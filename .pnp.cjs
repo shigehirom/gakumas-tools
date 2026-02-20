@@ -19,8 +19,8 @@ const RAW_RUNTIME_STATE =
       "reference": "workspace:gakumas-tools"\
     },\
     {\
-      "name": "gakumas-tools-cli-utility",\
-      "reference": "workspace:packages/cli-utility"\
+      "name": "gakumas-cli",\
+      "reference": "workspace:packages/cli"\
     },\
     {\
       "name": "gakumas-data",\
@@ -39,11 +39,11 @@ const RAW_RUNTIME_STATE =
   "ignorePatternData": "(^(?:\\\\.yarn\\\\/sdks(?:\\\\/(?!\\\\.{1,2}(?:\\\\/|$))(?:(?:(?!(?:^|\\\\/)\\\\.{1,2}(?:\\\\/|$)).)*?)|$))$)",\
   "pnpZipBackend": "libzip",\
   "fallbackExclusionList": [\
+    ["gakumas-cli", ["workspace:packages/cli"]],\
     ["gakumas-data", ["workspace:packages/gakumas-data"]],\
     ["gakumas-engine", ["workspace:packages/gakumas-engine"]],\
     ["gakumas-images", ["virtual:c329f4bce9d6cb5068f034092eac2b6609b9c403ea1f3ff7962a577845e8b6141703dd480a23de1313d01b00751563ffb90454072ad3a8400c165217bdf20ec9#workspace:packages/gakumas-images", "workspace:packages/gakumas-images"]],\
     ["gakumas-tools", ["workspace:gakumas-tools"]],\
-    ["gakumas-tools-cli-utility", ["workspace:packages/cli-utility"]],\
     ["gakumas-tools-monorepo", ["workspace:."]]\
   ],\
   "fallbackPool": [\
@@ -4092,6 +4092,27 @@ const RAW_RUNTIME_STATE =
         "linkType": "HARD"\
       }]\
     ]],\
+    ["gakumas-cli", [\
+      ["workspace:packages/cli", {\
+        "packageLocation": "./packages/cli/",\
+        "packageDependencies": [\
+          ["@types/mongodb", "npm:4.0.6"],\
+          ["@types/node", "npm:25.2.3"],\
+          ["cac", "npm:6.7.14"],\
+          ["esbuild", "npm:0.27.3"],\
+          ["gakumas-cli", "workspace:packages/cli"],\
+          ["gakumas-data", "workspace:packages/gakumas-data"],\
+          ["gakumas-engine", "workspace:packages/gakumas-engine"],\
+          ["googleapis", "npm:171.4.0"],\
+          ["handlebars", "npm:4.7.8"],\
+          ["mongodb", "virtual:c329f4bce9d6cb5068f034092eac2b6609b9c403ea1f3ff7962a577845e8b6141703dd480a23de1313d01b00751563ffb90454072ad3a8400c165217bdf20ec9#npm:7.1.0"],\
+          ["ts-node", "virtual:13cdc8ff193386b4bb695397e8f3765ca349abf88c10d4f174ce9f21cdbdaa07c24da7883f78e7471ab3622569efe33099043e472d94f3fc9c2877977f01c082#npm:10.9.2"],\
+          ["tsconfig-paths", "npm:4.2.0"],\
+          ["typescript", "patch:typescript@npm%3A5.9.3#optional!builtin<compat/typescript>::version=5.9.3&hash=5786d5"]\
+        ],\
+        "linkType": "SOFT"\
+      }]\
+    ]],\
     ["gakumas-data", [\
       ["workspace:packages/gakumas-data", {\
         "packageLocation": "./packages/gakumas-data/",\
@@ -4163,27 +4184,6 @@ const RAW_RUNTIME_STATE =
           ["sass", "npm:1.97.3"],\
           ["sharp", "npm:0.34.5"],\
           ["tesseract.js", "npm:6.0.1"]\
-        ],\
-        "linkType": "SOFT"\
-      }]\
-    ]],\
-    ["gakumas-tools-cli-utility", [\
-      ["workspace:packages/cli-utility", {\
-        "packageLocation": "./packages/cli-utility/",\
-        "packageDependencies": [\
-          ["@types/mongodb", "npm:4.0.6"],\
-          ["@types/node", "npm:25.2.3"],\
-          ["cac", "npm:6.7.14"],\
-          ["esbuild", "npm:0.27.3"],\
-          ["gakumas-data", "workspace:packages/gakumas-data"],\
-          ["gakumas-engine", "workspace:packages/gakumas-engine"],\
-          ["gakumas-tools-cli-utility", "workspace:packages/cli-utility"],\
-          ["googleapis", "npm:171.4.0"],\
-          ["handlebars", "npm:4.7.8"],\
-          ["mongodb", "virtual:c329f4bce9d6cb5068f034092eac2b6609b9c403ea1f3ff7962a577845e8b6141703dd480a23de1313d01b00751563ffb90454072ad3a8400c165217bdf20ec9#npm:7.1.0"],\
-          ["ts-node", "virtual:66811812608587183478f8726ae0f5294826303ea587ce4bb8a38ba6cd6ab68cda1f8442c6b62d341252a7267c67cfb1b1b574bb8e13d43f3cb19f21bec509e8#npm:10.9.2"],\
-          ["tsconfig-paths", "npm:4.2.0"],\
-          ["typescript", "patch:typescript@npm%3A5.9.3#optional!builtin<compat/typescript>::version=5.9.3&hash=5786d5"]\
         ],\
         "linkType": "SOFT"\
       }]\
@@ -7302,8 +7302,8 @@ const RAW_RUNTIME_STATE =
         ],\
         "linkType": "SOFT"\
       }],\
-      ["virtual:66811812608587183478f8726ae0f5294826303ea587ce4bb8a38ba6cd6ab68cda1f8442c6b62d341252a7267c67cfb1b1b574bb8e13d43f3cb19f21bec509e8#npm:10.9.2", {\
-        "packageLocation": "./.yarn/__virtual__/ts-node-virtual-805e5ede25/3/.yarn/berry/cache/ts-node-npm-10.9.2-3f3890b9ac-10c0.zip/node_modules/ts-node/",\
+      ["virtual:13cdc8ff193386b4bb695397e8f3765ca349abf88c10d4f174ce9f21cdbdaa07c24da7883f78e7471ab3622569efe33099043e472d94f3fc9c2877977f01c082#npm:10.9.2", {\
+        "packageLocation": "./.yarn/__virtual__/ts-node-virtual-21b7dfd1f2/3/.yarn/berry/cache/ts-node-npm-10.9.2-3f3890b9ac-10c0.zip/node_modules/ts-node/",\
         "packageDependencies": [\
           ["@cspotcode/source-map-support", "npm:0.8.1"],\
           ["@swc/core", null],\
@@ -7322,7 +7322,7 @@ const RAW_RUNTIME_STATE =
           ["create-require", "npm:1.1.1"],\
           ["diff", "npm:4.0.4"],\
           ["make-error", "npm:1.3.6"],\
-          ["ts-node", "virtual:66811812608587183478f8726ae0f5294826303ea587ce4bb8a38ba6cd6ab68cda1f8442c6b62d341252a7267c67cfb1b1b574bb8e13d43f3cb19f21bec509e8#npm:10.9.2"],\
+          ["ts-node", "virtual:13cdc8ff193386b4bb695397e8f3765ca349abf88c10d4f174ce9f21cdbdaa07c24da7883f78e7471ab3622569efe33099043e472d94f3fc9c2877977f01c082#npm:10.9.2"],\
           ["typescript", "patch:typescript@npm%3A5.9.3#optional!builtin<compat/typescript>::version=5.9.3&hash=5786d5"],\
           ["v8-compile-cache-lib", "npm:3.0.1"],\
           ["yn", "npm:3.1.1"]\

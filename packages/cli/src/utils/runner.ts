@@ -3,7 +3,7 @@ import path from 'path';
 import { GlobalCapture } from './capture';
 
 export const GAKUMAS_TOOLS_ROOT = path.resolve(process.cwd(), '../../gakumas-tools');
-export const LOCAL_SCRIPTS_DIR = path.join(GAKUMAS_TOOLS_ROOT, 'local-scripts');
+export const LOCAL_SCRIPTS_DIR = path.resolve(__dirname, '../../scripts');
 
 export interface RunScriptOptions {
     cwd?: string;

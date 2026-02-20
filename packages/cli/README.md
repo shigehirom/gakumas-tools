@@ -5,11 +5,11 @@
 
 ## インストール
 
-プロジェクトのルートディレクトリ（`gakumas-tools-cli-utility`）で以下のコマンドを実行し、依存関係をインストールしてビルドします。
+プロジェクトのルートから `yarn cli` で実行可能です。個別に開発する場合は `packages/cli` ディレクトリで以下のコマンドを実行します。
 
 ```bash
-npm install
-npm run build
+yarn install
+yarn build
 ```
 
 ## 使い方
@@ -17,13 +17,13 @@ npm run build
 以下のコマンドで実行します。
 
 ```bash
-npm start -- <command> [options]
+yarn cli <command> [options]
 ```
 
 または、エイリアスを設定して `gakumas` コマンドなどで呼び出せるようにすることを推奨します。
 
 ```bash
-alias gakumas='npm start --prefix /path/to/gakumas-tools-cli-utility --'
+alias gakumas='yarn --cwd /path/to/gakumas-tools cli'
 ```
 
 ### グローバルオプション
@@ -50,6 +50,8 @@ gakumas contest <stage> [runs] [idolName] [plan] [options]
     *   `plan`: 特定のプランのみ計算する場合 (例: `anomaly`)
 *   **オプション**:
     *   `--synth`: 合成シミュレーションを実行し、スキルカード交換の提案を行います。
+    *   `--force`: キャッシュを無視して強制的に再計算を行います。
+    *   `--compare <pattern>`: 特定の文字列（ワイルドカード可）を含むメモリーとの組み合わせのみを対象にします。
     *   `--showWorst`: ワースト編成も表示します。
     *   `--json`: 結果をJSON形式で出力します。
 
@@ -71,20 +73,7 @@ gakumas stats [idol] [plan] [options]
 
 ---
 
-#### 3. アイドル道シミュレータ (`idol-road`)
-
-MongoDBからロードしたメモリーを使用して、対話形式でアイドル道のシミュレーションを行います。
-
-```bash
-gakumas idol-road [memoryId]
-```
-
-*   **引数**:
-    *   `memoryId`: メモリーのオブジェクトID。省略した場合は最近のメモリー一覧を表示します。
-
----
-
-#### 4. メモリー一覧 (`list`)
+#### 3. メモリー一覧 (`list`)
 
 保存されているメモリーの名前一覧を表示します。
 
@@ -94,7 +83,7 @@ gakumas list [idolName]
 
 ---
 
-#### 5. レポート生成 (`dump`)
+#### 4. レポート生成 (`dump`)
 
 メモリーの詳細レポートを Markdown 形式で出力します。
 
@@ -104,23 +93,14 @@ gakumas dump [idolName] [outputFile]
 
 ---
 
-#### 6. 重複整理 (`diet`)
+#### 5. メモリー削除 (`rm`)
 
-MongoDB上の重複・類似メモリーを整理します。
-
-```bash
-gakumas diet [plan] [idol] [threshold]
-```
-
----
-
-#### 7. シミュレーション (`sim`)
-
-ローカルのJSON形式のメモリーファイルを使用してシミュレーションを実行します。
+パターンに一致するメモリーを対話形式で削除します。
 
 ```bash
-gakumas sim <seasonStage> [options]
+gakumas rm <pattern>
 ```
+
 
 ---
 
@@ -137,4 +117,3 @@ GDRIVE_FOLDER_ID=your-folder-id
 ## 開発者向け情報
 
 *   **テンプレート**: `src/templates/` にある `.hbs` ファイルを編集することで、出力フォーマットをカスタマイズできます。
-*   **高度なアイドル道シミュレーション**: `gakumas-engine` を使用した精緻なシミュレーションは `src/idol-road/interactive.ts` を直接実行することで利用可能です。

@@ -1,18 +1,10 @@
 // @ts-ignore
 import { cac } from 'cac';
-import { registerSimCommand } from './commands/sim';
 import { registerDumpCommand } from './commands/dump';
 import { registerContestCommand } from './commands/contest';
 import { registerStatsCommand } from './commands/stats';
-import { registerDietCommand } from './commands/diet';
-// @ts-ignore
-import { registerMatchCommand } from './commands/match';
 // @ts-ignore
 import { registerListCommand } from './commands/list';
-// @ts-ignore
-import { registerIdolRoadCommand } from './commands/idol-road';
-// @ts-ignore
-import { registerIdolRoadSimCommand } from './commands/idol-road-sim';
 import { registerRmCommand } from './commands/rm';
 // @ts-ignore
 import * as fs from 'fs';
@@ -83,16 +75,11 @@ if (parsed.options.gdrive) {
     });
 }
 
-registerSimCommand(cli);
 registerDumpCommand(cli);
 registerContestCommand(cli);
 registerStatsCommand(cli);
-registerDietCommand(cli);
 registerListCommand(cli);
-registerIdolRoadCommand(cli);
-registerIdolRoadSimCommand(cli);
 registerRmCommand(cli);
-registerMatchCommand(cli);
 
 cli.help();
 cli.version('0.1.0');

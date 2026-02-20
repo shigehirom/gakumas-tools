@@ -1,6 +1,6 @@
 # テンプレートカスタマイズガイド
 
-`gakumas-tools-cli-utility` は Handlebars テンプレートエンジンを使用して、コマンドの実行結果を整形して表示します。
+`gakumas-cli` は Handlebars テンプレートエンジンを使用して、コマンドの実行結果を整形して表示します。
 テンプレートファイルを編集することで、出力フォーマットを自由にカスタマイズできます。
 
 ## テンプレートの場所
@@ -11,15 +11,15 @@
 *   `stats.hbs`: `stats` コマンド（全体統計）の出力用
 *   `stats-idol.hbs`: `stats` コマンド（アイドル別統計）の出力用
 
-編集後は `npm run build` を再実行して、`dist/templates/` に変更を反映させる必要があります（または `src/templates` を直接参照するようにコードが書かれていれば不要ですが、現在の実装では `dist` 実行時に `src` を参照するか確認が必要です。現状の実装では `src/templates` を見に行っているため、再ビルドは不要なはずですが、TypeScriptのビルドプロセスによってはコピーされる可能性があります。念のため確認します）。
+編集後は `yarn build` を再実行して、`dist/templates/` に変更を反映させる必要があります。
 
 ## データ構造
 
 各テンプレートで利用可能なデータ構造は以下の通りです。
 
-### 1. `opt-remote.hbs`
+### 1. `contest.hbs`
 
-`opt-remote` コマンドの実行結果 (`--json` 出力) が渡されます。
+`contest` コマンドの実行結果 (`--json` 出力) が渡されます。
 
 ```json
 {
@@ -34,9 +34,9 @@
     "subFilename": "..."
   },
   "topCombinations": [
-    { 
-      "score": 12300, 
-      "mainName": "...", 
+    {
+      "score": 12300,
+      "mainName": "...",
       "subName": "...",
       "min": 10000,
       "max": 14000,
@@ -134,5 +134,5 @@
 3.  コマンドを実行して出力を確認します。
 
 ```bash
-npm start -- stats
-```
+ yarn cli stats
+ ```
