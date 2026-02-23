@@ -480,7 +480,7 @@ async function run() {
             const best = allResults[0] || {};
             const finalOutputData = {
                 best: {
-                    score: best.score,
+                    score: Math.round(best.score),
                     mainFilename: best.mainFilename,
                     subFilename: best.subFilename,
                     mainTitle: "", // Will populate below
@@ -492,10 +492,10 @@ async function run() {
                 topCombinations: allResults.slice(0, 5).map(res => ({
                     mainName: res.mainName,
                     subName: res.subName,
-                    min: res.min,
-                    score: res.score,
-                    median: res.median,
-                    max: res.max
+                    min: Math.round(res.min),
+                    score: Math.round(res.score),
+                    median: Math.round(res.median),
+                    max: Math.round(res.max)
                 })),
                 worstCombinations: [],
                 synthResults: [],
