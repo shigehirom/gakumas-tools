@@ -132,6 +132,9 @@ async function run() {
     if (options.idolName) {
         if (options.idolName.toLowerCase() === 'all') {
             idolNames = ALL_IDOL_NAMES;
+        } else if (options.triple || options.idolName.includes(",")) {
+            // For triple simulation or explicit multi-idol list, use a combined pool
+            idolNames = [options.idolName];
         } else {
             idolNames = options.idolName.split(",").map(s => s.trim());
         }
@@ -193,22 +196,20 @@ async function run() {
                     const delRes = await simulationResultsCollection.deleteMany(deleteQuery);
                     console.error(`削除完了: ${delRes.deletedCount} 件のキャッシュを削除しました。`);
                 } else {
-                    // Pre-fetch existing results for this stage/runs to filter
-                    // Optimization: Maybe only fetch hashes?
                     const query = {
                         stageId: contestStage.id,
                         runs: numRuns,
                         season: season
                     };
-                    // If we could restrict by idol, that would be better, but we are cross-combining?
-                    // Actually combinations are strictly within `memories` list which is filtered by Idol.
-                    // So all combinations involve this idol (as Main).
-                    // Wait, combinations are `memories` x `memories`.
-                    // And `memories` contains only `currentIdolName`'s memories (if options.idolName is set).
-                    // Yes.
 
-                    const cached = await simulationResultsCollection.find(query).project({ mainHash: 1, subHash: 1 }).toArray();
-                    cached.forEach(c => existingResultsSet.add(`${c.mainHash}_${c.subHash}`));
+                    const projection = { mainHash: 1, subHash: 1 };
+                    if (options.triple) projection.sub2Hash = 1;
+
+                    const cached = await simulationResultsCollection.find(query).project(projection).toArray();
+                    cached.forEach(c => {
+                        const key = options.triple ? `${c.mainHash}_${c.subHash}_${c.sub2Hash}` : `${c.mainHash}_${c.subHash}`;
+                        existingResultsSet.add(key);
+                    });
 
                     console.error(`キャッシュ済み結果: ${cached.length} 件`);
                 }
@@ -227,23 +228,40 @@ async function run() {
 
         for (const mainMem of memories) {
             for (const subMem of memories) {
-                // For DB sourced items, filename might be the ID string, ensure uniqueness check works
                 if (mainMem.filename === subMem.filename) continue;
 
-                // If compare mode is active, at least one memory must match the pattern
-                if (comparePattern) {
-                    const mainMatch = mainMem.data.name && comparePattern.test(mainMem.data.name);
-                    const subMatch = subMem.data.name && comparePattern.test(subMem.data.name);
-                    if (!mainMatch && !subMatch) continue;
-                }
+                if (options.triple) {
+                    for (const sub2Mem of memories) {
+                        if (mainMem.filename === sub2Mem.filename || subMem.filename === sub2Mem.filename) continue;
 
-                // Check Cache
-                if (!options.force && existingResultsSet.has(`${mainMem.hash}_${subMem.hash}`)) {
-                    skippedCount++;
-                    continue;
-                }
+                        if (comparePattern) {
+                            const mainMatch = mainMem.data.name && comparePattern.test(mainMem.data.name);
+                            const subMatch = subMem.data.name && comparePattern.test(subMem.data.name);
+                            const sub2Match = sub2Mem.data.name && comparePattern.test(sub2Mem.data.name);
+                            if (!mainMatch && !subMatch && !sub2Match) continue;
+                        }
 
-                combinations.push({ main: mainMem, sub: subMem });
+                        const cacheKey = `${mainMem.hash}_${subMem.hash}_${sub2Mem.hash}`;
+                        if (!options.force && existingResultsSet.has(cacheKey)) {
+                            skippedCount++;
+                            continue;
+                        }
+                        combinations.push({ main: mainMem, sub: subMem, sub2: sub2Mem });
+                    }
+                } else {
+                    if (comparePattern) {
+                        const mainMatch = mainMem.data.name && comparePattern.test(mainMem.data.name);
+                        const subMatch = subMem.data.name && comparePattern.test(subMem.data.name);
+                        if (!mainMatch && !subMatch) continue;
+                    }
+
+                    if (!options.force && existingResultsSet.has(`${mainMem.hash}_${subMem.hash}`)) {
+                        skippedCount++;
+                        continue;
+                    }
+
+                    combinations.push({ main: mainMem, sub: subMem });
+                }
             }
         }
         const totalCombs = combinations.length;
@@ -346,6 +364,7 @@ async function run() {
                     filter: {
                         mainHash: res.mainHash,
                         subHash: res.subHash,
+                        ...(options.triple ? { sub2Hash: res.sub2Hash } : {}),
                         stageId: contestStage.id,
                         runs: numRuns,
                         season: season
@@ -354,6 +373,7 @@ async function run() {
                         $set: {
                             mainHash: res.mainHash,
                             subHash: res.subHash,
+                            ...(options.triple ? { sub2Hash: res.sub2Hash } : {}),
                             stageId: contestStage.id,
                             runs: numRuns,
                             season: season,
@@ -363,8 +383,10 @@ async function run() {
                             median: res.median,
                             mainName: res.mainName,
                             subName: res.subName,
+                            sub2Name: res.sub2Name,
                             mainFilename: res.mainFilename,
                             subFilename: res.subFilename,
+                            sub2Filename: res.sub2Filename,
                             createdAt: new Date()
                         }
                     },
@@ -383,71 +405,42 @@ async function run() {
 
         // Merge with Cached Results for Display
         if (useCache && simulationResultsCollection) {
-            // Fetch ALL results for this set (cache + new)
-            // Re-query simply or assume we have everything?
-            // We only skipped ones that match (mainHash, subHash) from `memories`.
-            // So we should construct the list of relevant hashes to fetch?
-            // Or just fetch all for this stage/runs again? (Might be large if many idols)
-            // Better: We know which ones we skipped.
-
-            // To be safe and simple: Fetch all results where `mainHash` IN (memories.hashes) AND `subHash` IN (memories.hashes)
             const memHashes = memories.map(m => m.hash);
             const finalQuery = {
                 stageId: contestStage.id,
                 runs: numRuns,
                 season: season,
                 mainHash: { $in: memHashes },
-                subHash: { $in: memHashes }
+                subHash: { $in: memHashes },
+                ...(options.triple ? { sub2Hash: { $in: memHashes } } : {})
             };
-
-            // If totalCombs was 0, allResults is empty.
-            // If totalCombs > 0, allResults has NEW results. 
-            // We want (New + Cached).
 
             try {
                 const cachedResults = await simulationResultsCollection.find(finalQuery).toArray();
-
-                // Merge strategies:
-                // `allResults` currently contains valid result objects.
-                // `cachedResults` are from DB. Map them to same structure.
 
                 const cachedMapped = cachedResults.map(r => ({
                     mainFilename: r.mainFilename,
                     mainName: r.mainName,
                     subFilename: r.subFilename,
                     subName: r.subName,
+                    sub2Filename: r.sub2Filename,
+                    sub2Name: r.sub2Name,
                     score: r.score,
                     min: r.min,
                     max: r.max,
                     median: r.median,
                     mainHash: r.mainHash,
-                    subHash: r.subHash
+                    subHash: r.subHash,
+                    sub2Hash: r.sub2Hash
                 }));
 
-                // Deduplicate?
-                // `allResults` are definitely new and unique.
-                // `cachedResults` might include everything if we queried broad?
-                // Actually `allResults` are NOT in DB yet when we query? 
-                // Wait, I saved them just above.
-                // So `cachedResults` SHOULD contain `allResults` too now.
-
-                // So replacing `allResults` with `cachedResults` is the correct approach.
-                // But `cachedResults` might miss "meta" or other runtime fields?
-                // `meta` is used for synthesized name display?
-                // The worker returns `meta`. `simulation_results` schema doesn't seem to store `meta`.
-                // `meta` is passed from `main.meta`.
-
-                // Re-attaching meta:
-                // We can recover meta from `memories` by matching filename/hash.
-
-                // Let's use `cachedMapped` as the source of truth for scores.
-                allResults.length = 0; // Clear
+                allResults.length = 0;
                 allResults.push(...cachedMapped);
 
-                // Rehydrate meta and names for all results
                 for (const res of allResults) {
                     const mainMem = memories.find(m => m.hash === res.mainHash);
                     const subMem = memories.find(m => m.hash === res.subHash);
+                    const sub2Mem = options.triple ? memories.find(m => m.hash === res.sub2Hash) : null;
 
                     if (mainMem) {
                         res.mainName = mainMem.data.name;
@@ -457,6 +450,10 @@ async function run() {
                     if (subMem) {
                         res.subName = subMem.data.name;
                         res.subFilename = subMem.filename;
+                    }
+                    if (sub2Mem) {
+                        res.sub2Name = sub2Mem.data.name;
+                        res.sub2Filename = sub2Mem.filename;
                     }
                 }
 
@@ -483,15 +480,19 @@ async function run() {
                     score: Math.round(best.score),
                     mainFilename: best.mainFilename,
                     subFilename: best.subFilename,
+                    sub2Filename: best.sub2Filename,
                     mainTitle: "", // Will populate below
                     subTitle: "",
+                    sub2Title: "",
                     idolName: currentIdolName,
                     mainName: best.mainName,
-                    subName: best.subName
+                    subName: best.subName,
+                    sub2Name: best.sub2Name
                 },
                 topCombinations: allResults.slice(0, 5).map(res => ({
                     mainName: res.mainName,
                     subName: res.subName,
+                    sub2Name: res.sub2Name,
                     min: Math.round(res.min),
                     score: Math.round(res.score),
                     median: Math.round(res.median),
@@ -512,13 +513,16 @@ async function run() {
             // Populate titles for best result
             const mainMem = memories.find(m => m.filename === best.mainFilename);
             const subMem = memories.find(m => m.filename === best.subFilename);
+            const sub2Mem = memories.find(m => m.filename === best.sub2Filename);
             if (mainMem && subMem) {
                 const mainPIdol = PIdols.getById(mainMem.data.pIdolId);
                 const subPIdol = PIdols.getById(subMem.data.pIdolId);
+                const sub2PIdol = sub2Mem ? PIdols.getById(sub2Mem.data.pIdolId) : null;
                 const idol = mainPIdol ? Idols.getById(mainPIdol.idolId) : null;
                 finalOutputData.best.idolName = idol ? idol.name.replace(" ", "") : (currentIdolName || "Unknown");
                 finalOutputData.best.mainTitle = mainPIdol ? mainPIdol.title : "Unknown";
                 finalOutputData.best.subTitle = subPIdol ? subPIdol.title : "Unknown";
+                finalOutputData.best.sub2Title = sub2PIdol ? sub2PIdol.title : "";
             }
 
             if (options.showWorst || options.compare) {
@@ -610,36 +614,50 @@ async function run() {
                 const best = allResults[0];
                 const mainMem = memories.find(m => m.filename === best.mainFilename);
                 const subMem = memories.find(m => m.filename === best.subFilename);
+                const sub2Mem = memories.find(m => m.filename === best.sub2Filename);
 
                 // Safety check if memories are found (should always be true)
                 if (mainMem && subMem) {
                     const mainPIdol = PIdols.getById(mainMem.data.pIdolId);
                     const subPIdol = PIdols.getById(subMem.data.pIdolId);
+                    const sub2PIdol = sub2Mem ? PIdols.getById(sub2Mem.data.pIdolId) : null;
                     const idol = mainPIdol ? Idols.getById(mainPIdol.idolId) : null;
 
                     const idolName = idol ? idol.name.replace(" ", "") : "Unknown";
                     const mainTitle = mainPIdol ? mainPIdol.title : "Unknown";
                     const subTitle = subPIdol ? subPIdol.title : "Unknown";
+                    const sub2Title = sub2PIdol ? sub2PIdol.title : "";
 
-                    if (mainTitle === subTitle) {
-                        console.log(`# ${idolName}【${mainTitle}】 - ベストスコア: ${Math.round(best.score)}`);
-                    } else {
-                        console.log(`# ${idolName}【${mainTitle}】【${subTitle}】 - ベストスコア: ${Math.round(best.score)}`);
-                    }
+                    let header = `# ${idolName}【${mainTitle}】`;
+                    if (subTitle && subTitle !== mainTitle) header += `【${subTitle}】`;
+                    if (sub2Title && sub2Title !== subTitle && sub2Title !== mainTitle) header += `【${sub2Title}】`;
+                    header += ` - ベストスコア: ${Math.round(best.score)}`;
+
+                    console.log(header);
                     console.log("");
                 }
             }
 
             console.log("## ベストスコア(平均値): " + Math.round(allResults[0]?.score || 0));
-            console.log("| メイン | サブ | 最小値 | 平均値 | 中央値 | 最大値 |");
-            console.log("| :-- | :-- | --: | --: | --: | --: |");
+            if (options.triple) {
+                console.log("| メイン | サブ1 | サブ2 | 最小値 | 平均値 | 中央値 | 最大値 |");
+                console.log("| :-- | :-- | :-- | --: | --: | --: | --: |");
+            } else {
+                console.log("| メイン | サブ | 最小値 | 平均値 | 中央値 | 最大値 |");
+                console.log("| :-- | :-- | --: | --: | --: | --: |");
+            }
 
             // Top 5 Combinations
             allResults.slice(0, 5).forEach((res) => {
                 const mainNameStr = res.mainName || "No Name";
                 const subNameStr = res.subName || "No Name";
+                const sub2NameStr = res.sub2Name || "No Name";
 
-                console.log(`| ${mainNameStr} | ${subNameStr} | ${Math.round(res.min)} | ${Math.round(res.score)} | ${Math.round(res.median)} | ${Math.round(res.max)} |`);
+                if (options.triple) {
+                    console.log(`| ${mainNameStr} | ${subNameStr} | ${sub2NameStr} | ${Math.round(res.min)} | ${Math.round(res.score)} | ${Math.round(res.median)} | ${Math.round(res.max)} |`);
+                } else {
+                    console.log(`| ${mainNameStr} | ${subNameStr} | ${Math.round(res.min)} | ${Math.round(res.score)} | ${Math.round(res.median)} | ${Math.round(res.max)} |`);
+                }
             });
             console.log(""); // Empty line before ---
             console.log("---");
@@ -755,21 +773,26 @@ async function loadMemoriesFromDB(uri, options) {
         const { idolName, plan } = options;
 
         if (idolName) {
-            // idolName passed here is always single (due to caller loop)
-            const idolId = IDOL_NAME_TO_ID[idolName.toLowerCase()];
-            if (!idolId) {
-                // Try searching by exact pIdolId if numeric
-                if (!isNaN(parseInt(idolName))) {
-                    query.pIdolId = parseInt(idolName);
+            const requestedIdolNames = idolName.split(",").map(s => s.trim().toLowerCase());
+            const allTargetPIdolIds = [];
+
+            for (const name of requestedIdolNames) {
+                const idolId = IDOL_NAME_TO_ID[name];
+                if (idolId) {
+                    const targetPIdols = PIdols.getAll().filter(p => p.idolId === idolId);
+                    allTargetPIdolIds.push(...targetPIdols.map(p => p.id));
+                } else if (!isNaN(parseInt(name))) {
+                    allTargetPIdolIds.push(parseInt(name));
                 } else {
-                    console.error(`エラー: アイドル名 '${idolName}' が見つかりません。`);
-                    return [];
+                    console.error(`警告: アイドル名 '${name}' が見つかりません。`);
                 }
+            }
+
+            if (allTargetPIdolIds.length > 0) {
+                query.pIdolId = { $in: allTargetPIdolIds };
             } else {
-                // Get all pIdolIds for this idol
-                const targetPIdols = PIdols.getAll().filter(p => p.idolId === idolId);
-                const pIdolIds = targetPIdols.map(p => p.id);
-                query.pIdolId = { $in: pIdolIds };
+                console.error(`エラー: 有効なアイドル指定が見つかりませんでした。`);
+                return [];
             }
         }
 

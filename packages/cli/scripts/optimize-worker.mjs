@@ -7,35 +7,46 @@ const { contestStage, numRuns } = workerData;
 const stageConfig = new StageConfig(contestStage);
 
 parentPort.on('message', async (task) => {
-    // task: { id, combinations: [{ main: { data, filename }, sub: { data, filename } }, ...] }
+    // task: { id, combinations: [{ main, sub, sub2 }, ...] }
     const { id, combinations } = task;
     const results = [];
     let pendingCount = 0;
 
     // Process chunk
     for (const comb of combinations) {
-        const { main, sub } = comb;
+        const { main, sub, sub2 } = comb;
 
         const loadout = {
             stageId: contestStage.id,
             supportBonus: 0.04,
             params: [0, 0, 0, 0],
-            pItemIds: [0, 0, 0, 0],
-            skillCardIdGroups: [[0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0]],
-            customizationGroups: [[{}, {}, {}, {}, {}, {}], [{}, {}, {}, {}, {}, {}]],
+            pItemIds: [],
+            skillCardIdGroups: [],
+            customizationGroups: [],
         };
 
         // Apply Main
-        loadout.params = main.data.params;
-        loadout.pItemIds = main.data.pItemIds;
-        loadout.skillCardIdGroups[0] = main.data.skillCardIds;
-        loadout.customizationGroups[0] = main.data.customizations || [{}, {}, {}, {}, {}, {}];
+        loadout.params = [...main.data.params];
+        loadout.pItemIds = [...(main.data.pItemIds || [])];
+        loadout.skillCardIdGroups.push(main.data.skillCardIds || []);
+        loadout.customizationGroups.push(main.data.customizations || [{}, {}, {}, {}, {}, {}]);
 
         // Apply Sub
         const multiplier = 0.2;
-        loadout.params = loadout.params.map((p, i) => p + Math.floor((sub.data.params[i] || 0) * multiplier));
-        loadout.skillCardIdGroups[1] = sub.data.skillCardIds;
-        loadout.customizationGroups[1] = sub.data.customizations || [{}, {}, {}, {}, {}, {}];
+        if (sub) {
+            loadout.params = loadout.params.map((p, i) => p + Math.floor((sub.data.params[i] || 0) * multiplier));
+            if (sub.data.pItemIds) loadout.pItemIds.push(...sub.data.pItemIds);
+            loadout.skillCardIdGroups.push(sub.data.skillCardIds || []);
+            loadout.customizationGroups.push(sub.data.customizations || [{}, {}, {}, {}, {}, {}]);
+        }
+
+        // Apply Sub2
+        if (sub2) {
+            loadout.params = loadout.params.map((p, i) => p + Math.floor((sub2.data.params[i] || 0) * multiplier));
+            if (sub2.data.pItemIds) loadout.pItemIds.push(...sub2.data.pItemIds);
+            loadout.skillCardIdGroups.push(sub2.data.skillCardIds || []);
+            loadout.customizationGroups.push(sub2.data.customizations || [{}, {}, {}, {}, {}, {}]);
+        }
 
         // Setup Engine
         const idolConfig = new IdolConfig(loadout);
@@ -54,10 +65,7 @@ parentPort.on('message', async (task) => {
                 const result = await player.play();
                 runScores.push(result.score);
             } catch (e) {
-                // Ignore errors, but pushes 0 if we want to penalize? 
-                // Or just skip. Current logic was skipping totalScore add.
-                // runScores.push(0); // Optional: decide how to handle errors. 
-                // Ensuring consistent count might be better, but for now sticking to original "ignore".
+                // Ignore errors
             }
         }
 
@@ -65,8 +73,10 @@ parentPort.on('message', async (task) => {
             results.push({
                 mainFilename: main.filename,
                 mainName: main.data.name,
-                subFilename: sub.filename,
-                subName: sub.data.name,
+                subFilename: sub ? sub.filename : undefined,
+                subName: sub ? sub.data.name : undefined,
+                sub2Filename: sub2 ? sub2.filename : undefined,
+                sub2Name: sub2 ? sub2.data.name : undefined,
                 score: 0,
                 min: 0,
                 max: 0,
@@ -88,9 +98,12 @@ parentPort.on('message', async (task) => {
             mainFilename: main.filename,
             mainName: main.data.name,
             mainHash: main.hash,
-            subFilename: sub.filename,
-            subName: sub.data.name,
-            subHash: sub.hash,
+            subFilename: sub ? sub.filename : undefined,
+            subName: sub ? sub.data.name : undefined,
+            subHash: sub ? sub.hash : undefined,
+            sub2Filename: sub2 ? sub2.filename : undefined,
+            sub2Name: sub2 ? sub2.data.name : undefined,
+            sub2Hash: sub2 ? sub2.hash : undefined,
             score: avgScore,
             min: minScore,
             max: maxScore,
