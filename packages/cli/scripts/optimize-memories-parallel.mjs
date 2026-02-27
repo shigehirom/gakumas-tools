@@ -67,9 +67,7 @@ async function run() {
         console.log = () => { };
         // console.error = () => { }; // Keep stderr for debug logs
     }
-    const [seasonStr, stageStr] = args[1].split("-");
-    const season = parseInt(seasonStr, 10);
-    const stageNumber = parseInt(stageStr, 10);
+    const stageInput = args[1];
 
     let numRuns = parseInt(args[2], 10);
 
@@ -108,12 +106,36 @@ async function run() {
 
     // Load Stage
     const stages = Stages.getAll();
-    const contestStage = stages.find((s) => s.type == "contest" && s.season == season && s.stage == stageNumber);
+    let contestStage;
+
+    // 1. Try by ID
+    if (!isNaN(parseInt(stageInput)) && !stageInput.includes("-")) {
+        const id = parseInt(stageInput, 10);
+        contestStage = stages.find(s => s.id === id);
+    }
+
+    // 2. Try by Name
+    if (!contestStage) {
+        contestStage = stages.find(s => s.name === stageInput);
+    }
+
+    // 3. Try by season-stage[-round]
+    if (!contestStage && stageInput.includes("-")) {
+        const [s_season, s_stage, s_round] = stageInput.split("-");
+        contestStage = stages.find(s =>
+            String(s.season) === s_season &&
+            String(s.stage) === s_stage &&
+            (!s_round || String(s.round) === s_round)
+        );
+    }
 
     if (!contestStage) {
-        console.error(`ステージが見つかりません: シーズン${season} ステージ${stageNumber}`);
+        console.error(`ステージが見つかりません: ${stageInput}`);
         process.exit(1);
     }
+
+    const season = contestStage.season;
+    const stageNumber = contestStage.stage;
 
     // Auto-detect plan from stage definition if not provided
     if (!options.plan && contestStage.plan && contestStage.plan !== 'free') {
@@ -186,10 +208,9 @@ async function run() {
                 if (options.force) {
                     const deleteQuery = {
                         stageId: contestStage.id,
-                        runs: numRuns,
-                        season: season
+                        runs: numRuns
                     };
-                    console.error(`--force 指定: キャッシュを削除します... (Stage ID: ${contestStage.id}, Runs: ${numRuns}, Season: ${season})`);
+                    console.error(`--force 指定: キャッシュを削除します... (Stage ID: ${contestStage.id}, Runs: ${numRuns})`);
                     const delRes = await simulationResultsCollection.deleteMany(deleteQuery);
                     console.error(`削除完了: ${delRes.deletedCount} 件のキャッシュを削除しました。`);
                 } else {
@@ -197,8 +218,7 @@ async function run() {
                     // Optimization: Maybe only fetch hashes?
                     const query = {
                         stageId: contestStage.id,
-                        runs: numRuns,
-                        season: season
+                        runs: numRuns
                     };
                     // If we could restrict by idol, that would be better, but we are cross-combining?
                     // Actually combinations are strictly within `memories` list which is filtered by Idol.
@@ -271,7 +291,7 @@ async function run() {
         console.error(`- 読み込みメモリー数: ${memories.length} 件`);
         console.error(`- 総組み合わせ数: ${totalCombs} 通り`);
         console.error(`- 並列実行数: ${workerCount} スレッド`);
-        console.error(`- ステージ: シーズン${season} ステージ${stageNumber}`);
+        console.error(`- ステージ: ${contestStage.name} (ID: ${contestStage.id})`);
         console.error(`- 試行回数: ${numRuns} 回/組`);
         console.error("- シミュレーション開始... (時間がかかります)");
 
@@ -347,8 +367,7 @@ async function run() {
                         mainHash: res.mainHash,
                         subHash: res.subHash,
                         stageId: contestStage.id,
-                        runs: numRuns,
-                        season: season
+                        runs: numRuns
                     },
                     update: {
                         $set: {
@@ -356,7 +375,6 @@ async function run() {
                             subHash: res.subHash,
                             stageId: contestStage.id,
                             runs: numRuns,
-                            season: season,
                             score: res.score,
                             min: res.min,
                             max: res.max,
@@ -395,7 +413,6 @@ async function run() {
             const finalQuery = {
                 stageId: contestStage.id,
                 runs: numRuns,
-                season: season,
                 mainHash: { $in: memHashes },
                 subHash: { $in: memHashes }
             };

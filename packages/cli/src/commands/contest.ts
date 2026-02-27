@@ -7,7 +7,7 @@ import { parseJsonStream } from '../utils/json-stream';
 const Handlebars = importHandlebars;
 
 export function registerContestCommand(cli: any) {
-    cli.command('contest <stage> [runs] [idolName] [plan]', 'Optimize memories using remote DB')
+    cli.command('contest <stage> [runs] [idolName] [plan]', 'Optimize memories using remote DB (stage can be ID, name, or season-stage format)')
         .option('--synth', 'Simulate card synthesis')
         .option('--showWorst', 'Show worst combinations')
         .option('--json', 'Output results as JSON')
