@@ -56,6 +56,24 @@ gakumas contest <stage> [runs] [idolName] [plan] [options]
     *   `--showWorst`: 各メモリーをメインにした際の平均スコアが低い「ワースト10」も表示します。
     *   `--json`: 結果をJSON形式で出力します。
 
+##### ライブツアーイベント (3枠メモリー) の実行例
+3つのメモリー枠（メイン + サブ1 + サブ2）を使用し、複数のアイドルのメモリーを混合して計算する場合の例です。
+
+**Stage A (手毬, 麻央, 清夏, 佑芽, 莉波)**
+```bash
+yarn cli contest 139 1000 temari,mao,sumika,ume,rinami --triple
+```
+
+**Stage B (ことね, 燕, リーリヤ, 千奈, 美鈴)**
+```bash
+yarn cli contest 140 1000 kotone,tsubame,lilja,china,misuzu --triple
+```
+
+**Stage C (咲季, ことね, 広, 星南, 佑芽)**
+```bash
+yarn cli contest 141 1000 saki,kotone,hiro,sena,ume --triple
+```
+
 ---
 
 #### 2. メモリー統計 (`stats`)

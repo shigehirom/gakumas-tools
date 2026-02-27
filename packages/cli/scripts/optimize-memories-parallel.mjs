@@ -199,7 +199,8 @@ async function run() {
                     const query = {
                         stageId: contestStage.id,
                         runs: numRuns,
-                        season: season
+                        season: season,
+                        sub2Hash: options.triple ? { $exists: true } : { $exists: false }
                     };
 
                     const projection = { mainHash: 1, subHash: 1 };
@@ -364,7 +365,7 @@ async function run() {
                     filter: {
                         mainHash: res.mainHash,
                         subHash: res.subHash,
-                        ...(options.triple ? { sub2Hash: res.sub2Hash } : {}),
+                        sub2Hash: options.triple ? res.sub2Hash : { $exists: false },
                         stageId: contestStage.id,
                         runs: numRuns,
                         season: season
@@ -412,7 +413,7 @@ async function run() {
                 season: season,
                 mainHash: { $in: memHashes },
                 subHash: { $in: memHashes },
-                ...(options.triple ? { sub2Hash: { $in: memHashes } } : {})
+                sub2Hash: options.triple ? { $in: memHashes } : { $exists: false }
             };
 
             try {
