@@ -166,7 +166,10 @@
   "MemoryEditorModal": {
     "name": "名前",
     "contestPower": "総合力",
-    "cost": "コスト"
+    "cost": "コスト",
+    "produceAbilities": "プロデュースアビリティ",
+    "stagePItems": "ステージPアイテム",
+    "stageSkillCards": "ステージスキルカード"
   },
   "ParametersInput": {
     "stamina": "体力"
