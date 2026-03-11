@@ -166,7 +166,10 @@
   "MemoryEditorModal": {
     "name": "Name",
     "contestPower": "Contest power",
-    "cost": "Cost"
+    "cost": "Cost",
+    "produceAbilities": "Produce Abilities",
+    "stagePItems": "Stage P-Items",
+    "stageSkillCards": "Stage Skill Cards"
   },
   "ParametersInput": {
     "stamina": "Stamina"
