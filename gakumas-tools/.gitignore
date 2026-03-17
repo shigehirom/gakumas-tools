@@ -32,3 +32,7 @@ next-env.d.ts
 *-dump/
 test-dump/
 candidates.json
+
+# yarn
+.yarn
+.pnp.*

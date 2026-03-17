@@ -41,6 +41,14 @@ export function registerStatsCommand(cli: any) {
                         throw new Error(`Template not found: ${templatePath}`);
                     }
                     const templateContent = fs.readFileSync(templatePath, 'utf-8');
+
+                    Handlebars.registerHelper('round', function (value: any) {
+                        return isNaN(value) ? value : Math.round(value);
+                    });
+                    Handlebars.registerHelper('comma', function (value: any) {
+                        return isNaN(value) ? value : Math.round(Number(value)).toLocaleString();
+                    });
+
                     const template = Handlebars.compile(templateContent);
 
                     if (data.type === 'all_idols') {

@@ -85,6 +85,9 @@ export function registerContestCommand(cli: any) {
                     Handlebars.registerHelper('round', function (value: any) {
                         return isNaN(value) ? value : Math.round(value);
                     });
+                    Handlebars.registerHelper('comma', function (value: any) {
+                        return isNaN(value) ? value : Math.round(Number(value)).toLocaleString();
+                    });
                     Handlebars.registerHelper('inc', function (value: any) {
                         return parseInt(value) + 1;
                     });

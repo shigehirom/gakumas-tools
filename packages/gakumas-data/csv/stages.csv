@@ -140,3 +140,6 @@ id,name,type,preview,season,stage,round,plan,criteria,turnCounts,firstTurns,effe
 139,シーズン40 ステージ1,contest,TRUE,40,1,,sense,"0.35,0.4,0.25","4,5,3","0.1,0.9,0","at:cardUsed,if:cardSourceType==pIdol,do:setConcentrationBuff(0.5,3),limit:4",
 140,シーズン40 ステージ2,contest,TRUE,40,2,,logic,"0.35,0.4,0.25","4,5,3","0.1,0.9,0","at:cardUsed,if:cardSourceType==pIdol,if:genki>=30,do:motivation+=10,do:genki+=2,limit:4",
 141,シーズン40 ステージ3,contest,TRUE,40,3,,anomaly,"0.35,0.4,0.25","4,5,3","0.1,0.9,0","at:stanceChanged,if:parentPhase==processCard,if:stanceChangedByCardTimes%2==1,target:sourceType(pIdol),do:g.score+=25,limit:4",
+142,シーズン41 ステージ1,contest,TRUE,41,1,,sense,"0.2,0.35,0.45","3,4,5","0,0,0","at:cardUsed,if:cardSourceType==pIdol,do:setConcentrationBuff(0.5,3),limit:4",
+143,シーズン41 ステージ2,contest,TRUE,41,2,,logic,"0.2,0.35,0.45","2,3,5","0,0,0","at:afterCardUsed,if:cardEffects&goodImpressionTurns,if:goodImpressionCardsUsed%3==0,do:setGoodImpressionTurnsEffectBuff(0.5,3),do:goodImpressionTurns+=2,limit:3;at:beforeStartOfTurn,if:turnsElapsed==7,do:goodImpressionTurns*=1.5,limit:1",
+144,シーズン41 ステージ3,contest,TRUE,41,3,,anomaly,"0.2,0.35,0.45","3,4,5","0,0,0","at:stanceChanged,if:parentPhase==processCard,target:sourceType(pIdol),do:g.score+=12,limit:8",

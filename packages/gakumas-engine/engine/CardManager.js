@@ -111,6 +111,7 @@ export default class CardManager extends EngineComponent {
 
     state[S.heldCards] = [];
     state[S.cardsUsed] = 0;
+    state[S.goodImpressionCardsUsed] = 0;
     state[S.activeCardsUsed] = 0;
     state[S.usedCard] = null;
     state[S.lastUsedCard] = null;
@@ -375,6 +376,9 @@ export default class CardManager extends EngineComponent {
 
     // Increment counters
     state[S.cardsUsed]++;
+    if (this.getCardEffects(state, card).has("goodImpressionTurns")) {
+      state[S.goodImpressionCardsUsed]++;
+    }
     state[S.turnCardsUsed]++;
     if (skillCard.type == "active") {
       state[S.activeCardsUsed]++;

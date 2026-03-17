@@ -8,6 +8,7 @@ import { registerListCommand } from './commands/list';
 import { registerRmCommand } from './commands/rm';
 import { registerRehearsalCommand } from './commands/rehearsal';
 import { registerLoadoutCommand } from './commands/loadout';
+import { registerRecommendCommand } from './commands/recommend';
 // @ts-ignore
 import * as fs from 'fs';
 // @ts-ignore
@@ -127,6 +128,10 @@ if (parsed.options.gdrive || parsed.options.gdrive === '') {
         } else if (cmdName === 'stats') {
             const idolFilter = parsed.args[1] || 'summary';
             defaultName = `${datePrefix}_stats_${idolFilter.replace(/,/g, '+')}.md`;
+        } else if (cmdName === 'recommend') {
+            const fileArg = parsed.args[1] || 'unknown';
+            const baseFile = path.basename(fileArg, '.md');
+            defaultName = `${datePrefix}_recommend_${baseFile}.md`;
         }
 
         parsed.options.gdrive = defaultName;
@@ -162,6 +167,7 @@ registerListCommand(cli);
 registerRmCommand(cli);
 registerRehearsalCommand(cli);
 registerLoadoutCommand(cli);
+registerRecommendCommand(cli);
 
 cli.help();
 cli.version('0.1.0');

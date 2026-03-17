@@ -205,6 +205,7 @@ export const ALL_FIELDS = [
   "removedCards",
   "heldCards",
   "cardsUsed",
+  "goodImpressionCardsUsed",
   "activeCardsUsed",
   "turnCardsUsed",
   "turnCardsUpgraded",

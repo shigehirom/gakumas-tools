@@ -37,27 +37,25 @@ parentPort.on('message', async (task) => {
         loadout.skillCardIdGroups[1] = sub.data.skillCardIds;
         loadout.customizationGroups[1] = sub.data.customizations || [{}, {}, {}, {}, {}, {}];
 
-        // Setup Engine
+        // Setup Engine and Strategy (Reused across numRuns)
         const idolConfig = new IdolConfig(loadout);
         const config = new IdolStageConfig(idolConfig, stageConfig);
+
+        const engine = new StageEngine(config);
+        engine.logger.disable();
+        const StrategyClass = STRATEGIES["HeuristicStrategy"];
+        const strategy = new StrategyClass(engine);
+        engine.strategy = strategy;
+        const player = new StagePlayer(engine, strategy);
 
         const runScores = [];
 
         for (let i = 0; i < numRuns; i++) {
-            const engine = new StageEngine(config);
-            const StrategyClass = STRATEGIES["HeuristicStrategy"];
-            const strategy = new StrategyClass(engine);
-            engine.strategy = strategy;
-            const player = new StagePlayer(engine, strategy);
-
             try {
                 const result = await player.play();
                 runScores.push(result.score);
             } catch (e) {
-                // Ignore errors, but pushes 0 if we want to penalize? 
-                // Or just skip. Current logic was skipping totalScore add.
-                // runScores.push(0); // Optional: decide how to handle errors. 
-                // Ensuring consistent count might be better, but for now sticking to original "ignore".
+                // Ignore errors
             }
         }
 

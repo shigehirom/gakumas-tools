@@ -48,6 +48,7 @@ for (const loadout of loadouts) {
             stageName: stageName,
             params: loadout.params || [0, 0, 0, 0],
             pItems: pItems,
+            deck: (loadout.deck || []).map(c => c.name || SkillCards.getById(c.id)?.name || `Unknown(${c.id})`),
             memory1: getCardGroup(0),
             memory2: getCardGroup(1)
         });

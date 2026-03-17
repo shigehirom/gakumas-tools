@@ -1,16 +1,17 @@
-# リハーサル結果: シーズン {{season}} ステージ {{stage}} : 平均合計スコア - {{totalScore}}
+# リハーサル結果: シーズン {{season}} ステージ {{stage}} : 平均合計スコア - {{comma totalScore}}
 
 | アイドル | 最小 | 平均 | 最大 |
 | :-- | ---: | ---: | ---: |
 {{#each idols}}
-| {{idolName}} | {{min}} | {{score}} | {{max}} |
+| {{idolName}} | `{{comma min}}` | `{{comma score}}` | `{{comma max}}` |
 {{/each}}
-| 合計 | {{totalMin}} | {{totalScore}} | {{totalMax}} |
+| 合計 | `{{comma totalMin}}` | `{{comma totalScore}}` | `{{comma totalMax}}` |
 
 # シーズン {{season}} ステージ{{stage}} ({{plan}})
 {{#each idols}}
 ## {{{idolName}}}【{{{deckDetails.mainTitle}}}】【{{{deckDetails.subTitle}}}】
-### (Vo, Da, Vi, HP) = ({{deckDetails.params.[0]}}, {{deckDetails.params.[1]}}, {{deckDetails.params.[2]}}, {{deckDetails.params.[3]}})
+### (Vo, Da, Vi, HP) = ({{deckDetails.params.[0]}}, {{deckDetails.params.[1]}}, {{deckDetails.params.[2]}},
+{{deckDetails.params.[3]}})
 ### Pアイテム
 {{#each deckDetails.pItems}}
 - {{{this}}}

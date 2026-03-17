@@ -2,7 +2,7 @@ import { G, S } from "../constants.js";
 import { deepCopy } from "../utils.js";
 import BaseStrategy from "./BaseStrategy.js";
 
-const MAX_DEPTH = 3;
+const MAX_DEPTH = 2;
 
 export default class HeuristicStrategy extends BaseStrategy {
   constructor(engine) {
@@ -36,15 +36,17 @@ export default class HeuristicStrategy extends BaseStrategy {
       maxScore = this.getStateScore(nextState);
     }
 
-    this.engine.logger.logs[logIndex].data = {
-      handCards: state[S.handCards].map((card) => ({
-        id: state[S.cardMap][card].id,
-        c: state[S.cardMap][card].c11n,
-      })),
-      scores,
-      selectedIndex,
-      state: this.engine.logger.getHandStateForLogging(state),
-    };
+    if (!this.engine.logger.disabled) {
+      this.engine.logger.logs[logIndex].data = {
+        handCards: state[S.handCards].map((card) => ({
+          id: state[S.cardMap][card].id,
+          c: state[S.cardMap][card].c11n,
+        })),
+        scores,
+        selectedIndex,
+        state: this.engine.logger.getHandStateForLogging(state),
+      };
+    }
 
     return { score: maxScore, state: nextState };
   }
@@ -334,28 +336,22 @@ export default class HeuristicStrategy extends BaseStrategy {
 
   getGrowthScore(state) {
     let growthScore = 0;
-    const multipliers = {
-      [G["g.score"]]: 2,
-      [G["g.scoreTimes"]]: 20,
-      [G["g.cost"]]: 1,
-      [G["g.typedCost"]]: 1,
-      [G["g.genki"]]: 1,
-      [G["g.goodConditionTurns"]]: 1,
-      [G["g.perfectConditionTurns"]]: 1,
-      [G["g.concentration"]]: 2,
-      [G["g.goodImpressionTurns"]]: 1,
-      [G["g.motivation"]]: 1,
-      [G["g.fullPowerCharge"]]: 1,
-      [G["g.halfCostTurns"]]: 1,
-      [G["g.scoreByGoodImpressionTurns"]]: 20,
-      [G["g.scoreByMotivation"]]: 20,
-      [G["g.scoreByGenki"]]: 20,
-      [G["g.stanceLevel"]]: 2,
-    };
-    for (let { growth } of state[S.cardMap]) {
+    const cardMap = state[S.cardMap];
+    const len = cardMap.length;
+    for (let i = 0; i < len; i++) {
+      const { growth } = cardMap[i];
       if (!growth) continue;
-      for (let key in growth) {
-        growthScore += growth[key] * (multipliers[key] || 1);
+      for (const key in growth) {
+        switch (key) {
+          case "g.score": growthScore += growth[key] * 2; break;
+          case "g.scoreTimes": growthScore += growth[key] * 20; break;
+          case "g.concentration": growthScore += growth[key] * 2; break;
+          case "g.scoreByGoodImpressionTurns":
+          case "g.scoreByMotivation":
+          case "g.scoreByGenki": growthScore += growth[key] * 20; break;
+          case "g.stanceLevel": growthScore += growth[key] * 2; break;
+          default: growthScore += growth[key]; break;
+        }
       }
     }
     return growthScore;
