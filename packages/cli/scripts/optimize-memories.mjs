@@ -69,7 +69,7 @@ async function run() {
 
             const loadout = {
                 stageId: contestStage.id,
-                supportBonus: 0.04,
+                supportBonus: process.env.SUPPORT_BONUS ? parseFloat(process.env.SUPPORT_BONUS) : 0.04,
                 params: [0, 0, 0, 0],
                 pItemIds: [0, 0, 0, 0],
                 skillCardIdGroups: [[0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0]],

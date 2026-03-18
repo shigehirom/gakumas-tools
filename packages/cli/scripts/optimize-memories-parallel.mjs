@@ -137,7 +137,7 @@ async function run() {
         }
     }
 
-    let supportBonusRaw = parseFloat(options.supportBonus || "0.04");
+    let supportBonusRaw = parseFloat(options.supportBonus || process.env.SUPPORT_BONUS || "0.04");
     let supportBonus = supportBonusRaw >= 1.0 ? supportBonusRaw / 100 : supportBonusRaw;
 
     for (const currentIdolName of idolNames) {

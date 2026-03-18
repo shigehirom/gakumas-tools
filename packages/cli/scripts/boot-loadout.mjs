@@ -22,7 +22,7 @@ for (const loadout of loadouts) {
     if (verbose) {
         const pItems = (loadout.pItemIds || []).filter(id => id > 0).map(id => {
             const item = PItems.getById(id);
-            return item ? item.name : `Unknown(${id})`;
+            return item ? `[${item.rarity}] ${item.name}` : `Unknown(${id})`;
         });
 
         const getCardGroup = (index) => {
@@ -30,6 +30,7 @@ for (const loadout of loadouts) {
             const custs = loadout.customizationGroups?.[index] || [];
             return cardIds.filter(id => id > 0).map((id, i) => {
                 const card = SkillCards.getById(id);
+                const prefix = card ? `[${card.rarity}] ` : "";
                 const name = card ? card.name : `Unknown(${id})`;
                 const customObj = custs[i];
                 if (customObj && Object.keys(customObj).length > 0) {
@@ -37,9 +38,9 @@ for (const loadout of loadouts) {
                         const custom = Customizations.getById(cId);
                         return custom ? custom.name : `C(${cId})`;
                     }).join(", ");
-                    return `${name} (${customNames})`;
+                    return `${prefix}${name} (${customNames})`;
                 }
-                return name;
+                return `${prefix}${name}`;
             });
         };
 
@@ -48,7 +49,11 @@ for (const loadout of loadouts) {
             stageName: stageName,
             params: loadout.params || [0, 0, 0, 0],
             pItems: pItems,
-            deck: (loadout.deck || []).map(c => c.name || SkillCards.getById(c.id)?.name || `Unknown(${c.id})`),
+            deck: (loadout.deck || []).map(c => {
+                const card = SkillCards.getById(c.id);
+                const prefix = card ? `[${card.rarity}] ` : "";
+                return c.name || `${prefix}${card?.name}` || `Unknown(${c.id})`;
+            }),
             memory1: getCardGroup(0),
             memory2: getCardGroup(1)
         });

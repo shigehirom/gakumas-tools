@@ -306,7 +306,9 @@ async function run() {
 
                     // Format Memory 1 items
                     const memory1CardsArr = bestMem1.matchedItems.map(item => {
-                        let name = item.name;
+                        const card = SkillCards.getById(item.id);
+                        const rarity = card ? `[${card.rarity}] ` : "";
+                        let name = `${rarity}${item.name}`;
                         if (item.customizations && item.customizations.length > 0) {
                             const cnames = item.customizations.map(cid => Customizations.getById(cid)?.name).filter(x => x).join(", ");
                             if(cnames) name += ` (${cnames})`;
@@ -317,7 +319,10 @@ async function run() {
                     // Add signature card to Memory 1
                     let sigName1 = "[固有札]";
                     const sig1 = bestMem1.dbDoc.skillCardIds.find(cId => SkillCards.getById(cId)?.sourceType === "pIdol");
-                    if (sig1) sigName1 = SkillCards.getById(sig1).name;
+                    if (sig1) {
+                        const card = SkillCards.getById(sig1);
+                        sigName1 = `[${card.rarity}] ${card.name}`;
+                    }
 
                     const titleData = PIdols.getById(bestMem1.dbDoc.pIdolId);
                     const mainTitle = titleData ? titleData.title : "Unknown";
@@ -327,11 +332,25 @@ async function run() {
                         idolNameBase: dbIdolNameMatch.name,
                         targetMem1Title: mainTitle,
                         mem1Name: bestMem1.dbDoc.name || `Memory(${bestMem1.dbDoc._id.toString().substring(0,8)})`,
-                        pItemsMatched: bestMem1.pItemsMatched.map(id => PItems.getById(id)?.name || ""),
-                        pItemsTarget: unmatchedPItems,
+                        pItemsMatched: bestMem1.pItemsMatched.map(id => {
+                            const item = PItems.getById(id);
+                            return item ? `[${item.rarity}] ${item.name}` : "";
+                        }),
+                        pItemsTarget: unmatchedPItems.map(name => {
+                            const items = getPItemIdsByName(name);
+                            if (items.length > 0) {
+                                const item = PItems.getById(items[0]);
+                                return `[${item.rarity}] ${name}`;
+                            }
+                            return name;
+                        }),
                         mem1Sig: sigName1,
                         mem1Cards: memory1CardsArr,
-                        mem2Cards: unmatchedCards.slice(0, 5).map(c => c.original)
+                        mem2Cards: unmatchedCards.slice(0, 5).map(c => {
+                            const card = getCardInfoByName(c.name);
+                            const rarity = card ? `[${card.rarity}] ` : "";
+                            return `${rarity}${c.original}`;
+                        })
                     });
                 } else {
                     // No memory found
@@ -341,8 +360,21 @@ async function run() {
                         targetMem1Title: "不明",
                         mem1Name: "条件に合うメモリーなし",
                         pItemsMatched: [],
-                        pItemsTarget: idealPItems,
-                        mem1Sig: "[固有札]", mem1Cards: [], mem2Cards: idealCards.slice(0, 5).map(c => c.original)
+                        pItemsTarget: idealPItems.map(name => {
+                            const items = getPItemIdsByName(name);
+                            if (items.length > 0) {
+                                const item = PItems.getById(items[0]);
+                                return `[${item.rarity}] ${name}`;
+                            }
+                            return name;
+                        }),
+                        mem1Sig: "[固有札]", 
+                        mem1Cards: [], 
+                        mem2Cards: idealCards.slice(0, 5).map(c => {
+                            const card = getCardInfoByName(c.name);
+                            const rarity = card ? `[${card.rarity}] ` : "";
+                            return `${rarity}${c.original}`;
+                        })
                     });
                 }
             }

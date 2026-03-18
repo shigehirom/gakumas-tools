@@ -103,13 +103,15 @@ async function run() {
         console.log(`### Pアイテム (${goalPItems.length})`);
         goalPItems.forEach(id => {
             const item = PItems.getById(id);
-            console.log(`- ${item ? item.name : `Unknown (${id})`}`);
+            const rarity = item ? `[${item.rarity}] ` : "";
+            console.log(`- ${rarity}${item ? item.name : `Unknown (${id})`}`);
         });
 
         console.log(`\n### メモリー共通スキル (${goalCommonSkillIds.length})`);
         goalCommonSkillIds.forEach(id => {
             const card = SkillCards.getById(id);
-            console.log(`- ${card ? card.name : `Unknown (${id})`}`);
+            const rarity = card ? `[${card.rarity}] ` : "";
+            console.log(`- ${rarity}${card ? card.name : `Unknown (${id})`}`);
         });
 
         // 3. Find Candidates (Total Search Pairs)
@@ -188,9 +190,18 @@ async function run() {
             const missingPIds = goalPItems.filter(id => !cand.combinedPItems.includes(id));
             const extraPIds = cand.combinedPItems.filter(id => !goalPItems.includes(id));
 
-            matchedPIds.forEach(id => console.log(`- [一致] ${PItems.getById(id)?.name || id}`));
-            missingPIds.forEach(id => console.log(`- [不足] ${PItems.getById(id)?.name || id}`));
-            extraPIds.forEach(id => console.log(`- [余剰] ${PItems.getById(id)?.name || id}`));
+            matchedPIds.forEach(id => {
+                const item = PItems.getById(id);
+                console.log(`- [一致] [${item?.rarity}] ${item?.name || id}`);
+            });
+            missingPIds.forEach(id => {
+                const item = PItems.getById(id);
+                console.log(`- [不足] [${item?.rarity}] ${item?.name || id}`);
+            });
+            extraPIds.forEach(id => {
+                const item = PItems.getById(id);
+                console.log(`- [余剰] [${item?.rarity}] ${item?.name || id}`);
+            });
 
             console.log(`\n#### 共通スキル (${cand.matchedSkillCount}/10)`);
             // 一致スキルの詳細表示（重複対応）
@@ -206,8 +217,14 @@ async function run() {
                 }
             });
 
-            matchedSkillDetails.forEach(s => console.log(`- ${s.status} ${SkillCards.getById(s.id)?.name || s.id}`));
-            tempCombinedSkills.forEach(id => console.log(`- [余剰] ${SkillCards.getById(id)?.name || id}`));
+            matchedSkillDetails.forEach(s => {
+                const card = SkillCards.getById(s.id);
+                console.log(`- ${s.status} [${card?.rarity}] ${card?.name || s.id}`);
+            });
+            tempCombinedSkills.forEach(id => {
+                const card = SkillCards.getById(id);
+                console.log(`- [余剰] [${card?.rarity}] ${card?.name || id}`);
+            });
         });
 
     } catch (e) {

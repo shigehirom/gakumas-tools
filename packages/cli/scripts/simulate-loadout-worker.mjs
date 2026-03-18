@@ -15,9 +15,10 @@ parentPort.on('message', async (task) => {
     // Process chunk
     for (const loadoutData of loadouts) {
         // Construct full loadout object
+        const envBonus = process.env.SUPPORT_BONUS ? parseFloat(process.env.SUPPORT_BONUS) : 0.04;
         const loadout = {
             stageId: contestStage.id,
-            supportBonus: 0.04, // Default assumption
+            supportBonus: envBonus, // Default assumption
             params: [0, 0, 0, 0],
             pItemIds: [0, 0, 0, 0],
             skillCardIdGroups: [[0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0]],
