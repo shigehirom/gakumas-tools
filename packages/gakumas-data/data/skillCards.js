@@ -1,4 +1,4 @@
-import SKILL_CARDS from "../json/skill_cards.json";
+import SKILL_CARDS from "../json/skill_cards.json" with { type: "json" };
 import { getSkillCardContestPower } from "../utils/contestPower.js";
 import { deserializeEffectSequence } from "../utils/effects.js";
 

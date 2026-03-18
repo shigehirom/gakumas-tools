@@ -1,4 +1,4 @@
-import CUSTOMIZATIONS from "../json/customizations.json";
+import CUSTOMIZATIONS from "../json/customizations.json" with { type: "json" };
 import { deserializeEffectSequence } from "../utils/effects.js";
 
 CUSTOMIZATIONS.forEach((customization) => {

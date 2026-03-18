@@ -1,4 +1,4 @@
-import P_ITEMS from "../json/p_items.json";
+import P_ITEMS from "../json/p_items.json" with { type: "json" };
 import { getPItemContestPower } from "../utils/contestPower.js";
 import { deserializeEffectSequence } from "../utils/effects.js";
 
