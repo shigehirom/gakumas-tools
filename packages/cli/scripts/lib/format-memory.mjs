@@ -23,8 +23,7 @@ export function formatMemory(memory) {
         const validItems = memory.pItemIds.filter(id => id !== 0 && id != null);
         if (validItems.length > 0) {
             validItems.forEach(id => {
-                const item = PItems.getById(id);
-                const itemName = item ? `[${item.rarity}] ${item.name}` : `Unknown Item (${id})`;
+                const itemName = item ? `【${item.rarity}】 ${item.name}` : `Unknown Item (${id})`;
                 output += `- ${itemName}\n`;
             });
         } else {
@@ -60,7 +59,7 @@ export function formatMemory(memory) {
             return a - b; // fallback to ID
         }).forEach(id => {
             const card = SkillCards.getById(id);
-            const prefix = card ? `[${card.rarity}] ` : "";
+            const prefix = card ? `【${card.rarity}】 ` : "";
             const cardName = card ? card.name : `Unknown Card (${id})`;
             output += `- ${prefix}${cardName}\n`;
         });

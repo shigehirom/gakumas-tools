@@ -22,7 +22,7 @@ for (const loadout of loadouts) {
     if (verbose) {
         const pItems = (loadout.pItemIds || []).filter(id => id > 0).map(id => {
             const item = PItems.getById(id);
-            return item ? `[${item.rarity}] ${item.name}` : `Unknown(${id})`;
+            return item ? `【${item.rarity}】 ${item.name}` : `Unknown(${id})`;
         });
 
         const getCardGroup = (index) => {
@@ -30,7 +30,7 @@ for (const loadout of loadouts) {
             const custs = loadout.customizationGroups?.[index] || [];
             return cardIds.filter(id => id > 0).map((id, i) => {
                 const card = SkillCards.getById(id);
-                const prefix = card ? `[${card.rarity}] ` : "";
+                const prefix = card ? `【${card.rarity}】 ` : "";
                 const name = card ? card.name : `Unknown(${id})`;
                 const customObj = custs[i];
                 if (customObj && Object.keys(customObj).length > 0) {
@@ -51,7 +51,7 @@ for (const loadout of loadouts) {
             pItems: pItems,
             deck: (loadout.deck || []).map(c => {
                 const card = SkillCards.getById(c.id);
-                const prefix = card ? `[${card.rarity}] ` : "";
+                const prefix = card ? `【${card.rarity}】 ` : "";
                 return c.name || `${prefix}${card?.name}` || `Unknown(${c.id})`;
             }),
             memory1: getCardGroup(0),

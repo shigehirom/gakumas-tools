@@ -83,7 +83,7 @@ async function run() {
             const pItemsList = (loadout.pItemIds || []).filter(id => id > 0).map(id => {
                 const item = PItems.getById(id);
                 if (!item) return `Unknown(${id})`;
-                return `[${item.rarity}] ${item.name}`;
+                return `【${item.rarity}】 ${item.name}`;
             });
             const getCardGroup = (index) => {
                 const cardIds = loadout.skillCardIdGroups?.[index] || [];
@@ -92,7 +92,7 @@ async function run() {
                     const card = SkillCards.getById(id);
                     if (!card) return `Unknown(${id})`;
                     
-                    const prefix = `[${card.rarity}] `;
+                    const prefix = `【${card.rarity}】 `;
                     const name = card.name;
                     const customObj = custs?.[i];
                     if (customObj && Object.keys(customObj).length > 0) {

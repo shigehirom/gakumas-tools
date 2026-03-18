@@ -77,7 +77,7 @@ async function run() {
                 console.log(`スキルカード:`);
                 mem.skillCardIds.filter(id => !!id).forEach(id => {
                     const card = SkillCards.getById(id);
-                    const rarity = card ? `[${card.rarity}] ` : "";
+                    const rarity = card ? `【${card.rarity}】 ` : "";
                     console.log(`  - ${rarity}${card ? card.name : `Unknown (${id})`}`);
                 });
             }

@@ -103,14 +103,14 @@ async function run() {
         console.log(`### Pアイテム (${goalPItems.length})`);
         goalPItems.forEach(id => {
             const item = PItems.getById(id);
-            const rarity = item ? `[${item.rarity}] ` : "";
+            const rarity = item ? `【${item.rarity}】 ` : "";
             console.log(`- ${rarity}${item ? item.name : `Unknown (${id})`}`);
         });
 
         console.log(`\n### メモリー共通スキル (${goalCommonSkillIds.length})`);
         goalCommonSkillIds.forEach(id => {
             const card = SkillCards.getById(id);
-            const rarity = card ? `[${card.rarity}] ` : "";
+            const rarity = card ? `【${card.rarity}】 ` : "";
             console.log(`- ${rarity}${card ? card.name : `Unknown (${id})`}`);
         });
 
@@ -192,15 +192,15 @@ async function run() {
 
             matchedPIds.forEach(id => {
                 const item = PItems.getById(id);
-                console.log(`- [一致] [${item?.rarity}] ${item?.name || id}`);
+                console.log(`- [一致] 【${item?.rarity}】 ${item?.name || id}`);
             });
             missingPIds.forEach(id => {
                 const item = PItems.getById(id);
-                console.log(`- [不足] [${item?.rarity}] ${item?.name || id}`);
+                console.log(`- [不足] 【${item?.rarity}】 ${item?.name || id}`);
             });
             extraPIds.forEach(id => {
                 const item = PItems.getById(id);
-                console.log(`- [余剰] [${item?.rarity}] ${item?.name || id}`);
+                console.log(`- [余剰] 【${item?.rarity}】 ${item?.name || id}`);
             });
 
             console.log(`\n#### 共通スキル (${cand.matchedSkillCount}/10)`);
@@ -219,11 +219,11 @@ async function run() {
 
             matchedSkillDetails.forEach(s => {
                 const card = SkillCards.getById(s.id);
-                console.log(`- ${s.status} [${card?.rarity}] ${card?.name || s.id}`);
+                console.log(`- ${s.status} 【${card?.rarity}】 ${card?.name || s.id}`);
             });
             tempCombinedSkills.forEach(id => {
                 const card = SkillCards.getById(id);
-                console.log(`- [余剰] [${card?.rarity}] ${card?.name || id}`);
+                console.log(`- [余剰] 【${card?.rarity}】 ${card?.name || id}`);
             });
         });
 
