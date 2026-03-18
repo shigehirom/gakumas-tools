@@ -1,9 +1,9 @@
 import { memo } from "react";
 import { useTranslations } from "next-intl";
 import SimulatorLogs from "@/components/SimulatorLogs";
-import SimulatorResultGraphs from "./SimulatorResultGraphs";
+import SimulatorResultGraphs from "./SimulatorResultGraphs.js";
 import styles from "./SimulatorResult.module.scss";
-import KofiAd from "../KofiAd";
+import KofiAd from "../KofiAd.js";
 
 function SimulatorResult({ data, idolId, plan }) {
   const t = useTranslations("SimulatorResult");

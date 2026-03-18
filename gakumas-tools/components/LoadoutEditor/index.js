@@ -1,1 +1,1 @@
-export { default } from "./LoadoutEditor";
+export { default } from "./LoadoutEditor.js";

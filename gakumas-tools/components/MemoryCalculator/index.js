@@ -1,1 +1,1 @@
-export { default } from "./MemoryCalculator";
+export { default } from "./MemoryCalculator.js";

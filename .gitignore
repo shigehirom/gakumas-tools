@@ -14,14 +14,15 @@
 .pnp.*
 
 # yarn berry cache (always ignore to prevent large commits)
-.yarn/cache
-.yarn/unplugged
-.yarn/build-state.yml
-.yarn/install-state.gz
+# documentation here: https://yarnpkg.com/features/zero-installs
+!.yarn/cache
+#.pnp.*
 
-# next.js
-/.next/
-/out/
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
 
 # production
 /build
@@ -45,12 +46,6 @@ yarn-error.log*
 
 # db dumps
 /dump
-
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-.venv/
 
 # Custom
 .env

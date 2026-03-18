@@ -28,8 +28,8 @@ import {
   PARAM_REGIMES_BY_DIFF_STAGE_BALANCE_ORDER,
   VOTE_REGIMES_BY_DIFF_STAGE,
 } from "@/utils/nia";
-import ParamBadges from "./ParamBadges";
-import Params from "./Params";
+import ParamBadges from "./ParamBadges.js";
+import Params from "./Params.js";
 import styles from "./NiaCalculator.module.scss";
 
 const AFFECTION_OPTIONS = [...new Array(11)].map((x, i) => ({

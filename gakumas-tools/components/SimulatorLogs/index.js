@@ -1,1 +1,1 @@
-export { default } from "./SimulatorLogs";
+export { default } from "./SimulatorLogs.js";

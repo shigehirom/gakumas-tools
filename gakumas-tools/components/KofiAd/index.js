@@ -1,1 +1,1 @@
-export { default } from "./KofiAd";
+export { default } from "./KofiAd.js";

@@ -1,1 +1,1 @@
-export { default } from "./LessonCalculator";
+export { default } from "./LessonCalculator.js";

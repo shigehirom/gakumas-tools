@@ -1,4 +1,4 @@
-import IDOLS from "../json/idols.json" with { type: "json" };
+import IDOLS from "../json/idols.json";
 
 IDOLS.forEach((idol) => {
   idol._type = "idol";

@@ -1,1 +1,1 @@
-export { default } from "./MemorySummary";
+export { default } from "./MemorySummary.js";

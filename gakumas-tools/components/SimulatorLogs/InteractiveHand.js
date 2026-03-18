@@ -6,7 +6,7 @@ import Button from "@/components/Button";
 import EntityIcon from "@/components/EntityIcon";
 import c from "@/utils/classNames";
 import { EntityTypes } from "@/utils/entities";
-import HandState from "./HandState";
+import HandState from "./HandState.js";
 import styles from "./SimulatorLogs.module.scss";
 
 function InteractiveHand({

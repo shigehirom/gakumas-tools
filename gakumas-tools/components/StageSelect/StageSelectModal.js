@@ -7,7 +7,7 @@ import StageCustomizer from "@/components/StageCustomizer";
 import LoadoutContext from "@/contexts/LoadoutContext";
 import ModalContext from "@/contexts/ModalContext";
 import { compareStages } from "@/utils/sort";
-import StageSummary from "./StageSummary";
+import StageSummary from "./StageSummary.js";
 import styles from "./StageSelect.module.scss";
 
 const allStages = Stages.getAll().sort(compareStages);

@@ -1,1 +1,1 @@
-export { default } from "./TargetSkillCards";
+export { default } from "./TargetSkillCards.js";

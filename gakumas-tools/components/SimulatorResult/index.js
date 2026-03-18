@@ -1,1 +1,1 @@
-export { default } from "./SimulatorResult";
+export { default } from "./SimulatorResult.js";

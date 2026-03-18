@@ -1,6 +1,6 @@
 import { useTranslations } from "next-intl";
 import { ALL_FIELDS, S } from "gakumas-engine";
-import TurnIndicator from "./TurnIndicator";
+import TurnIndicator from "./TurnIndicator.js";
 import styles from "./SimulatorLogs.module.scss";
 
 const BUFFS_MAP = {

@@ -240,8 +240,8 @@ id,name,rarity,upgraded,plan,mode,sourceType,pIdolId,welfare,effects
 239,ひとりだちシューズ,SSR,FALSE,free,stage,support,,FALSE,"at:startOfTurn,if:isDanceTurn,if:stamina<=maxStamina*0.5,do:fixedStamina+=maxStamina*0.15,limit:2"
 240,積み重ねた努力,SSR,FALSE,anomaly,stage,pIdol,84,FALSE,"at:startOfTurn,if:cumulativeFullPowerCharge>=5,do:genki+=6,limit:2"
 241,積み重ねた努力+,SSR,TRUE,anomaly,stage,pIdol,84,FALSE,"at:startOfTurn,if:cumulativeFullPowerCharge>=5,do:genki+=8,limit:2"
-242,Pっち,SSR,FALSE,sense,stage,pIdol,85,FALSE,"at:cardUsed,if:concentration>=8,do:pcchiCardsUsed+=1;at:cardUsed,if:concentration>=8,if:pcchiCardsUsed%2==1,do:goodConditionTurns+=3,do:concentration-=1"
-243,Pっち+,SSR,TRUE,sense,stage,pIdol,85,FALSE,"at:cardUsed,if:concentration>=3,do:pcchiCardsUsed+=1;at:cardUsed,if:concentration>=3,if:pcchiCardsUsed%2==1,do:goodConditionTurns+=3,do:concentration-=1"
+242,Pっち,SSR,FALSE,sense,stage,pIdol,85,FALSE,"at:cardUsed,if:concentration>=8,do:effectCounter+=1;at:cardUsed,if:concentration>=8,if:effectCounter%2==1,do:goodConditionTurns+=3,do:concentration-=1"
+243,Pっち+,SSR,TRUE,sense,stage,pIdol,85,FALSE,"at:cardUsed,if:concentration>=3,do:effectCounter+=1;at:cardUsed,if:concentration>=3,if:effectCounter%2==1,do:goodConditionTurns+=3,do:concentration-=1"
 244,夢へのスタートライン,SSR,FALSE,sense,stage,support,,FALSE,"at:startOfTurn,if:isDanceTurn,if:goodConditionTurns>=3,do:goodConditionTurns+=3,do:fixedStamina-=1,limit:2"
 245,ギャルめいきんぐ！,SR,FALSE,sense,produce,support,,FALSE,
 246,運命の出逢い,SSR,FALSE,anomaly,stage,pIdol,86,FALSE,"at:afterStartOfTurn,if:isFullPower,do:genki+=10,do:fullPowerCharge+=3,do:fixedStamina-=3,limit:1;at:afterStartOfTurn,if:isFullPower,target:hand,do:g.score+=10,limit:1;at:afterStartOfTurn,if:isFullPower,limit:1;at:turn,do:setStance(preservation),limit:1"
@@ -391,3 +391,12 @@ id,name,rarity,upgraded,plan,mode,sourceType,pIdolId,welfare,effects
 390,最初の鳥,SSR,FALSE,logic,stage,pIdol,126,FALSE,"at:turn,if:turnsElapsed%2==1,if:genki>=30,do:fixedStamina+=1,do:score+=genki*0.2*countCards(removed\757)"
 391,最初の鳥+,SSR,TRUE,logic,stage,pIdol,126,FALSE,"at:turn,if:turnsElapsed%2==1,if:genki>=30,do:fixedStamina+=2,do:score+=genki*0.25*countCards(removed\757)"
 392,幸せの詰め合わせ,SR,FALSE,logic,produce,support,,FALSE,
+393,知らない世界へ,SSR,FALSE,sense,stage,pIdol,127,FALSE,"at:cardUsed,if:cardEffects&concentration,do:effectCounter+=1;at:cardUsed,if:cardEffects&concentration,if:effectCounter%3==2,do:concentration+=countCards(removed)*0.5"
+394,知らない世界へ+,SSR,TRUE,sense,stage,pIdol,127,FALSE,"at:cardUsed,if:cardEffects&concentration,do:effectCounter+=1;at:cardUsed,if:cardEffects&concentration,if:effectCounter%3==2,do:concentration+=countCards(removed)*0.5,do:genki+=2"
+395,箱庭のバラ,SSR,FALSE,logic,stage,pIdol,128,FALSE,"at:afterMentalCardUsed,if:goodImpressionTurns>=6,do:genki+=4,do:goodImpressionTurns+=1,limit:2"
+396,箱庭のバラ+,SSR,TRUE,logic,stage,pIdol,128,FALSE,"at:afterMentalCardUsed,if:goodImpressionTurns>=6,do:genki+=4,do:goodImpressionTurns+=2,limit:2"
+397,花海メモリアル,SSR,FALSE,sense,produce,support,,FALSE,
+398,お洗濯の必需品,SR,FALSE,sense,produce,support,,FALSE,
+399,ユートピアへの誘い,SSR,FALSE,anomaly,stage,pIdol,129,FALSE,"at:stanceChanged,if:parentPhase==processCard,if:isStrength,if:fullPowerCharge>=5,do:genki+=4,do:fullPowerCharge-=2;at:stanceChanged,if:parentPhase==processCard,if:isStrength,if:fullPowerCharge>=5,target:active,do:g.score+=3;at:stanceChanged,if:parentPhase==processCard,if:isStrength,if:fullPowerCharge>=5;at:turn,do:drawCard,limit:1"
+400,ユートピアへの誘い+,SSR,TRUE,anomaly,stage,pIdol,129,FALSE,"at:stanceChanged,if:parentPhase==processCard,if:isStrength,if:fullPowerCharge>=5,do:genki+=6,do:fullPowerCharge-=2;at:stanceChanged,if:parentPhase==processCard,if:isStrength,if:fullPowerCharge>=5,target:active,do:g.score+=3;at:stanceChanged,if:parentPhase==processCard,if:isStrength,if:fullPowerCharge>=5;at:turn,do:drawCard,limit:1"
+401,ほくほくハンバーガー,SR,FALSE,anomaly,produce,support,,FALSE,

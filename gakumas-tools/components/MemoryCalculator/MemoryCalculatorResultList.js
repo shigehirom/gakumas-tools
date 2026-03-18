@@ -1,6 +1,6 @@
 import { memo } from "react";
 import { List } from "react-window";
-import MemoryCalculatorResult from "./MemoryCalculatorResult";
+import MemoryCalculatorResult from "./MemoryCalculatorResult.js";
 
 const ROW_HEIGHT = 72;
 const WINDOW_SIZE = 8;

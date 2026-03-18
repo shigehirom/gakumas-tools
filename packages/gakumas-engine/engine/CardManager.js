@@ -111,18 +111,10 @@ export default class CardManager extends EngineComponent {
 
     state[S.heldCards] = [];
     state[S.cardsUsed] = 0;
-    state[S.goodImpressionCardsUsed] = 0;
     state[S.activeCardsUsed] = 0;
     state[S.usedCard] = null;
     state[S.lastUsedCard] = null;
     state[S.movedCard] = null;
-
-    state[S.pcchiCardsUsed] = 0;
-    state[S.natsuyaCardsUsed] = 0;
-    state[S.holidayCardsUsed] = 0;
-    state[S.onigiriCardsUsed] = 0;
-    state[S.koeteCardsUsed] = 0;
-    state[S.kyakkouCardsUsed] = -1;
   }
 
   changeIdol(state) {
@@ -369,16 +361,15 @@ export default class CardManager extends EngineComponent {
     state[S.phase] = "processCard";
     if (state[S.doubleCardEffectCards]) {
       state[S.doubleCardEffectCards]--;
+      state[S.effectInstanceId]++;
       this.engine.effectManager.triggerEffects(state, effects, null, card);
     }
+    state[S.effectInstanceId]++;
     this.engine.effectManager.triggerEffects(state, effects, null, card);
     delete state[S.phase];
 
     // Increment counters
     state[S.cardsUsed]++;
-    if (this.getCardEffects(state, card).has("goodImpressionTurns")) {
-      state[S.goodImpressionCardsUsed]++;
-    }
     state[S.turnCardsUsed]++;
     if (skillCard.type == "active") {
       state[S.activeCardsUsed]++;
@@ -759,7 +750,7 @@ export default class CardManager extends EngineComponent {
     let cards = state[S.cardMap]
       .map((c, i) =>
         state[S.removedCards].includes(i) &&
-          SkillCards.getById(c.id).type == "active"
+        SkillCards.getById(c.id).type == "active"
           ? i
           : -1
       )

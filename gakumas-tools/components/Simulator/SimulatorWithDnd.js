@@ -1,7 +1,7 @@
 "use client";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
-import Simulator from "./Simulator";
+import Simulator from "./Simulator.js";
 
 export default function SimulatorWithDnd() {
   return (

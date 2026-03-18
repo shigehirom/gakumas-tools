@@ -1,6 +1,6 @@
 import { PItems } from "gakumas-data";
 import gkImg from "gakumas-images";
-import styles from "./Preview.styles";
+import styles from "./Preview.styles.js";
 
 export default function PreviewPItems({ itemIds, baseUrl }) {
   return (

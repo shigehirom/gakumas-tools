@@ -1,1 +1,1 @@
-export { default } from "./ProduceRankCalculator";
+export { default } from "./ProduceRankCalculator.js";

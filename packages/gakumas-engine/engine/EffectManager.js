@@ -8,6 +8,9 @@ export default class EffectManager extends EngineComponent {
     const config = this.getConfig(state);
 
     state[S.effects] = [];
+    state[S.effectInstanceId] = 0;
+    state[S.effectCounters] = {};
+    state[S.currentEffectInstanceId] = null;
 
     // Set default effects
     this.logger.debug("Setting default effects", DEFAULT_EFFECTS);
@@ -59,6 +62,7 @@ export default class EffectManager extends EngineComponent {
   setEffects(state, effects, source) {
     for (let i = 0; i < effects.length; i++) {
       const effect = { ...effects[i] };
+      effect.effectInstanceId = state[S.effectInstanceId];
       if (source) {
         effect.source = source;
       }
@@ -120,6 +124,14 @@ export default class EffectManager extends EngineComponent {
   triggerEffects(state, effects, cndState, card, skipConditions) {
     const conditionState = cndState || shallowCopy(state);
 
+    // Deep copy effectCounters so condition checks see pre-modification values
+    if (state[S.effectCounters]) {
+      conditionState[S.effectCounters] = {};
+      for (let id in state[S.effectCounters]) {
+        conditionState[S.effectCounters][id] = { ...state[S.effectCounters][id] };
+      }
+    }
+
     let triggeredEffects = [];
     let skipNextEffect = false;
 
@@ -143,10 +155,10 @@ export default class EffectManager extends EngineComponent {
           [effect],
           card != null
             ? {
-              type: "skillCardEffect",
-              id: state[S.cardMap][card].id,
-              idx: card,
-            }
+                type: "skillCardEffect",
+                id: state[S.cardMap][card].id,
+                idx: card,
+              }
             : null
         );
         this.logger.log(state, "setEffect");
@@ -171,6 +183,11 @@ export default class EffectManager extends EngineComponent {
         continue;
       }
 
+      // Set current effect instance ID for counter resolution
+      const prevInstanceId = state[S.currentEffectInstanceId];
+      state[S.currentEffectInstanceId] = effect.effectInstanceId;
+      conditionState[S.currentEffectInstanceId] = effect.effectInstanceId;
+
       // Check conditions
       if (!skipConditions && effect.conditions) {
         let satisfied = true;
@@ -184,6 +201,7 @@ export default class EffectManager extends EngineComponent {
           }
         }
         if (!satisfied) {
+          state[S.currentEffectInstanceId] = prevInstanceId;
           if (!effect.actions && !effect.effects) {
             skipNextEffect = true;
           }
@@ -233,6 +251,9 @@ export default class EffectManager extends EngineComponent {
       if (effect.source) {
         this.logger.log(state, "entityEnd", effect.source);
       }
+
+      // Restore previous effect instance ID
+      state[S.currentEffectInstanceId] = prevInstanceId;
 
       // Track triggered effects
       triggeredEffects.push(effect.index);

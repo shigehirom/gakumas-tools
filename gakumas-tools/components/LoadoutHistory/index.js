@@ -1,1 +1,1 @@
-export { default } from "./LoadoutHistory";
+export { default } from "./LoadoutHistory.js";

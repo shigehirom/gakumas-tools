@@ -3,7 +3,7 @@ import { FaRegRectangleList } from "react-icons/fa6";
 import gkImg from "gakumas-images";
 import Image from "@/components/Image";
 import { ENTITY_DATA_BY_TYPE } from "@/utils/entities";
-import AvailableCustomizations from "./AvailableCustomizations";
+import AvailableCustomizations from "./AvailableCustomizations.js";
 import styles from "./EntityDetails.module.scss";
 
 function EntityDetails({ type, id }) {

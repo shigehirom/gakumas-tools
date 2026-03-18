@@ -1,4 +1,4 @@
-import STAGES from "../json/stages.json" with { type: "json" };
+import STAGES from "../json/stages.json";
 import { deserializeEffectSequence } from "../utils/effects.js";
 
 STAGES.forEach((stage) => {

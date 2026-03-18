@@ -2,7 +2,7 @@ import { memo, useContext } from "react";
 import Button from "@/components/Button";
 import LoadoutContext from "@/contexts/LoadoutContext";
 import LoadoutHistoryContext from "@/contexts/LoadoutHistoryContext";
-import LoadoutSummary from "./LoadoutSummary";
+import LoadoutSummary from "./LoadoutSummary.js";
 import styles from "./LoadoutHistory.module.scss";
 
 function LoadoutHistory() {

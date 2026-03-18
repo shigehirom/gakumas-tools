@@ -1,13 +1,13 @@
 import React, { memo } from "react";
 import { useTranslations } from "next-intl";
-import AddCard from "./AddCard";
-import Diff from "./Diff";
-import Group from "./Group";
-import Hand from "./Hand";
-import InteractiveHand from "./InteractiveHand";
-import SetBuff from "./SetBuff";
-import Tile from "./Tile";
-import Turn from "./Turn";
+import AddCard from "./AddCard.js";
+import Diff from "./Diff.js";
+import Group from "./Group.js";
+import Hand from "./Hand.js";
+import InteractiveHand from "./InteractiveHand.js";
+import SetBuff from "./SetBuff.js";
+import Tile from "./Tile.js";
+import Turn from "./Turn.js";
 import styles from "./SimulatorLogs.module.scss";
 
 const BUFF_LOG_TYPES = {

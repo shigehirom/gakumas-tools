@@ -3,7 +3,7 @@ import { useTranslations } from "next-intl";
 import { PItems, SkillCards } from "gakumas-data";
 import gkImg from "gakumas-images";
 import Image from "@/components/Image";
-import Logs from "./Logs";
+import Logs from "./Logs.js";
 import styles from "./SimulatorLogs.module.scss";
 
 function Group({ entity, childLogs, idolId, pendingDecision, onDecision }) {
@@ -48,14 +48,16 @@ function Group({ entity, childLogs, idolId, pendingDecision, onDecision }) {
           </>
         )}
       </div>
-      <div className={styles.childLogs}>
-        <Logs
-          logs={childLogs}
-          idolId={idolId}
-          pendingDecision={pendingDecision}
-          onDecision={onDecision}
-        />
-      </div>
+      {!!childLogs.length && (
+        <div className={styles.childLogs}>
+          <Logs
+            logs={childLogs}
+            idolId={idolId}
+            pendingDecision={pendingDecision}
+            onDecision={onDecision}
+          />
+        </div>
+      )}
     </div>
   );
 }

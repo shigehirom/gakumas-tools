@@ -1,7 +1,7 @@
 import { Customizations } from "gakumas-data";
 import gkImg from "gakumas-images";
 import { countCustomizations } from "@/utils/customizations";
-import styles from "./Preview.styles";
+import styles from "./Preview.styles.js";
 
 export default function PreviewSkillCard({
   card,

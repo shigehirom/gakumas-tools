@@ -4,9 +4,9 @@ import Image from "@/components/Image";
 import c from "@/utils/classNames";
 import { ENTITY_DATA_BY_TYPE, EntityTypes } from "@/utils/entities";
 import { useDrag, useDrop } from "@/utils/safeDnd";
-import CustomizationCounts from "./CustomizationCounts";
-import Indications from "./Indications";
-import TierIndicator from "./TierIndicator";
+import CustomizationCounts from "./CustomizationCounts.js";
+import Indications from "./Indications.js";
+import TierIndicator from "./TierIndicator.js";
 import styles from "./EntityIcon.module.scss";
 
 function EntityIcon({

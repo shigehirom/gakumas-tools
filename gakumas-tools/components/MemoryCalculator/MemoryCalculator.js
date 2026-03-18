@@ -7,9 +7,9 @@ import MemoryCalculatorContext from "@/contexts/MemoryCalculatorContext";
 import WorkspaceContext from "@/contexts/WorkspaceContext";
 import { COST_RANGES, COST_RANGES_BY_RANK } from "@/utils/contestPower";
 import { generatePossibleMemories } from "@/utils/skillCardLottery";
-import AcquiredSkillCards from "./AcquiredSkillCards";
-import MemoryCalculatorResultList from "./MemoryCalculatorResultList";
-import TargetSkillCards from "./TargetSkillCards";
+import AcquiredSkillCards from "./AcquiredSkillCards.js";
+import MemoryCalculatorResultList from "./MemoryCalculatorResultList.js";
+import TargetSkillCards from "./TargetSkillCards.js";
 import styles from "./MemoryCalculator.module.scss";
 
 const RANK_OPTIONS = COST_RANGES.toReversed().map(({ rank }) => ({

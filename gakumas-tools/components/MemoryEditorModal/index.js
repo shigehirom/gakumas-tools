@@ -1,1 +1,1 @@
-export { default } from "./MemoryEditorModal";
+export { default } from "./MemoryEditorModal.js";

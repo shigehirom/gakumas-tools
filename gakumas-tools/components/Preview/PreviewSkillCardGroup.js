@@ -1,6 +1,6 @@
 import { SkillCards } from "gakumas-data";
-import PreviewSkillCard from "./PreviewSkillCard";
-import styles from "./Preview.styles";
+import PreviewSkillCard from "./PreviewSkillCard.js";
+import styles from "./Preview.styles.js";
 
 export default function PreviewSkillCardGroup({
   cards,

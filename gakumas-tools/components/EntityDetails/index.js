@@ -1,1 +1,1 @@
-export { default } from "./EntityDetails";
+export { default } from "./EntityDetails.js";

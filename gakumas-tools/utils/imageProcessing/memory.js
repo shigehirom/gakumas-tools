@@ -6,8 +6,8 @@ import {
   getWhiteCanvas,
   loadImageFromFile,
   extractLines,
-} from "./common";
-import { calculateContestPower } from "../contestPower";
+} from "./common.js";
+import { calculateContestPower } from "../contestPower.js";
 
 const PARAMS_REGEXP = new RegExp(/^\s*\d+\s+\d+\s+\d+\s+\d+\s*$/gm);
 
@@ -99,14 +99,8 @@ export async function getMemoryFromFile(
   const flag =
     !powerCandidates.includes(calculatedPower) || itemsPIdolId != cardsPIdolId;
 
-  const date = new Date(file.lastModified || Date.now());
-  const year = date.getFullYear().toString().slice(-2);
-  const month = (date.getMonth() + 1).toString().padStart(2, "0");
-  const day = date.getDate().toString().padStart(2, "0");
-  const datePrefix = `${year}/${month}/${day}＿`;
-
   return {
-    name: `${datePrefix}${Math.max(...powerCandidates, 0)}${flag ? " (FIXME)" : ""}`,
+    name: `${Math.max(...powerCandidates, 0)}${flag ? " (FIXME)" : ""}`,
     pIdolId: cardsPIdolId,
     params,
     pItemIds: pItems,

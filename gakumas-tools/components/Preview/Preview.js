@@ -1,6 +1,6 @@
-import PreviewPItems from "./PreviewPItems";
-import PreviewSkillCardGroup from "./PreviewSkillCardGroup";
-import styles from "./Preview.styles";
+import PreviewPItems from "./PreviewPItems.js";
+import PreviewSkillCardGroup from "./PreviewSkillCardGroup.js";
+import styles from "./Preview.styles.js";
 
 export default function Preview({
   baseUrl,

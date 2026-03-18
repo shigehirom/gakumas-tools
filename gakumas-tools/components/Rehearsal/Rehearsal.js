@@ -27,10 +27,10 @@ import {
   extractCandidateFrames,
   canvasToImage,
 } from "@/utils/imageProcessing/videoFrameExtractor";
-import RehearsalTable from "./RehearsalTable";
+import RehearsalTable from "./RehearsalTable.js";
 import styles from "./Rehearsal.module.scss";
-import KofiAd from "../KofiAd";
-import DistributionPlot from "../DistributionPlot";
+import KofiAd from "../KofiAd.js";
+import DistributionPlot from "../DistributionPlot.js";
 import { bucketScores } from "@/utils/simulator";
 
 const MAX_WORKERS = 8;

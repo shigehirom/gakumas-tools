@@ -1,1 +1,1 @@
-export { default } from "./LoadoutParams";
+export { default } from "./LoadoutParams.js";

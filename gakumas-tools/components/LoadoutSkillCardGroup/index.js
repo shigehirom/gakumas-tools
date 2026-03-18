@@ -1,1 +1,1 @@
-export { default } from "./LoadoutSkillCardGroup";
+export { default } from "./LoadoutSkillCardGroup.js";

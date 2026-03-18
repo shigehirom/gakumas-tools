@@ -3,7 +3,7 @@ import EntityIcon from "@/components/EntityIcon";
 import ModalContext from "@/contexts/ModalContext";
 import { EntityTypes } from "@/utils/entities";
 import styles from "./StageSkillCards.module.scss";
-import EntityPickerModal from "../EntityPickerModal";
+import EntityPickerModal from "../EntityPickerModal.js";
 
 function StageSkillCards({
   skillCardIds,

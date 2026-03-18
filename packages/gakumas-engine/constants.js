@@ -205,7 +205,6 @@ export const ALL_FIELDS = [
   "removedCards",
   "heldCards",
   "cardsUsed",
-  "goodImpressionCardsUsed",
   "activeCardsUsed",
   "turnCardsUsed",
   "turnCardsUpgraded",
@@ -219,14 +218,11 @@ export const ALL_FIELDS = [
   "effects",
   "phase",
   "parentPhase",
+  "effectInstanceId",
+  "effectCounters",
+  "currentEffectInstanceId",
 
   // Special
-  "pcchiCardsUsed",
-  "natsuyaCardsUsed",
-  "holidayCardsUsed",
-  "onigiriCardsUsed",
-  "koeteCardsUsed",
-  "kyakkouCardsUsed",
   "nullifySelect",
 
   // Delta

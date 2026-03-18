@@ -1,1 +1,1 @@
-export { default } from "./AreaPlot";
+export { default } from "./AreaPlot.js";

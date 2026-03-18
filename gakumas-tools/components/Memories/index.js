@@ -1,1 +1,1 @@
-export { default } from "./Memories";
+export { default } from "./Memories.js";

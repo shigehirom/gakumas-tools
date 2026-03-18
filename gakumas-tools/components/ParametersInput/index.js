@@ -1,1 +1,1 @@
-export { default } from "./ParametersInput";
+export { default } from "./ParametersInput.js";

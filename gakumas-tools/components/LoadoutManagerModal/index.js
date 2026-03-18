@@ -1,1 +1,1 @@
-export { default } from "./LoadoutManagerModal";
+export { default } from "./LoadoutManagerModal.js";

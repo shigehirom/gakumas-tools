@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { FaCircleArrowUp } from "react-icons/fa6";
 import Logs from "@/components/SimulatorLogs/Logs";
 import { structureLogs } from "@/utils/simulator";
-import HoldModal from "./HoldModal";
+import HoldModal from "./HoldModal.js";
 import styles from "./ManualPlay.module.scss";
 
 export default function ManualPlay({

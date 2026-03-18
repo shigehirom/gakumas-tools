@@ -3,7 +3,7 @@ import { useTranslations } from "next-intl";
 import { FaCircleArrowUp } from "react-icons/fa6";
 import ButtonGroup from "@/components/ButtonGroup";
 import { structureLogs } from "@/utils/simulator";
-import Logs from "./Logs";
+import Logs from "./Logs.js";
 import styles from "./SimulatorLogs.module.scss";
 
 function SimulatorLogs({ minRun, averageRun, maxRun, idolId }) {

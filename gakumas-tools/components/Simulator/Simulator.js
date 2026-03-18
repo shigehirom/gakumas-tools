@@ -35,9 +35,9 @@ import WorkspaceContext from "@/contexts/WorkspaceContext";
 import { simulate } from "@/simulator";
 import { MAX_WORKERS, DEFAULT_NUM_RUNS, SYNC } from "@/simulator/constants";
 import { bucketScores, getMedianScore, mergeResults } from "@/utils/simulator";
-import ManualPlay from "./ManualPlay";
-import SimulatorButtons from "./SimulatorButtons";
-import SimulatorSubTools from "./SimulatorSubTools";
+import ManualPlay from "./ManualPlay.js";
+import SimulatorButtons from "./SimulatorButtons.js";
+import SimulatorSubTools from "./SimulatorSubTools.js";
 import styles from "./Simulator.module.scss";
 
 const LINK_PHASES = ["OP", "MID", "ED"];
@@ -316,7 +316,7 @@ export default function Simulator() {
             href="https://github.com/surisuririsu/gakumas-tools/blob/master/gakumas-tools/simulator/CHANGELOG.md"
             target="_blank"
           >
-            {t("lastUpdated")}: 2026-02-24
+            {t("lastUpdated")}: 2026-03-18
           </a>
         </div>
       </div>
