@@ -50,12 +50,26 @@ parentPort.on('message', async (task) => {
 
         const runScores = [];
 
-        for (let i = 0; i < numRuns; i++) {
-            try {
-                const result = await player.play();
-                runScores.push(result.score);
-            } catch (e) {
-                // Ignore errors
+        // Check if strategy is sync to avoid await overhead in loop
+        const isSync = !(strategy instanceof STRATEGIES["ManualStrategy"]);
+
+        if (isSync) {
+            for (let i = 0; i < numRuns; i++) {
+                try {
+                    const result = player.playSync ? player.playSync() : await player.play();
+                    runScores.push(result.score);
+                } catch (e) {
+                    // Ignore errors
+                }
+            }
+        } else {
+            for (let i = 0; i < numRuns; i++) {
+                try {
+                    const result = await player.play();
+                    runScores.push(result.score);
+                } catch (e) {
+                    // Ignore errors
+                }
             }
         }
 

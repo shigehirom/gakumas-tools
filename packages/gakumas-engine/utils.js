@@ -39,8 +39,21 @@ export function shallowCopy(state) {
   return [...state];
 }
 
-export function deepCopy(state) {
-  return JSON.parse(JSON.stringify(state));
+export function deepCopy(val) {
+  if (!val || typeof val !== 'object') return val;
+  if (Array.isArray(val)) {
+    const len = val.length;
+    const res = new Array(len);
+    for (let i = 0; i < len; i++) {
+      res[i] = deepCopy(val[i]);
+    }
+    return res;
+  }
+  const res = {};
+  for (const key in val) {
+    res[key] = deepCopy(val[key]);
+  }
+  return res;
 }
 
 export function getBaseId(entity) {
