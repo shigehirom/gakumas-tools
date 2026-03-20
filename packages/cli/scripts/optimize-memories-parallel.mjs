@@ -33,6 +33,20 @@ function calculateMemoryHash(memoryData) {
     return crypto.createHash('sha256').update(parts.join('|')).digest('hex');
 }
 
+/**
+ * Calculates a hash for the *effective* simulation input from a sub memory.
+ * Sub memories only contribute 20% of params, and their skill cards/customizations.
+ * Their pItems and pIdolId are NOT used when they are in the sub slot.
+ */
+function calculateSubEffectiveHash(memoryData) {
+    const parts = [
+        JSON.stringify(memoryData.params.map(p => Math.floor((p || 0) * 0.2))),
+        JSON.stringify(memoryData.skillCardIds),
+        JSON.stringify(memoryData.customizations || [{}, {}, {}, {}, {}, {}])
+    ];
+    return crypto.createHash('sha256').update(parts.join('|')).digest('hex');
+}
+
 async function run() {
     const rawArgs = process.argv.slice(2);
 
@@ -167,6 +181,7 @@ async function run() {
         // Calculate Hashes
         memories.forEach(m => {
             m.hash = calculateMemoryHash(m.data);
+            m.subHash = calculateSubEffectiveHash(m.data);
         });
 
         if (memories.length === 0) {
@@ -189,8 +204,8 @@ async function run() {
 
                 // Ensure compound index exists for ultra-fast bulk upserts (background prevents blocking)
                 await simulationResultsCollection.createIndex(
-                    { mainHash: 1, subHash: 1, stageId: 1, runs: 1, season: 1 },
-                    { background: true, name: "cache_upsert_index" }
+                    { mainHash: 1, subHash: 1, stageId: 1, runs: 1, season: 1, supportBonus: 1 },
+                    { background: true, name: "cache_upsert_index_v2" }
                 );
 
                 if (options.force) {
@@ -234,10 +249,14 @@ async function run() {
         console.error("組み合わせ生成中...");
         const combinations = [];
         let skippedCount = 0;
+        let effectiveSubSkippedCount = 0;
 
         const comparePattern = options.compare ? new RegExp(options.compare.replace(/\*/g, '.*')) : null;
 
         for (const mainMem of memories) {
+            // Optimization: Track which subHashes we've already paired with this mainHash in this run
+            const seenSubHashesForThisMain = new Set();
+
             for (const subMem of memories) {
                 // For DB sourced items, filename might be the ID string, ensure uniqueness check works
                 if (mainMem.filename === subMem.filename) continue;
@@ -249,17 +268,26 @@ async function run() {
                     if (!mainMatch && !subMatch) continue;
                 }
 
+                // Optimization: If another memory has identical effective contribution as a sub-memory, skip it.
+                // Effective contribution = 20% stats + skill cards + customizations.
+                if (seenSubHashesForThisMain.has(subMem.subHash)) {
+                    effectiveSubSkippedCount++;
+                    continue;
+                }
+
                 // Check Cache
-                if (!options.force && existingResultsSet.has(`${mainMem.hash}_${subMem.hash}`)) {
+                if (!options.force && existingResultsSet.has(`${mainMem.hash}_${subMem.subHash}`)) {
                     skippedCount++;
+                    seenSubHashesForThisMain.add(subMem.subHash);
                     continue;
                 }
 
                 combinations.push({ main: mainMem, sub: subMem });
+                seenSubHashesForThisMain.add(subMem.subHash);
             }
         }
         const totalCombs = combinations.length;
-        console.error(`総組み合わせ数: ${totalCombs} 通り (キャッシュ済み: ${skippedCount} 件スキップ)`);
+        console.error(`総組み合わせ数: ${totalCombs} 通り (キャッシュ済み: ${skippedCount} 件, 内容重複: ${effectiveSubSkippedCount} 件スキップ)`);
 
         if (totalCombs === 0) {
             console.error("新規計算対象の組み合わせがありません。");
@@ -273,6 +301,28 @@ async function run() {
         // Determine Worker Count
         const cpuCount = os.cpus().length;
         const workerCount = Math.max(1, cpuCount);
+
+        // Optimization: Prepare memories for workers by removing unnecessary fields
+        const workerMemories = memories.map(m => ({
+            filename: m.filename,
+            hash: m.hash,
+            subHash: m.subHash,
+            data: {
+                params: m.data.params,
+                pItemIds: m.data.pItemIds,
+                skillCardIds: m.data.skillCardIds,
+                customizations: m.data.customizations,
+                name: m.data.name,
+                pIdolId: m.data.pIdolId,
+            }
+        }));
+
+        // Replace memories in combinations with optimized versions
+        const optimizedCombinations = combinations.map(c => {
+            const main = workerMemories.find(m => m.filename === c.main.filename);
+            const sub = workerMemories.find(m => m.filename === c.sub.filename);
+            return { main, sub };
+        });
 
         // Progress Output -> stderr
         console.error("---");
@@ -291,7 +341,7 @@ async function run() {
         const chunkSize = Math.ceil(totalCombs / workerCount);
         const chunks = [];
         for (let i = 0; i < totalCombs; i += chunkSize) {
-            chunks.push(combinations.slice(i, i + chunkSize));
+            chunks.push(optimizedCombinations.slice(i, i + chunkSize));
         }
 
         // Run Workers
@@ -359,7 +409,7 @@ async function run() {
                 updateOne: {
                     filter: {
                         mainHash: res.mainHash,
-                        subHash: res.subHash,
+                        subHash: res.subHash, // This should now be the subHash (effective)
                         stageId: contestStage.id,
                         runs: numRuns,
                         season: season,
@@ -415,13 +465,14 @@ async function run() {
 
             // To be safe and simple: Fetch all results where `mainHash` IN (memories.hashes) AND `subHash` IN (memories.hashes)
             const memHashes = memories.map(m => m.hash);
+            const subHashes = memories.map(m => m.subHash);
             const finalQuery = {
                 stageId: contestStage.id,
                 runs: numRuns,
                 season: season,
                 supportBonus: supportBonus,
                 mainHash: { $in: memHashes },
-                subHash: { $in: memHashes }
+                subHash: { $in: subHashes }
             };
 
             // If totalCombs was 0, allResults is empty.
@@ -470,17 +521,18 @@ async function run() {
 
                 // Rehydrate meta for all results
                 for (const res of allResults) {
-                    const mem = memories.find(m => m.hash === res.mainHash); // hash check is safer than filename if we want robust
-                    // Or filename? Filename should be unique per run.
-                    if (mem) {
-                        res.meta = mem.data.meta || {};
-                        // Actually `main.meta` in worker was `main.meta`. 
-                        // `memories` items are `{ filename, data, hash }`.
-                        // `data` has `meta`? No, `data` is the JSON content.
-                        // `loadMemoriesFromDB` returns `data: m`. `m` might have meta?
-                        // `memories` from file: `data: JSON.parse(...)`.
-                        // Currently meta is not strictly used in existing code EXCEPT `synth` option logic.
-                        // `synth` logic checks `options.synth` and uses `memories` array to find `mainMem` and `subMem`.
+                    const mainMem = memories.find(m => m.hash === res.mainHash);
+                    if (mainMem) {
+                        res.meta = mainMem.data.meta || {};
+                    }
+                    // Also need to find original sub memory names if possible, but for DB results,
+                    // we might have multiple subs with same subHash. Just use the ones from DB for now.
+                    if (!res.subName || !res.subFilename) {
+                        const subMem = memories.find(m => m.subHash === res.subHash);
+                        if (subMem) {
+                            res.subName = subMem.data.name;
+                            res.subFilename = subMem.filename;
+                        }
                     }
                 }
 
@@ -492,7 +544,15 @@ async function run() {
         }
 
         const duration = (Date.now() - startTime) / 1000;
+        const totalSimTime = allResults.reduce((acc, r) => acc + (r.simTime || 0), 0) / 1000;
+        const avgSimTimePerCombination = allResults.length > 0 ? (totalSimTime / allResults.length) : 0;
+
         console.error(`\n- 完了! 処理時間: ${duration.toFixed(1)}秒`);
+        console.error(`- シミュレーション純粋時間: ${totalSimTime.toFixed(1)}秒 (スレッド合計)`);
+        if (allResults.length > 0) {
+            console.error(`- 1組み合わせあたりの平均シミュレーション時間: ${(avgSimTimePerCombination * 1000).toFixed(2)}ms`);
+            console.error(`- 1シミュレーション(1試行)あたりの平均時間: ${(avgSimTimePerCombination * 1000 / numRuns).toFixed(2)}ms`);
+        }
         console.error("---");
         // End of Progress Output (stderr)
 
