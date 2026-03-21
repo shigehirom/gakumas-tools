@@ -49,6 +49,7 @@ parentPort.on('message', async (task) => {
         const player = new StagePlayer(engine, strategy);
 
         const runScores = [];
+        const simStartTime = performance.now();
 
         for (let i = 0; i < numRuns; i++) {
             try {
@@ -58,6 +59,8 @@ parentPort.on('message', async (task) => {
                 // Ignore errors
             }
         }
+
+        const simDuration = performance.now() - simStartTime;
 
         if (runScores.length === 0) {
             results.push({
@@ -93,7 +96,8 @@ parentPort.on('message', async (task) => {
             min: minScore,
             max: maxScore,
             median: medianScore,
-            meta: main.meta // Pass through metadata
+            meta: main.meta, // Pass through metadata
+            simTime: simDuration
         });
 
         // Notify progress (batched)
