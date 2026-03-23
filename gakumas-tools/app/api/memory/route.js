@@ -1,6 +1,7 @@
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/utils/auth";
 import { connect } from "@/utils/mongodb";
+import { triggerAutomation } from "@/utils/automation";
 
 export async function GET() {
   const session = await getServerSession(authOptions);
@@ -26,19 +27,24 @@ export async function POST(request) {
   const { memories } = await request.json();
 
   const { db } = await connect();
-  const { insertedIds } = await db.collection("memories").insertMany(
-    memories.map(
-      ({ name, pIdolId, params, pItemIds, skillCardIds, customizations }) => ({
-        userId,
-        name,
-        pIdolId,
-        params,
-        pItemIds,
-        skillCardIds,
-        customizations,
-      })
-    )
+  const memoriesToInsert = memories.map(
+    ({ name, pIdolId, params, pItemIds, skillCardIds, customizations }) => ({
+      userId,
+      name,
+      pIdolId,
+      params,
+      pItemIds,
+      skillCardIds,
+      customizations,
+    })
   );
+
+  const { insertedIds } = await db.collection("memories").insertMany(memoriesToInsert);
+
+  // Trigger automation asynchronously
+  triggerAutomation(memoriesToInsert).catch((err) => {
+    console.error("Automation trigger failed:", err);
+  });
 
   return Response.json({ ids: insertedIds });
 }

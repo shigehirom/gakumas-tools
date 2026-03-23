@@ -50,6 +50,9 @@ export function registerRecommendCommand(cli: any) {
 
                 try {
                     const resultData = JSON.parse(outputBuffer.trim());
+                    if (resultData.length === 0) {
+                        console.warn("警告: 有効なセクション（'# シーズン X ステージ Y' の形式）がマークダウンから見つかりませんでした。");
+                    }
                     for (const stageData of resultData) {
                         console.log(template(stageData));
                         console.log('\n');
