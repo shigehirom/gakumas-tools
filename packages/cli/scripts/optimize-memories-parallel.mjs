@@ -22,7 +22,7 @@ const ALL_IDOL_NAMES = [
     "sumika", "hiro", "sena", "misuzu", "ume", "rinami"
 ];
 
-function calculateMemoryHash(memoryData) {
+export function calculateMemoryHash(memoryData) {
     const parts = [
         memoryData.pIdolId,
         JSON.stringify(memoryData.params),
@@ -38,7 +38,7 @@ function calculateMemoryHash(memoryData) {
  * Sub memories only contribute 20% of params, and their skill cards/customizations.
  * Their pItems and pIdolId are NOT used when they are in the sub slot.
  */
-function calculateSubEffectiveHash(memoryData) {
+export function calculateSubEffectiveHash(memoryData) {
     const parts = [
         JSON.stringify(memoryData.params.map(p => Math.floor((p || 0) * 0.2))),
         JSON.stringify(memoryData.skillCardIds),

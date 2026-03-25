@@ -9,6 +9,7 @@ import { registerRmCommand } from './commands/rm';
 import { registerRehearsalCommand } from './commands/rehearsal';
 import { registerLoadoutCommand } from './commands/loadout';
 import { registerRecommendCommand } from './commands/recommend';
+import { registerUncachedCommand } from './commands/uncached';
 // @ts-ignore
 import * as fs from 'fs';
 // @ts-ignore
@@ -168,6 +169,7 @@ registerRmCommand(cli);
 registerRehearsalCommand(cli);
 registerLoadoutCommand(cli);
 registerRecommendCommand(cli);
+registerUncachedCommand(cli);
 
 cli.help();
 cli.version('0.1.0');
