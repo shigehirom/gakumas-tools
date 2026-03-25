@@ -740,8 +740,20 @@ async function run() {
                                 createdAt: new Date(),
                             };
 
-                            const result = await collection.insertOne(loadout);
-                            console.error(`Loadout #${rank + 1} (${saveName}) saved successfully with ID: ${result.insertedId}`);
+                            const query = { name: saveName, userId };
+                            const update = {
+                                $set: {
+                                    ...loadout,
+                                    updatedAt: new Date()
+                                }
+                            };
+
+                            const result = await collection.updateOne(query, update, { upsert: true });
+                            if (result.upsertedCount > 0) {
+                                console.error(`Loadout #${rank + 1} (${saveName}) saved successfully (New)`);
+                            } else {
+                                console.error(`Loadout #${rank + 1} (${saveName}) updated successfully (Overwrite)`);
+                            }
                         }
                         await client.close();
                     } catch (e) {
