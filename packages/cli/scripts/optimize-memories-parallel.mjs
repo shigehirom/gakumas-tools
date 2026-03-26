@@ -736,12 +736,14 @@ async function run() {
                                     mainMem.data.customizations || [{}, {}, {}, {}, {}, {}],
                                     subMem.data.customizations || [{}, {}, {}, {}, {}, {}]
                                 ],
+                                memory1Name: mainMem.data.name || path.basename(mainMem.filename, ".json"),
+                                memory2Name: subMem.data.name || path.basename(subMem.filename, ".json"),
                                 userId,
-                                createdAt: new Date(),
+                                createdAt: new Date()
                             };
 
-                            const result = await collection.insertOne(loadout);
-                            console.error(`Loadout #${rank + 1} (${saveName}) saved successfully with ID: ${result.insertedId}`);
+                            await collection.updateOne({ name: saveName, userId }, { $set: loadout }, { upsert: true });
+                            console.error(`Loadout #${rank + 1} (${saveName}) saved/updated successfully.`);
                         }
                         await client.close();
                     } catch (e) {

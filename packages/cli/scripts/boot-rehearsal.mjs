@@ -88,13 +88,15 @@ async function run() {
             const getCardGroup = (index) => {
                 const cardIds = loadout.skillCardIdGroups?.[index] || [];
                 const custs = loadout.customizationGroups?.[index] || [];
-                return cardIds.filter(id => id > 0).map((id, i) => {
+
+                return cardIds.map((id, i) => ({ id, i })).filter(item => item.id > 0).map((item) => {
+                    const id = item.id;
                     const card = SkillCards.getById(id);
                     if (!card) return `Unknown(${id})`;
                     
                     const prefix = `【${card.rarity}】 `;
                     const name = card.name;
-                    const customObj = custs?.[i];
+                    const customObj = custs?.[item.i];
                     if (customObj && Object.keys(customObj).length > 0) {
                         const customNames = Object.keys(customObj).map(cId => {
                             const custom = Customizations.getById(cId);
@@ -135,7 +137,9 @@ async function run() {
                     params: loadout.params || [0, 0, 0, 0],
                     pItems: pItemsList,
                     memory1: getCardGroup(0),
-                    memory2: getCardGroup(1)
+                    memory2: getCardGroup(1),
+                    memory1Name: loadout.memory1Name || "Unknown (Rerunning optimize command will fix this)",
+                    memory2Name: loadout.memory2Name || "Unknown (Rerunning optimize command will fix this)",
                 }
             });
         }

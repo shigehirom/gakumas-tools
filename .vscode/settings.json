@@ -4,5 +4,10 @@
     "plaintext": false,
     "markdown": false,
     "scminput": false
-  }
+  },
+  "[handlebars]": {
+    "editor.formatOnSave": false
+  },
+  "html.format.wrapLineLength": 0,
+  "html.format.wrapAttributes": "auto"
 }
