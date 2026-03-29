@@ -147,14 +147,16 @@ export default class Executor extends EngineComponent {
     state[S.motivationMultiplier] = prevMotivationMultiplier;
 
     // Log changed fields (uses overall batch prev for logging)
-    for (let i = 0; i < LOGGED_FIELDS.length; i++) {
-      const field = LOGGED_FIELDS[i];
-      if (state[field] == prev[field]) continue;
-      this.logger.log(state, "diff", {
-        field,
-        prev: formatDiffField(prev[field]),
-        next: formatDiffField(state[field]),
-      });
+    if (!this.logger.disabled) {
+      for (let i = 0; i < LOGGED_FIELDS.length; i++) {
+        const field = LOGGED_FIELDS[i];
+        if (state[field] == prev[field]) continue;
+        this.logger.log(state, "diff", {
+          field,
+          prev: formatDiffField(prev[field]),
+          next: formatDiffField(state[field]),
+        });
+      }
     }
 
     // Protect fresh stats from decrement (uses overall batch prev)
@@ -462,10 +464,11 @@ export default class Executor extends EngineComponent {
 
     if (score > 0) {
       // Apply concentration
-      const concentrationEffectBuff = state[S.concentrationEffectBuffs].reduce(
-        (acc, cur) => acc + cur.amount,
-        state[S.concentrationMultiplier]
-      );
+      let concentrationEffectBuff = state[S.concentrationMultiplier];
+      const ceBuffs = state[S.concentrationEffectBuffs];
+      for (let i = 0; i < ceBuffs.length; i++) {
+        concentrationEffectBuff += ceBuffs[i].amount;
+      }
       score += state[S.concentration] * concentrationEffectBuff;
 
       // Apply enthusiasm
@@ -501,10 +504,11 @@ export default class Executor extends EngineComponent {
       }
 
       // Score buff effects
-      let scoreBuff = state[S.scoreBuffs].reduce(
-        (acc, cur) => acc + cur.amount,
-        0
-      );
+      let scoreBuff = 0;
+      const sBuffs = state[S.scoreBuffs];
+      for (let i = 0; i < sBuffs.length; i++) {
+        scoreBuff += sBuffs[i].amount;
+      }
 
       if (state[S.prideTurns]) {
         const buffAmount = Math.min(
@@ -517,10 +521,12 @@ export default class Executor extends EngineComponent {
       score *= 1 + scoreBuff;
 
       // Score debuff effects
-      score *= Math.max(
-        state[S.scoreDebuffs].reduce((acc, cur) => acc - cur.amount, 1),
-        0
-      );
+      let scoreDebuffAmount = 0;
+      const sdBuffs = state[S.scoreDebuffs];
+      for (let i = 0; i < sdBuffs.length; i++) {
+        scoreDebuffAmount += sdBuffs[i].amount;
+      }
+      score *= Math.max(1 - scoreDebuffAmount, 0);
 
       // Apply poor condition
       if (state[S.poorConditionTurns]) {
@@ -540,40 +546,48 @@ export default class Executor extends EngineComponent {
 
   resolveGoodImpressionTurns(state, goodImpressionTurns) {
     // Apply good impression turns buffs
-    goodImpressionTurns *= state[S.goodImpressionTurnsBuffs].reduce(
-      (acc, cur) => acc + cur.amount,
-      1
-    );
+    let giBuff = 1;
+    const giBuffs = state[S.goodImpressionTurnsBuffs];
+    for (let i = 0; i < giBuffs.length; i++) {
+      giBuff += giBuffs[i].amount;
+    }
+    goodImpressionTurns *= giBuff;
 
     state[S.goodImpressionTurns] += goodImpressionTurns;
   }
 
   resolveMotivation(state, motivation) {
     // Apply motivation buffs
-    motivation *= state[S.motivationBuffs].reduce(
-      (acc, cur) => acc + cur.amount,
-      1
-    );
+    let mBuff = 1;
+    const mBuffs = state[S.motivationBuffs];
+    for (let i = 0; i < mBuffs.length; i++) {
+      mBuff += mBuffs[i].amount;
+    }
+    motivation *= mBuff;
 
     state[S.motivation] += motivation;
   }
 
   resolveGoodConditionTurns(state, goodConditionTurns) {
     // Apply good condition turns buffs
-    goodConditionTurns *= state[S.goodConditionTurnsBuffs].reduce(
-      (acc, cur) => acc + cur.amount,
-      1
-    );
+    let gcBuff = 1;
+    const gcBuffs = state[S.goodConditionTurnsBuffs];
+    for (let i = 0; i < gcBuffs.length; i++) {
+      gcBuff += gcBuffs[i].amount;
+    }
+    goodConditionTurns *= gcBuff;
 
     state[S.goodConditionTurns] += goodConditionTurns;
   }
 
   resolveConcentration(state, concentration) {
     // Apply concentration buffs
-    concentration *= state[S.concentrationBuffs].reduce(
-      (acc, cur) => acc + cur.amount,
-      1
-    );
+    let cBuff = 1;
+    const cBuffs = state[S.concentrationBuffs];
+    for (let i = 0; i < cBuffs.length; i++) {
+      cBuff += cBuffs[i].amount;
+    }
+    concentration *= cBuff;
 
     state[S.concentration] += concentration;
   }
@@ -631,20 +645,24 @@ export default class Executor extends EngineComponent {
 
   resolveEnthusiasm(state, enthusiasm) {
     enthusiasm += state[S.enthusiasmBonus];
-    enthusiasm *= state[S.enthusiasmBuffs].reduce(
-      (acc, cur) => acc + cur.amount,
-      1
-    );
+    let eBuff = 1;
+    const eBuffs = state[S.enthusiasmBuffs];
+    for (let i = 0; i < eBuffs.length; i++) {
+      eBuff += eBuffs[i].amount;
+    }
+    enthusiasm *= eBuff;
     state[S.enthusiasm] += enthusiasm;
   }
 
   resolveFullPowerCharge(state, fullPowerCharge) {
     if (fullPowerCharge > 0) {
       // Apply full power charge buffs
-      fullPowerCharge *= state[S.fullPowerChargeBuffs].reduce(
-        (acc, cur) => acc + cur.amount,
-        1
-      );
+      let fpBuff = 1;
+      const fpBuffs = state[S.fullPowerChargeBuffs];
+      for (let i = 0; i < fpBuffs.length; i++) {
+        fpBuff += fpBuffs[i].amount;
+      }
+      fullPowerCharge *= fpBuff;
       state[S.cumulativeFullPowerCharge] += fullPowerCharge;
     }
     state[S.fullPowerCharge] += fullPowerCharge;

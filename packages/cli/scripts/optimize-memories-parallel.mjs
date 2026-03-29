@@ -227,12 +227,6 @@ async function run() {
                         season: season,
                         supportBonus: supportBonus
                     };
-                    // If we could restrict by idol, that would be better, but we are cross-combining?
-                    // Actually combinations are strictly within `memories` list which is filtered by Idol.
-                    // So all combinations involve this idol (as Main).
-                    // Wait, combinations are `memories` x `memories`.
-                    // And `memories` contains only `currentIdolName`'s memories (if options.idolName is set).
-                    // Yes.
 
                     const cached = await simulationResultsCollection.find(query).project({ mainHash: 1, subHash: 1 }).toArray();
                     cached.forEach(c => existingResultsSet.add(`${c.mainHash}_${c.subHash}`));

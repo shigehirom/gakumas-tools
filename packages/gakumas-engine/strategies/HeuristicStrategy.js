@@ -214,20 +214,18 @@ export default class HeuristicStrategy extends BaseStrategy {
         state[S.cumulativeFullPowerCharge] * 3 * this.fullPowerMultiplier;
 
       // Enthusiasm buffs
-      score +=
-        state[S.enthusiasmBuffs].reduce(
-          (acc, cur) =>
-            acc + cur.amount * (cur.turns || state[S.turnsRemaining]),
-          0
-        ) * 5;
+      const eBuffs = state[S.enthusiasmBuffs];
+      for (let i = 0; i < eBuffs.length; i++) {
+        const cur = eBuffs[i];
+        score += (cur.amount * (cur.turns || state[S.turnsRemaining])) * 5;
+      }
 
       // Full power charge buffs
-      score +=
-        state[S.fullPowerChargeBuffs].reduce(
-          (acc, cur) =>
-            acc + cur.amount * (cur.turns || state[S.turnsRemaining]),
-          0
-        ) * this.fullPowerMultiplier;
+      const fpcBuffs = state[S.fullPowerChargeBuffs];
+      for (let i = 0; i < fpcBuffs.length; i++) {
+        const cur = fpcBuffs[i];
+        score += (cur.amount * (cur.turns || state[S.turnsRemaining])) * this.fullPowerMultiplier;
+      }
 
       // Growth
       score += this.getGrowthScore(state) * 0.2 * state[S.turnsRemaining];
@@ -250,11 +248,11 @@ export default class HeuristicStrategy extends BaseStrategy {
     score += state[S.prideTurns] * state[S.turnsRemaining] * 0.2;
 
     // Score buffs
-    score +=
-      state[S.scoreBuffs].reduce(
-        (acc, cur) => acc + cur.amount * (cur.turns || state[S.turnsRemaining]),
-        0
-      ) * 8;
+    const sBuffs = state[S.scoreBuffs];
+    for (let i = 0; i < sBuffs.length; i++) {
+      const cur = sBuffs[i];
+      score += (cur.amount * (cur.turns || state[S.turnsRemaining])) * 8;
+    }
 
     // Half cost turns
     score += Math.min(state[S.halfCostTurns], state[S.turnsRemaining]) * 6;
@@ -272,36 +270,32 @@ export default class HeuristicStrategy extends BaseStrategy {
     score += state[S.cardUsesRemaining] * 50;
 
     // Good impression turns buffs
-    score +=
-      state[S.goodImpressionTurnsBuffs].reduce(
-        (acc, cur) => acc + cur.amount * (cur.turns || state[S.turnsRemaining]),
-        0
-      ) *
-      10 *
-      this.goodImpressionTurnsMultiplier;
+    const giBuffs = state[S.goodImpressionTurnsBuffs];
+    for (let i = 0; i < giBuffs.length; i++) {
+      const cur = giBuffs[i];
+      score += (cur.amount * (cur.turns || state[S.turnsRemaining])) * 10 * this.goodImpressionTurnsMultiplier;
+    }
 
     // Good impression turns effects buffs
-    score +=
-      state[S.goodImpressionTurnsEffectBuffs].reduce(
-        (acc, cur) => acc + cur.amount * (cur.turns || state[S.turnsRemaining]),
-        0
-      ) *
-      state[S.goodImpressionTurns] *
-      this.goodImpressionTurnsMultiplier;
+    const gieBuffs = state[S.goodImpressionTurnsEffectBuffs];
+    for (let i = 0; i < gieBuffs.length; i++) {
+      const cur = gieBuffs[i];
+      score += (cur.amount * (cur.turns || state[S.turnsRemaining])) * state[S.goodImpressionTurns] * this.goodImpressionTurnsMultiplier;
+    }
 
     // Good condition turns buffs
-    score +=
-      state[S.goodConditionTurnsBuffs].reduce(
-        (acc, cur) => acc + cur.amount * (cur.turns || state[S.turnsRemaining]),
-        0
-      ) * this.goodConditionTurnsMultiplier;
+    const gcBuffs = state[S.goodConditionTurnsBuffs];
+    for (let i = 0; i < gcBuffs.length; i++) {
+      const cur = gcBuffs[i];
+      score += (cur.amount * (cur.turns || state[S.turnsRemaining])) * this.goodConditionTurnsMultiplier;
+    }
 
     // Concentration buffs
-    score +=
-      state[S.concentrationBuffs].reduce(
-        (acc, cur) => acc + cur.amount * (cur.turns || state[S.turnsRemaining]),
-        0
-      ) * this.concentrationMultiplier;
+    const cBuffs = state[S.concentrationBuffs];
+    for (let i = 0; i < cBuffs.length; i++) {
+      const cur = cBuffs[i];
+      score += (cur.amount * (cur.turns || state[S.turnsRemaining])) * this.concentrationMultiplier;
+    }
 
     // Nullify genki turns
     score += state[S.nullifyGenkiTurns] * -9;
