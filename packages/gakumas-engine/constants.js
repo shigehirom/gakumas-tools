@@ -225,6 +225,7 @@ export const ALL_FIELDS = [
 
   // Special
   "nullifySelect",
+  "freeCardUses",
 
   // Delta
   "goodImpressionTurnsDelta",
@@ -269,6 +270,7 @@ export const CARD_PILES = [
   S.handCards,
   S.discardedCards,
   S.removedCards,
+  S.heldCards,
 ];
 
 export const COST_FIELDS = [
