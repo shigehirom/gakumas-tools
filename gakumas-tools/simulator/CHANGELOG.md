@@ -3,13 +3,21 @@
 All notable changes to the contest simulator will be documented in this file.
 Dates are based on Eastern Time Zone.
 
+## 2026-04-01
 
+- Fix removing trouble cards
+- Fix hand card limit on methods that add/move cards to hand
+- Fix doubleCardEffectCards triggering on legend cards, effect of Expert, and add helper variable for direct effect
+- Fix 0 cost and direct effect triggers
+- Fix 0 cost and direct effect triggers
 
+## 2026-03-31
 
+- Add new Legend cards, Asari, and Tokimeki Emotion preview
 
+## 2026-03-29
 
-
-
+- Add preview of S42
 
 ## 2026-03-28
 

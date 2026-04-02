@@ -403,6 +403,15 @@ import image_402 from "./402.png";
 import image_403 from "./403.png";
 import image_404 from "./404.png";
 import image_405 from "./405.png";
+import image_406 from "./406.png";
+import image_407 from "./407.png";
+import image_408 from "./408.png";
+import image_409 from "./409.png";
+import image_410 from "./410.png";
+import image_411 from "./411.png";
+import image_412 from "./412.png";
+import image_413 from "./413.png";
+import image_414 from "./414.png";
 
 const IMAGES = {
   '1': image_1,
@@ -810,6 +819,15 @@ const IMAGES = {
   '403': image_403,
   '404': image_404,
   '405': image_405,
+  '406': image_406,
+  '407': image_407,
+  '408': image_408,
+  '409': image_409,
+  '410': image_410,
+  '411': image_411,
+  '412': image_412,
+  '413': image_413,
+  '414': image_414,
 };
 
 export default IMAGES;
