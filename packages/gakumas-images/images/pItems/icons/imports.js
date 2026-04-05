@@ -412,6 +412,9 @@ import image_411 from "./411.png";
 import image_412 from "./412.png";
 import image_413 from "./413.png";
 import image_414 from "./414.png";
+import image_415 from "./415.png";
+import image_417 from "./417.png";
+import image_418 from "./418.png";
 
 const IMAGES = {
   '1': image_1,
@@ -828,6 +831,9 @@ const IMAGES = {
   '412': image_412,
   '413': image_413,
   '414': image_414,
+  '415': image_415,
+  '417': image_417,
+  '418': image_418,
 };
 
 export default IMAGES;
