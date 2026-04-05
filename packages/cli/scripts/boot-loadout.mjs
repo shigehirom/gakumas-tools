@@ -1,5 +1,5 @@
 import { MongoClient } from "mongodb";
-import { Stages, PItems, SkillCards, Customizations } from "gakumas-data";
+import { Stages, PItems, SkillCards, Customizations, PIdols, Idols } from "gakumas-data";
 
 const MONGODB_URI = process.argv[2];
 const verbose = process.argv.includes('--verbose');
@@ -16,8 +16,14 @@ for (const loadout of loadouts) {
     const stageInfo = stages.find(s => s.id === loadout.stageId);
     let stageName = "Unknown Stage";
     if (stageInfo) {
-        stageName = `シーズン${stageInfo.season} ステージ${stageInfo.stage}`;
+        // Use official name from CSV if available, fallback to computed
+        stageName = stageInfo.name || `シーズン${stageInfo.season} ステージ${stageInfo.stage}`;
     }
+
+    const pIdol = PIdols.getById(loadout.idolId);
+    const idol = pIdol ? Idols.getById(pIdol.idolId) : null;
+    const idolName = idol ? idol.name.replace(" ", "") : "";
+    const pIdolTitle = pIdol ? pIdol.title : "";
 
     if (verbose) {
         const pItems = (loadout.pItemIds || []).filter(id => id > 0).map(id => {
@@ -47,6 +53,8 @@ for (const loadout of loadouts) {
         results.push({
             name: loadout.name,
             stageName: stageName,
+            idolName,
+            pIdolTitle,
             params: loadout.params || [0, 0, 0, 0],
             pItems: pItems,
             deck: (loadout.deck || []).map(c => {
@@ -55,12 +63,18 @@ for (const loadout of loadouts) {
                 return c.name || `${prefix}${card?.name}` || `Unknown(${c.id})`;
             }),
             memory1: getCardGroup(0),
-            memory2: getCardGroup(1)
+            memory2: getCardGroup(1),
+            memory1Name: loadout.memory1Name,
+            memory2Name: loadout.memory2Name
         });
     } else {
         results.push({
             name: loadout.name,
             stageName: stageName,
+            idolName,
+            pIdolTitle,
+            memory1Name: loadout.memory1Name || "Unknown",
+            memory2Name: loadout.memory2Name || "Unknown",
         });
     }
 }

@@ -42,7 +42,8 @@ export function registerLoadoutCommand(cli: any) {
                 const results = JSON.parse(outputBuffer.trim());
                 if (!options.verbose) {
                     for (const res of results) {
-                        console.log(`Name: ${res.name} / ${res.stageName}`);
+                        const idolInfo = res.idolName ? `${res.idolName}【${res.pIdolTitle}】` : "Unknown Idol";
+                        console.log(`${res.name.padEnd(25)} | ${res.stageName.padEnd(16)} | ${idolInfo.padEnd(20)} | ${res.memory1Name} / ${res.memory2Name}`);
                     }
                 } else {
                     const templatePath = path.join(__dirname, '../templates/loadout.hbs');
