@@ -7,7 +7,7 @@ import {
 import Button from "@/components/Button";
 import ParametersInput from "@/components/ParametersInput";
 import styles from "./StageCustomizer.module.scss";
-import ButtonGroup from "../ButtonGroup.js";
+import ButtonGroup from "../ButtonGroup";
 
 function normalizeCriteria(criteria) {
   const nums = criteria.map((c) => c || 0);

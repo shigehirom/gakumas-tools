@@ -26,10 +26,16 @@ export async function POST(request) {
   const { memories } = await request.json();
 
   const { db } = await connect();
+  const now = new Date();
+  const year = String(now.getFullYear()).slice(-2);
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  const prefix = `${year}/${month}/${day}＿`;
+
   const memoriesToInsert = memories.map(
     ({ name, pIdolId, params, pItemIds, skillCardIds, customizations }) => ({
       userId,
-      name,
+      name: `${prefix}${name}`,
       pIdolId,
       params,
       pItemIds,

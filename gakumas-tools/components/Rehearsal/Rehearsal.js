@@ -27,9 +27,9 @@ import {
   extractCandidateFrames,
   canvasToImage,
 } from "@/utils/imageProcessing/videoFrameExtractor";
-import RehearsalTable from "./RehearsalTable.js";
+import RehearsalTable from "./RehearsalTable";
 import styles from "./Rehearsal.module.scss";
-import KofiAd from "../KofiAd.js";
+import KofiAd from "../KofiAd";
 import DistributionPlot from "../DistributionPlot.js";
 import { bucketScores } from "@/utils/simulator";
 

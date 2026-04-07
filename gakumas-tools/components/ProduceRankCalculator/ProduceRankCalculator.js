@@ -4,7 +4,7 @@ import { useTranslations } from "next-intl";
 import ButtonGroup from "@/components/ButtonGroup";
 import HajimeCalculator from "./HajimeCalculator.js";
 import NiaCalculator from "./NiaCalculator.js";
-import LessonCalculator from "../LessonCalculator.js";
+import LessonCalculator from "../LessonCalculator";
 import styles from "./ProduceRankCalculator.module.scss";
 
 function ProduceRankCalculator() {

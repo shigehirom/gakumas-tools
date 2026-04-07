@@ -27,6 +27,13 @@ shigehirom のリポジトリには、Jules によるレビューも入ってい
 - **`rehearsal`**: 指定された複数のロードアウト（編成）の合計スコアを予測します。
     - 使用法: `yarn cli rehearsal <runs> [...decks]`
 
+- **`daily-prep` (自動化)**: 毎日 3:00 以降の実行を想定した、コンテストとリハーサルの自動化スクリプトです。
+    - 使用法: `yarn node cli/daily-prep.mjs`
+    - 処理内容: 最新シーズンの全ジャンルをシミュレートし、上位3名のロードアウトを保存した上でリハーサルを実行します。
+    - 設定: `.env.local` の `SUPPORT_BONUS`, `DAILY_CONTEST_RUNS`, `DAILY_REHEARSAL_RUNS` を参照します。
+    - `cron` 設定例 (毎日 3:05 実行): 
+      `5 3 * * * cd /home/shigehiro/gakumas-workspace/gakumas-tools && /usr/bin/yarn node cli/daily-prep.mjs >> /home/shigehiro/logs/daily-prep.log 2>&1`
+
 ## 技術スタックと構成
 - **パッケージマネージャー**: Yarn PnP (Plug'n'Play)。スクリプトは常に `yarn node <script>` 経由で実行してください。
 - **データベース**: MongoDB。
@@ -40,6 +47,7 @@ shigehirom のリポジトリには、Jules によるレビューも入ってい
 - **メモリ表示**: レポート表示時には、内部的な MongoDB ID よりも、人間が読みやすい `data.name` (メモリ名) を優先して表示してください。
 - **ロギング**: 進捗インジケーターや診断メッセージには `console.error` を使用してください。`stdout` は最終的な JSON やレポート出力のために予約し、スクリプトのパイプ処理や合成を容易にします。
 - **アップストリーム同期**: 定期的に `surisuririsu/gakumas-tools` と同期し、最新のシミュレーションロジックやカードデータを取り込んでください。同期後は `packages/gakumas-data` で JSON の再生成 (`python3 -m scripts.csv_to_json`) が必要です。
+- **メモリの命名規則**: メモリーの登録（アップロード）時には、管理を容易にするため、その日の日付を `YY/MM/DD＿` (例: `26/04/05＿`) という形式で名前の先頭に付与してください。プレフィックスには全角アンダースコア（`＿`）を使用します。
 - **DSL フィルタ**: エフェクトの発動条件として `if:isDirectEffect` が導入されました。これは `parentPhase==processCard` を置き換えるもので、カード本来の効果と追加効果を区別するために使用されます。
 
 ## 画像アセット管理
