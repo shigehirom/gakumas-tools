@@ -14,7 +14,7 @@ export const STANCES = [
 ];
 export const SKILL_CARD_TYPES = ["active", "mental", "trouble"];
 export const SOURCE_TYPES = ["default", "produce", "pIdol", "support"];
-export const RARITIES = ["N", "R", "SR", "SSR"];
+export const RARITIES = ["N", "R", "SR", "SSR", "L", "T"];
 
 export const SET_OPERATOR = "&";
 export const BOOLEAN_OPERATORS = ["==", "!=", "<", ">", "<=", ">="];
