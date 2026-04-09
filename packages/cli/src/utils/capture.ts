@@ -30,4 +30,11 @@ export class GlobalCapture {
     static getCapturedOutput() {
         return this.capturedData;
     }
+
+    static disable() {
+        if (!this.capturing) return;
+        process.stdout.write = this.originalWrite;
+        this.capturing = false;
+        this.capturedData = '';
+    }
 }

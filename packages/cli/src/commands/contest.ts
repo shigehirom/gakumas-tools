@@ -4,6 +4,8 @@ import * as fs from 'fs';
 import * as path from 'path';
 import importHandlebars from 'handlebars';
 import { parseJsonStream } from '../utils/json-stream';
+import { Stages } from 'gakumas-data';
+import { GlobalCapture } from '../utils/capture';
 
 const Handlebars = importHandlebars;
 
@@ -19,6 +21,50 @@ export function registerContestCommand(cli: any) {
         .option('--userId <id>', 'User ID to save the loadout for')
         .option('--supportBonus <value>', 'Support bonus value (default: 0.04)')
         .action(async (stage: string, runs?: string, idolName?: string, plan?: string, options?: any) => {
+            // Season-only expansion logic (e.g. "42" -> "42-1", "42-2", "42-3")
+            if (/^\d+$/.test(stage)) {
+                const season = parseInt(stage, 10);
+                const seasonStages = Stages.getAll()
+                    .filter((s: any) => s.type === 'contest' && s.season === season)
+                    .sort((a: any, b: any) => a.stage - b.stage);
+
+                if (seasonStages.length > 0) {
+                    console.error(`Season ${season} detected. Expanding to stages: ${seasonStages.map((s: any) => `${season}-${s.stage}`).join(', ')}`);
+
+                    // Stop parent capturing for gdrive/GlobalCapture to avoid redundant uploads
+                    GlobalCapture.disable();
+
+                    for (const s of seasonStages) {
+                        const stageId = `${season}-${s.stage}`;
+                        console.error(`\n==================================================`);
+                        console.error(`>>> Processing Stage: ${stageId}`);
+                        console.error(`==================================================\n`);
+
+                        // Reconstruct command line arguments for child process
+                        const childArgs = [...process.argv.slice(1)];
+                        const contestIdx = childArgs.indexOf('contest');
+                        if (contestIdx !== -1 && childArgs[contestIdx + 1] === stage) {
+                            childArgs[contestIdx + 1] = stageId;
+                        }
+
+                        await new Promise<void>((resolve, reject) => {
+                            const child = spawn(process.argv[0], childArgs, {
+                                stdio: 'inherit',
+                                env: { ...process.env }
+                            });
+                            child.on('close', (code: any) => {
+                                if (code === 0) resolve();
+                                else reject(new Error(`Stage ${stageId} failed with exit code ${code}`));
+                            });
+                            child.on('error', reject);
+                        });
+                    }
+                    // All stages processed successfully
+                    process.exit(0);
+                    return;
+                }
+            }
+
             // Check if runs is actually idolName (if user skipped runs e.g. "contest 37-3 hiro")
             if (runs && isNaN(Number(runs))) {
                 plan = idolName;
@@ -142,7 +188,7 @@ export function registerContestCommand(cli: any) {
                 });
 
                 await new Promise<void>((resolve, reject) => {
-                    child.on('close', (code) => {
+                    child.on('close', (code: any) => {
                         if (code === 0) resolve();
                         else reject(new Error(`Script exited with code ${code}`));
                     });
