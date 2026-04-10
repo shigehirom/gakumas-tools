@@ -771,8 +771,8 @@ id,name,availableCustomizations,rarity,type,plan,unlockPlv,upgraded,unique,sourc
 770,せーのでぱくっ！+,"103,40",SSR,active,anomaly,1,TRUE,TRUE,support,,FALSE,,do:cost-=4,"do:setStance(strength),do:fullPowerCharge+=3,do:score+=3,do:score+=3;if:isPreservation,do:drawCard,do:drawCard",1,
 771,せのびの魔法,,SSR,active,logic,76,FALSE,TRUE,produce,,FALSE,,do:stamina-=3,"at:startOfTurn,do:genki+=2,limit:3;at:turn,delay:3,do:score+=genki*1.8,limit:1",1,
 772,せのびの魔法+,"27,22",SSR,active,logic,76,TRUE,TRUE,produce,,FALSE,,do:stamina-=3,"at:startOfTurn,do:genki+=2,limit:3;at:turn,delay:3,do:score+=genki*2.8,limit:1",1,
-773,エンターテイナー,,SSR,active,anomaly,77,FALSE,TRUE,produce,,FALSE,,do:stamina-=5,"do:setStance(strength),do:score+=10",,"at:stanceChanged,if:isDirectEffect,if:stanceChangedTimes%3==2,target:this,do:g.scoreTimes+=1,do:g.typedCost+=1,limit:2"
-774,エンターテイナー+,,SSR,active,anomaly,77,TRUE,TRUE,produce,,FALSE,,do:stamina-=5,"do:setStance(strength),do:score+=12",,"at:stanceChanged,if:isDirectEffect,if:stanceChangedTimes%3==2,target:this,do:g.scoreTimes+=1,do:g.typedCost+=1,limit:3"
+773,エンターテイナー,"27,108",SSR,active,anomaly,77,FALSE,TRUE,produce,,TRUE,,do:stamina-=5,"do:setStance(strength),do:score+=10",,"at:stanceChanged,if:isDirectEffect,if:stanceChangedTimes%3==2,target:this,do:g.scoreTimes+=1,do:g.typedCost+=1,limit:2"
+774,エンターテイナー+,"27,108",SSR,active,anomaly,77,TRUE,TRUE,produce,,TRUE,,do:stamina-=5,"do:setStance(strength),do:score+=12",,"at:stanceChanged,if:isDirectEffect,if:stanceChangedTimes%3==2,target:this,do:g.scoreTimes+=1,do:g.typedCost+=1,limit:3"
 775,話題沸騰,,SSR,active,sense,78,FALSE,TRUE,produce,,FALSE,if:goodConditionTurns>=8,do:perfectConditionTurns-=1,"do:goodConditionTurnsMultiplier=2,do:score+=37,do:setScoreBuff(0.3,1)",1,
 776,話題沸騰+,"104,37",SSR,active,sense,78,TRUE,TRUE,produce,,FALSE,if:goodConditionTurns>=8,do:perfectConditionTurns-=1,"do:goodConditionTurnsMultiplier=2.5,do:score+=50,do:setScoreBuff(0.3,1)",1,
 777,びしっとキメ顔,,SSR,active,logic,79,FALSE,TRUE,produce,,FALSE,if:goodImpressionTurns>=10,do:cost-=5,"do:setGoodImpressionTurnsEffectBuff(2,3);at:goodImpressionTurnsIncreased,if:isDirectEffect,do:score+=goodImpressionTurns,ttl:3",1,
