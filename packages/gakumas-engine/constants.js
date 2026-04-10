@@ -142,6 +142,7 @@ export const ALL_FIELDS = [
   "stamina",
   "consumedStamina",
   "genki",
+  "consumedGenki",
   "score",
 
   // Turns
@@ -168,6 +169,7 @@ export const ALL_FIELDS = [
   "scoreDebuffs",
   "goodImpressionTurnsBuffs",
   "goodImpressionTurnsEffectBuffs",
+  "goodImpressionTurnsTimesBuffs",
   "concentrationBuffs",
   "concentrationEffectBuffs",
   "goodConditionTurns",
@@ -224,6 +226,7 @@ export const ALL_FIELDS = [
 
   // Special
   "nullifySelect",
+  "freeCardUses",
 
   // Delta
   "goodImpressionTurnsDelta",
@@ -268,6 +271,7 @@ export const CARD_PILES = [
   S.handCards,
   S.discardedCards,
   S.removedCards,
+  S.heldCards,
 ];
 
 export const COST_FIELDS = [
@@ -418,8 +422,8 @@ export const FIELDS_TO_DIFF = [
     LOGGED_FIELDS.concat(
       INCREASE_TRIGGER_FIELDS,
       DECREASE_TRIGGER_FIELDS,
-      EOT_DECREMENT_FIELDS
-    )
+      EOT_DECREMENT_FIELDS,
+    ),
   ),
 ];
 

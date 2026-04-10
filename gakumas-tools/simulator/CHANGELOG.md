@@ -5,13 +5,44 @@ Dates are based on Eastern Time Zone.
 
 
 
+## 2026-04-10
 
+- Update shujinkou ume
 
+## 2026-04-03
 
+- Add okaimono bag
+- Add suisai shujinkou gacha preview
+
+## 2026-04-01
+
+- Fix removing trouble cards
+- Fix hand card limit on methods that add/move cards to hand
+- Fix doubleCardEffectCards triggering on legend cards, effect of Expert, and add helper variable for direct effect
+- Fix 0 cost and direct effect triggers
+- Fix 0 cost and direct effect triggers
+
+## 2026-03-31
+
+- Add new Legend cards, Asari, and Tokimeki Emotion preview
+
+## 2026-03-29
+
+- Add preview of S42
+
+## 2026-03-28
+
+- 3/31 card effect updates
+
+## 2026-03-20
+
+- Add support for good impression times effect"
+- Add support for good impression times effect
 
 ## 2026-03-18
 
 - Add new stages, cards, p-items. Change handling of card counting effects
+- Add preview of wildest flower saki
 
 ## 2026-02-24
 

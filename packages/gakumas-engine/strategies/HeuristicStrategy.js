@@ -124,7 +124,7 @@ export default class HeuristicStrategy extends BaseStrategy {
       (acc, cur) =>
         acc +
         (config.typeMultipliers[cur] * config.stage.turnCounts[cur]) /
-          config.stage.turnCount,
+        config.stage.turnCount,
       0
     );
   }
@@ -289,6 +289,15 @@ export default class HeuristicStrategy extends BaseStrategy {
       state[S.goodImpressionTurns] *
       this.goodImpressionTurnsMultiplier;
 
+    // Good impression turns times buffs
+    score +=
+      state[S.goodImpressionTurnsTimesBuffs].reduce(
+        (acc, cur) => acc + cur.amount * (cur.turns || state[S.turnsRemaining]),
+        0
+      ) *
+      state[S.goodImpressionTurns] *
+      this.goodImpressionTurnsMultiplier;
+
     // Good condition turns buffs
     score +=
       state[S.goodConditionTurnsBuffs].reduce(
@@ -386,6 +395,10 @@ export default class HeuristicStrategy extends BaseStrategy {
   }
 
   pickCardsToMoveToHand(state, cards, num = 1) {
+    return this.pickCardsToHold(state, cards, num);
+  }
+
+  pickCardsToUseFree(state, cards, num = 1) {
     return this.pickCardsToHold(state, cards, num);
   }
 }
