@@ -8,6 +8,7 @@ const Handlebars = importHandlebars;
 
 export function registerRehearsalCommand(cli: any) {
     cli.command('rehearsal <runs> [...decks]', 'Rehearsal mode to predict total score for 3 decks')
+        .option('--debug', 'Enable engine logging')
         .action(async (runs: string, decks: string[], options?: any) => {
             if (!process.env.MONGODB_URI) {
                 console.error('Error: MONGODB_URI is not set in environment (check .env.local)');
@@ -20,6 +21,9 @@ export function registerRehearsalCommand(cli: any) {
             }
 
             const args = [process.env.MONGODB_URI!, runs, ...decks];
+            if (options.debug) {
+                args.push('--debug');
+            }
 
             try {
                 const templatePath = path.join(__dirname, '../templates/rehearsal.hbs');

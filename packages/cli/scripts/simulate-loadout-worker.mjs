@@ -4,7 +4,7 @@ import { IdolConfig, StageConfig, IdolStageConfig, StageEngine, StagePlayer, STR
 
 
 // Receive static data (stage info) from workerData
-const { contestStage, numRuns } = workerData;
+const { contestStage, numRuns, debug } = workerData;
 const stageConfig = new StageConfig(contestStage);
 
 parentPort.on('message', async (task) => {
@@ -35,9 +35,13 @@ parentPort.on('message', async (task) => {
         const config = new IdolStageConfig(idolConfig, stageConfig);
 
         const runScores = [];
+        let lastReportedRun = 0;
 
         for (let i = 0; i < numRuns; i++) {
             const engine = new StageEngine(config);
+            if (!debug) {
+                engine.logger.disable();
+            }
             const StrategyClass = STRATEGIES["HeuristicStrategy"];
             const strategy = new StrategyClass(engine);
             engine.strategy = strategy;
@@ -47,7 +51,9 @@ parentPort.on('message', async (task) => {
                 const result = await player.play();
                 runScores.push(result.score);
                 if ((i + 1) % 10 === 0 || i + 1 === numRuns) {
-                    parentPort.postMessage({ type: 'progress', loadoutId: loadoutData.id, currentRun: i + 1, totalRuns: numRuns });
+                    const count = (i + 1) - lastReportedRun;
+                    parentPort.postMessage({ type: 'progress', loadoutId: loadoutData.id, currentRun: i + 1, totalRuns: numRuns, count });
+                    lastReportedRun = i + 1;
                 }
             } catch (e) {
                 console.error("Simulation error:", e);

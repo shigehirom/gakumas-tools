@@ -3,12 +3,14 @@ import { Stages, PIdols, SkillCards, Idols, PItems, Customizations } from "gakum
 import { Worker } from "worker_threads";
 import path from "path";
 import { fileURLToPath } from "url";
+import os from "os";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const MONGODB_URI = process.argv[2];
 const runsArg = parseInt(process.argv[3], 10) || 100;
+const isDebug = process.argv.includes('--debug');
 const deckNames = process.argv.slice(4).filter(n => n && !n.startsWith('--'));
 
 if (!MONGODB_URI) {
@@ -162,83 +164,122 @@ async function run() {
     const seasonStr = contestStage.season.toString();
     const stageStr = contestStage.stage.toString();
 
-    // Run simulation
-    const worker = new Worker(path.join(__dirname, 'simulate-loadout-worker.mjs'), {
-        workerData: {
-            contestStage,
-            numRuns: runsArg
-        }
-    });
+    // Parallel execution setup
+    const cpuCount = os.cpus().length;
+    const workerCount = Math.max(1, cpuCount);
+    const runsPerWorker = Math.floor(runsArg / workerCount);
+    const extraRuns = runsArg % workerCount;
 
-    let currentDeckIndex = 0;
+    const workerResults = [];
+    let completedWorkers = 0;
+    let totalCompletedRuns = 0;
 
-    worker.on('message', (msg) => {
-        if (msg.type === 'progress') {
-            const { loadoutId, currentRun, totalRuns } = msg;
-            // Clear current line and show progress
-            process.stderr.write(`\r- 予測シミュレーション実行中 (${loadoutId}): ${currentRun}/${totalRuns} (${Math.round((currentRun / totalRuns) * 100)}%)    `);
-        } else if (msg.type === 'done') {
-            process.stderr.write(`\r- 予測シミュレーション完了!                                  \n`);
-            const results = msg.results;
-
-            // Assign idol name back to result based on loadout.id
-            const finalIdols = results.map((r, index) => {
-                const correspondingLoadout = loadouts.find(l => l.id === r.id) || loadouts[index];
-                return {
-                    id: r.id,
-                    idolName: correspondingLoadout.idolName || r.id,
-                    min: r.min,
-                    score: Math.floor(r.score),
-                    max: r.max,
-                    deckDetails: correspondingLoadout.deckDetails
-                };
+    const createWorker = (numRuns, isLast) => {
+        return new Promise((resolve, reject) => {
+            const worker = new Worker(path.join(__dirname, 'simulate-loadout-worker.mjs'), {
+                workerData: {
+                    contestStage,
+                    numRuns,
+                    debug: isDebug
+                }
             });
 
-            // Helper to calculate score with 1.2x bonus for the highest
-            const calcTotal = (key) => {
-                const sorted = [...finalIdols].sort((a, b) => b[key] - a[key]);
-                let total = 0;
-                if (sorted.length > 0) {
-                    total += sorted[0][key] * 1.2;
-                    for (let i = 1; i < sorted.length; i++) {
-                        total += sorted[i][key];
+            worker.on('message', (msg) => {
+                if (msg.type === 'progress') {
+                    totalCompletedRuns += msg.count || 10;
+                    if (isLast) {
+                        const totalRuns = runsArg * loadouts.length;
+                        process.stderr.write(`\r- 予測シミュレーション実行中: ${Math.min(100, Math.round((totalCompletedRuns / totalRuns) * 100))}%    `);
                     }
+                } else if (msg.type === 'done') {
+                    workerResults.push(msg.results);
+                    resolve();
                 }
-                return Math.floor(total);
-            };
+            });
 
-            const planMap = { "sense": "センス", "logic": "ロジック", "anomaly": "アノマリー" };
-            const planName = planMap[contestStage.plan] || contestStage.plan;
+            worker.on('error', reject);
+            worker.on('exit', (code) => {
+                if (code !== 0) reject(new Error(`Worker stopped with exit code ${code}`));
+            });
 
-            const finalData = {
-                season: seasonStr,
-                stage: stageStr,
-                plan: planName,
-                runs: runsArg,
-                idols: finalIdols,
-                totalScore: calcTotal('score'),
-                totalMin: calcTotal('min'),
-                totalMax: calcTotal('max')
-            };
+            worker.postMessage({ id: 'rehearsal', loadouts });
+        });
+    };
 
-            console.log(JSON.stringify(finalData));
-            process.exit(0);
+    const workerPromises = [];
+    for (let i = 0; i < workerCount; i++) {
+        const workerRuns = runsPerWorker + (i === 0 ? extraRuns : 0);
+        if (workerRuns > 0) {
+            workerPromises.push(createWorker(workerRuns, i === 0));
         }
-    });
+    }
 
-    worker.on('error', (err) => {
-        console.error(err);
+    try {
+        await Promise.all(workerPromises);
+        process.stderr.write(`\r- 予測シミュレーション完了!                                  \n`);
+
+        // Aggregate results from all workers
+        const aggregatedIdols = loadouts.map((loadout, lIdx) => {
+            const loadoutResults = workerResults.map(res => res.find(r => r.id === loadout.id));
+
+            // Combine scores
+            let totalAvg = 0;
+            let totalWeight = 0;
+
+            loadoutResults.forEach((res, wIdx) => {
+                const workerRuns = runsPerWorker + (wIdx === 0 ? extraRuns : 0);
+                totalAvg += res.score * workerRuns;
+                totalWeight += workerRuns;
+            });
+
+            const finalAvg = totalAvg / totalWeight;
+            const finalMin = Math.min(...loadoutResults.map(r => r.min));
+            const finalMax = Math.max(...loadoutResults.map(r => r.max));
+
+            return {
+                id: loadout.id,
+                idolName: loadout.idolName || loadout.id,
+                min: finalMin,
+                score: Math.floor(finalAvg),
+                max: finalMax,
+                deckDetails: loadout.deckDetails
+            };
+        });
+
+        // Helper to calculate score with 1.2x bonus for the highest
+        const calcTotal = (key) => {
+            const sorted = [...aggregatedIdols].sort((a, b) => b[key] - a[key]);
+            let total = 0;
+            if (sorted.length > 0) {
+                total += sorted[0][key] * 1.2;
+                for (let i = 1; i < sorted.length; i++) {
+                    total += sorted[i][key];
+                }
+            }
+            return Math.floor(total);
+        };
+
+        const planMap = { "sense": "センス", "logic": "ロジック", "anomaly": "アノマリー" };
+        const planName = planMap[contestStage.plan] || contestStage.plan;
+
+        const finalData = {
+            season: seasonStr,
+            stage: stageStr,
+            plan: planName,
+            runs: runsArg,
+            idols: aggregatedIdols,
+            totalScore: calcTotal('score'),
+            totalMin: calcTotal('min'),
+            totalMax: calcTotal('max')
+        };
+
+        console.log(JSON.stringify(finalData));
+        process.exit(0);
+
+    } catch (err) {
+        console.error("Simulation failed:", err);
         process.exit(1);
-    });
-
-    worker.on('exit', (code) => {
-        if (code !== 0) {
-            console.error(new Error(`Worker stopped with exit code ${code}`));
-            process.exit(1);
-        }
-    });
-
-    worker.postMessage({ id: 'rehearsal', loadouts });
+    }
 }
 
 run();
