@@ -6,6 +6,7 @@ import Evaluator from "./Evaluator.js";
 import Executor from "./Executor.js";
 import StageLogger from "./StageLogger.js";
 import TurnManager from "./TurnManager.js";
+import Compiler from "./Compiler.js";
 import { deepCopy } from "../utils.js";
 
 export default class StageEngine {
@@ -19,6 +20,11 @@ export default class StageEngine {
     this.turnManager = new TurnManager(this);
     this.evaluator = new Evaluator(this);
     this.executor = new Executor(this);
+    this.compiler = new Compiler(this);
+    this.useJit =
+      typeof process !== "undefined" &&
+      process.env &&
+      process.env.USE_JIT === "1";
   }
 
   getConfig(state) {

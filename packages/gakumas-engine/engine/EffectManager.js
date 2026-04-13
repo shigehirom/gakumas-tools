@@ -69,6 +69,29 @@ export default class EffectManager extends EngineComponent {
       if (!effect.actions && i < effects.length - 1) {
         effect.effects = [effects[++i]];
       }
+
+      // Eager JIT compilation
+      if (this.engine.useJit) {
+        if (effect.conditions) {
+          for (let j = 0; j < effect.conditions.length; j++) {
+            if (!effect.conditions[j].compiled) {
+              effect.conditions[j].compiled = this.engine.compiler.compileCondition(
+                effect.conditions[j]
+              );
+            }
+          }
+        }
+        if (effect.actions) {
+          for (let j = 0; j < effect.actions.length; j++) {
+            if (!effect.actions[j].compiled) {
+              effect.actions[j].compiled = this.engine.compiler.compileAction(
+                effect.actions[j],
+              );
+            }
+          }
+        }
+      }
+
       state[S.effects].push(effect);
     }
   }

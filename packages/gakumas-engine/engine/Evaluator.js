@@ -32,6 +32,11 @@ export default class Evaluator extends EngineComponent {
   }
 
   evaluateCondition(state, condition) {
+    if (this.engine.useJit && condition.compiled) {
+      const result = condition.compiled(state, this.variableResolvers);
+      this.logger.debug("Condition (JIT)", condition, result);
+      return result;
+    }
     const tokens = condition;
     const result = this.evaluateExpression(state, tokens);
     this.logger.debug("Condition", condition, result);

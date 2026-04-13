@@ -302,9 +302,18 @@ export default class CardManager extends EngineComponent {
     }
 
     // Check cost
-    const cost = this.getLines(state, card, "cost")
-      .map((c) => c.actions)
-      .flat();
+    const costLines = this.getLines(state, card, "cost");
+    if (this.engine.useJit) {
+      for (let i = 0; i < costLines.length; i++) {
+        for (let j = 0; j < costLines[i].actions.length; j++) {
+          if (!costLines[i].actions[j].compiled) {
+            costLines[i].actions[j].compiled =
+              this.engine.compiler.compileAction(costLines[i].actions[j]);
+          }
+        }
+      }
+    }
+    const cost = costLines.map((c) => c.actions).flat();
     const previewState = shallowCopy(state);
     previewState[S.phase] = "checkCost";
     for (let i = 0; i < cost.length; i++) {
@@ -337,9 +346,18 @@ export default class CardManager extends EngineComponent {
     let conditionState = shallowCopy(state);
     this.logger.debug("Applying cost", skillCard.cost);
 
-    const cost = this.getLines(state, card, "cost")
-      .map((c) => c.actions)
-      .flat();
+    const costLines = this.getLines(state, card, "cost");
+    if (this.engine.useJit) {
+      for (let i = 0; i < costLines.length; i++) {
+        for (let j = 0; j < costLines[i].actions.length; j++) {
+          if (!costLines[i].actions[j].compiled) {
+            costLines[i].actions[j].compiled =
+              this.engine.compiler.compileAction(costLines[i].actions[j]);
+          }
+        }
+      }
+    }
+    const cost = costLines.map((c) => c.actions).flat();
     const hasStaminaCost = cost.some((action) =>
       ["cost", "stamina"].includes(action[0]),
     );
@@ -387,6 +405,26 @@ export default class CardManager extends EngineComponent {
 
     // Apply card effects
     const effects = this.getLines(state, card, "effects");
+    if (this.engine.useJit) {
+      for (let i = 0; i < effects.length; i++) {
+        if (effects[i].conditions) {
+          for (let j = 0; j < effects[i].conditions.length; j++) {
+            if (!effects[i].conditions[j].compiled) {
+              effects[i].conditions[j].compiled =
+                this.engine.compiler.compileCondition(effects[i].conditions[j]);
+            }
+          }
+        }
+        if (effects[i].actions) {
+          for (let j = 0; j < effects[i].actions.length; j++) {
+            if (!effects[i].actions[j].compiled) {
+              effects[i].actions[j].compiled =
+                this.engine.compiler.compileAction(effects[i].actions[j]);
+            }
+          }
+        }
+      }
+    }
     state[S.phase] = "processCard";
     if (state[S.doubleCardEffectCards] && skillCard.rarity !== "L") {
       state[S.doubleCardEffectCards]--;
