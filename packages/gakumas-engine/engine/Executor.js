@@ -48,12 +48,25 @@ export default class Executor extends EngineComponent {
   }
 
   executeGrowthActions(growth, actions) {
+    if (this.engine.useJit) {
+      for (let i = 0; i < actions.length; i++) {
+        if (!actions[i].compiledGrowth) {
+          actions[i].compiledGrowth = this.engine.compiler.compileGrowthAction(
+            actions[i],
+          );
+        }
+      }
+    }
     for (let i = 0; i < actions.length; i++) {
       this.executeGrowthAction(growth, actions[i]);
     }
   }
 
   executeGrowthAction(growth, action) {
+    if (this.engine.useJit && action.compiledGrowth) {
+      action.compiledGrowth(growth);
+      return;
+    }
     const tokens = action;
 
     // Assignments
@@ -229,6 +242,15 @@ export default class Executor extends EngineComponent {
   }
 
   executeAction(state, action, card) {
+    if (this.engine.useJit && action.compiled) {
+      action.compiled(
+        state,
+        card,
+        this.engine.evaluator.variableResolvers,
+        this
+      );
+      return;
+    }
     let growth = null;
     if (card != null) {
       growth = state[S.cardMap][card].growth;
