@@ -137,6 +137,8 @@ async function run() {
         }
     }
 
+    const supportBonus = options.supportBonus ? parseFloat(options.supportBonus) : (process.env.SUPPORT_BONUS ? parseFloat(process.env.SUPPORT_BONUS) : 0.04);
+
     for (const currentIdolName of idolNames) {
         if (currentIdolName) console.error(`\n========== アイドル: ${currentIdolName} の処理開始 ==========\n`);
 
@@ -187,9 +189,10 @@ async function run() {
                     const deleteQuery = {
                         stageId: contestStage.id,
                         runs: numRuns,
-                        season: season
+                        season: season,
+                        supportBonus: supportBonus
                     };
-                    console.error(`--force 指定: キャッシュを削除します... (Stage ID: ${contestStage.id}, Runs: ${numRuns}, Season: ${season})`);
+                    console.error(`--force 指定: キャッシュを削除します... (Stage ID: ${contestStage.id}, Runs: ${numRuns}, Season: ${season}, Bonus: ${supportBonus})`);
                     const delRes = await simulationResultsCollection.deleteMany(deleteQuery);
                     console.error(`削除完了: ${delRes.deletedCount} 件のキャッシュを削除しました。`);
                 } else {
@@ -198,7 +201,8 @@ async function run() {
                     const query = {
                         stageId: contestStage.id,
                         runs: numRuns,
-                        season: season
+                        season: season,
+                        supportBonus: supportBonus
                     };
                     // If we could restrict by idol, that would be better, but we are cross-combining?
                     // Actually combinations are strictly within `memories` list which is filtered by Idol.
@@ -273,6 +277,7 @@ async function run() {
         console.error(`- 並列実行数: ${workerCount} スレッド`);
         console.error(`- ステージ: シーズン${season} ステージ${stageNumber}`);
         console.error(`- 試行回数: ${numRuns} 回/組`);
+        console.error(`- サポートボーナス: ${(supportBonus * 100).toFixed(2)}%`);
         console.error("- シミュレーション開始... (時間がかかります)");
 
         // Split work
@@ -295,7 +300,8 @@ async function run() {
                 const worker = new Worker(path.join(__dirname, 'worker-boot.mjs'), {
                     workerData: {
                         contestStage,
-                        numRuns
+                        numRuns,
+                        supportBonus
                     },
                     // We don't need to inject execArgv anymore as boot script handles registration
                 });
@@ -348,7 +354,8 @@ async function run() {
                         subHash: res.subHash,
                         stageId: contestStage.id,
                         runs: numRuns,
-                        season: season
+                        season: season,
+                        supportBonus: supportBonus
                     },
                     update: {
                         $set: {
@@ -357,6 +364,7 @@ async function run() {
                             stageId: contestStage.id,
                             runs: numRuns,
                             season: season,
+                            supportBonus: supportBonus,
                             score: res.score,
                             min: res.min,
                             max: res.max,
@@ -396,6 +404,7 @@ async function run() {
                 stageId: contestStage.id,
                 runs: numRuns,
                 season: season,
+                supportBonus: supportBonus,
                 mainHash: { $in: memHashes },
                 subHash: { $in: memHashes }
             };

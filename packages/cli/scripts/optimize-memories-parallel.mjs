@@ -22,7 +22,7 @@ const ALL_IDOL_NAMES = [
     "sumika", "hiro", "sena", "misuzu", "ume", "rinami"
 ];
 
-function calculateMemoryHash(memoryData) {
+export function calculateMemoryHash(memoryData) {
     const parts = [
         memoryData.pIdolId,
         JSON.stringify(memoryData.params),
@@ -38,7 +38,7 @@ function calculateMemoryHash(memoryData) {
  * Sub memories only contribute 20% of params, and their skill cards/customizations.
  * Their pItems and pIdolId are NOT used when they are in the sub slot.
  */
-function calculateSubEffectiveHash(memoryData) {
+export function calculateSubEffectiveHash(memoryData) {
     const parts = [
         JSON.stringify(memoryData.params.map(p => Math.floor((p || 0) * 0.2))),
         JSON.stringify(memoryData.skillCardIds),
@@ -81,9 +81,38 @@ async function run() {
         console.log = () => { };
         // console.error = () => { }; // Keep stderr for debug logs
     }
-    const [seasonStr, stageStr] = args[1].split("-");
-    const season = parseInt(seasonStr, 10);
-    const stageNumber = parseInt(stageStr, 10);
+    // Load Stage
+    const stages = Stages.getAll();
+    const stageArg = args[1];
+    let contestStage;
+
+    if (stageArg.includes("-")) {
+        const [seasonStr, stageStr] = stageArg.split("-");
+        const season = parseInt(seasonStr, 10);
+        const stageNumber = parseInt(stageStr, 10);
+        contestStage = stages.find((s) => s.type == "contest" && s.season == season && s.stage == stageNumber);
+        if (!contestStage) {
+            console.error(`ステージが見つかりません: シーズン${season} ステージ${stageNumber}`);
+            process.exit(1);
+        }
+    } else if (!isNaN(parseInt(stageArg, 10))) {
+        const stageId = parseInt(stageArg, 10);
+        contestStage = stages.find((s) => s.id === stageId);
+        if (!contestStage) {
+            console.error(`ステージが見つかりません: ID ${stageId}`);
+            process.exit(1);
+        }
+    } else {
+        // Try looking by name directly
+        contestStage = stages.find((s) => s.name === stageArg);
+        if (!contestStage) {
+            console.error(`ステージが見つかりません: ${stageArg} (ID, シーズン-ステージ, または名称で指定してください)`);
+            process.exit(1);
+        }
+    }
+
+    const season = contestStage.season;
+    const stageNumber = contestStage.stage;
 
     let numRuns = parseInt(args[2], 10);
 
@@ -120,14 +149,6 @@ async function run() {
         }
     }
 
-    // Load Stage
-    const stages = Stages.getAll();
-    const contestStage = stages.find((s) => s.type == "contest" && s.season == season && s.stage == stageNumber);
-
-    if (!contestStage) {
-        console.error(`ステージが見つかりません: シーズン${season} ステージ${stageNumber}`);
-        process.exit(1);
-    }
 
     // Auto-detect plan from stage definition if not provided
     if (!options.plan && contestStage.plan && contestStage.plan !== 'free') {
@@ -736,8 +757,10 @@ async function run() {
                                     mainMem.data.customizations || [{}, {}, {}, {}, {}, {}],
                                     subMem.data.customizations || [{}, {}, {}, {}, {}, {}]
                                 ],
+                                memory1Name: mainMem.data.name || path.basename(mainMem.filename, ".json"),
+                                memory2Name: subMem.data.name || path.basename(subMem.filename, ".json"),
                                 userId,
-                                createdAt: new Date(),
+                                createdAt: new Date()
                             };
 
                             const query = { name: saveName, userId };

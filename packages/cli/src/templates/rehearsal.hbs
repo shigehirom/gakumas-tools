@@ -10,16 +10,17 @@
 # シーズン {{season}} ステージ{{stage}} ({{plan}})
 {{#each idols}}
 ## {{{idolName}}}【{{{deckDetails.mainTitle}}}】【{{{deckDetails.subTitle}}}】
+## メイン: {{deckDetails.memory1Name}} / サブ: {{deckDetails.memory2Name}}
 ### (Vo, Da, Vi, HP) = ({{deckDetails.params.[0]}}, {{deckDetails.params.[1]}}, {{deckDetails.params.[2]}}, {{deckDetails.params.[3]}})
 ### Pアイテム
 {{#each deckDetails.pItems}}
 - {{{this}}}
 {{/each}}
-### メモリー1
+### メインメモリー ({{deckDetails.memory1Name}})
 {{#each deckDetails.memory1}}
 - {{{this}}}
 {{/each}}
-### メモリー2
+### サブメモリー ({{deckDetails.memory2Name}})
 {{#each deckDetails.memory2}}
 - {{{this}}}
 {{/each}}

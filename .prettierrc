@@ -1,0 +1,15 @@
+{
+  "printWidth": 120,
+  "singleQuote": false,
+  "trailingComma": "none",
+  "tabWidth": 2,
+  "semi": true,
+  "overrides": [
+    {
+      "files": "*.hbs",
+      "options": {
+        "printWidth": 999
+      }
+    }
+  ]
+}

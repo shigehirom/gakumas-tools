@@ -106,3 +106,4 @@ id,alias,name,type,price,max,forceInitialHand,conditions,cost,effects,limit,grow
 66,scoreByGoodImpressionTurns3,好印象分パラメータ+,score,"40,40,70",3,,,,,,"level:1,at:prestage,target:this,do:g.scoreByGoodImpressionTurns+=0.35;level:2,at:prestage,target:this,do:g.scoreByGoodImpressionTurns+=0.7;level:3,at:prestage,target:this,do:g.scoreByGoodImpressionTurns+=1.5"
 7,scoreByGoodImpressionTurnsAdd1,好印象分パラメータ追加,score,70,1,,,,do:score+=goodImpressionTurns*0.6,,
 107,ichibanTakaiHoshiGrowth1,成長変更,effect,100,1,,,,,,"line:1,at:afterCardUsed,if:cardEffects&strength,target:this,do:g.score+=15,do:g.scoreTimes+=1,limit:2"
+108,score1_24,パラメータ+,score,70,1,,,,,,"at:prestage,target:this,do:g.score+=24"

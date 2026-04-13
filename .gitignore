@@ -1,21 +1,21 @@
 .DS_Store
 
 # Yarn
-.yarn/*
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/sdks
-!.yarn/versions
+**/.yarn/
+# !.yarn/patches
+# !.yarn/plugins
+# !.yarn/releases
+# !.yarn/sdks
+# !.yarn/versions
+
 
 # dependencies
 /node_modules
 /.pnp
 .pnp.*
 
-# yarn berry cache (always ignore to prevent large commits)
-# documentation here: https://yarnpkg.com/features/zero-installs
-!.yarn/cache
+# yarn berry cache
+.yarn/cache
 #.pnp.*
 
 # Python
@@ -62,3 +62,4 @@ tokens.json
 
 # Other Local Secret/Data Files
 appliance_id.json
+local/export/md/missing_icons.md

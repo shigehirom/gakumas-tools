@@ -2,8 +2,9 @@ import { spawn } from 'child_process';
 import path from 'path';
 import { GlobalCapture } from './capture';
 
-export const GAKUMAS_TOOLS_ROOT = path.resolve(process.cwd(), '../../gakumas-tools');
-export const LOCAL_SCRIPTS_DIR = path.resolve(__dirname, '../../scripts');
+const CLI_ROOT = path.resolve(__dirname, '../..');
+export const GAKUMAS_TOOLS_ROOT = path.resolve(CLI_ROOT, '../../gakumas-tools');
+export const LOCAL_SCRIPTS_DIR = path.resolve(CLI_ROOT, 'scripts');
 
 export interface RunScriptOptions {
     cwd?: string;

@@ -3,7 +3,7 @@ import { useTranslations } from "next-intl";
 import SimulatorLogs from "@/components/SimulatorLogs";
 import SimulatorResultGraphs from "./SimulatorResultGraphs.js";
 import styles from "./SimulatorResult.module.scss";
-import KofiAd from "../KofiAd.js";
+import KofiAd from "../KofiAd";
 
 function SimulatorResult({ data, idolId, plan }) {
   const t = useTranslations("SimulatorResult");
