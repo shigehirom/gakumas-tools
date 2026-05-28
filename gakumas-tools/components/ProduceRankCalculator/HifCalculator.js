@@ -9,10 +9,10 @@ import ProduceRankResult from "@/components/ProduceRankResult";
 import Table from "@/components/Table";
 import {
   calculateTargetRound2Scores,
-  calculateTotalEvaluation,
-  getEffectiveRound2StarGain,
+  calculateTotalRating,
+  getBoostedRound2StarGain,
   getRank,
-  MAX_PARAM,
+  MAX_PARAMS,
   MAX_PRE_ROUND2_STAR,
   MAX_ROUND1_SCORE,
   MAX_ROUND2_SCORE,
@@ -48,7 +48,7 @@ function HifCalculator() {
 
   const totalScore = round1Score + (round2Score || 0);
 
-  const effectiveStarGain = getEffectiveRound2StarGain(round2Score || 0);
+  const boostedStarGain = getBoostedRound2StarGain(round2Score || 0);
 
   const allEmpty =
     !params.some((p) => p) &&
@@ -56,15 +56,15 @@ function HifCalculator() {
     !leftScore &&
     !round2Score;
 
-  const totalEvaluation = allEmpty
+  const totalRating = allEmpty
     ? 0
-    : calculateTotalEvaluation({
+    : calculateTotalRating({
         params,
         preRound2Star: preRound2Star || 0,
         round1Score,
         round2Score: round2Score || 0,
       });
-  const rank = allEmpty ? "?" : getRank(totalEvaluation) || "?";
+  const rank = allEmpty ? "?" : getRank(totalRating) || "?";
 
   const targetRows = useMemo(
     () =>
@@ -73,16 +73,10 @@ function HifCalculator() {
         preRound2Star: preRound2Star || 0,
         round1Score,
         currentRound2Score: round2Score || 0,
-      }).map(({ rank: r, score }) => {
-        let cell;
-        if (score === "achieved") cell = "—";
-        else if (score === "impossible") cell = "∞";
-        else cell = score.toLocaleString();
-        return [
-          `${r} (${TARGET_RATING_BY_RANK[r].toLocaleString()})`,
-          cell,
-        ];
-      }),
+      }).map(({ rank: r, score }) => [
+        `${r} (${TARGET_RATING_BY_RANK[r].toLocaleString()})`,
+        score == null ? "∞" : score.toLocaleString(),
+      ]),
     [params, preRound2Star, round1Score, round2Score],
   );
 
@@ -103,7 +97,7 @@ function HifCalculator() {
             <label>{t("parameters")}</label>
             <ParametersInput
               parameters={params}
-              max={MAX_PARAM}
+              max={MAX_PARAMS}
               onChange={setParams}
             />
           </div>
@@ -156,14 +150,14 @@ function HifCalculator() {
               max={MAX_ROUND2_SCORE}
             />
             <div className={styles.hint}>
-              {t("hifRound2StarGain", { value: effectiveStarGain })}
+              {t("hifRound2StarGain", { value: boostedStarGain })}
             </div>
           </div>
         </div>
       </Panel>
 
       <Panel label={t("produceRank")} className={styles.resultPanel}>
-        <ProduceRankResult rating={totalEvaluation} rank={rank} />
+        <ProduceRankResult rating={totalRating} rank={rank} />
 
         <label>{t("hifTargetRound2Scores")}</label>
         <Table headers={TABLE_HEADERS} rows={targetRows} />

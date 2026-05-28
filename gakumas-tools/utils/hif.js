@@ -2,7 +2,7 @@ import { TARGET_RATING_BY_RANK, getRank } from "@/utils/produceRank";
 
 export { TARGET_RATING_BY_RANK, getRank };
 
-export const MAX_PARAM = 3200;
+export const MAX_PARAMS = 3200;
 export const MAX_PRE_ROUND2_STAR = 1110;
 export const MAX_ROUND1_SCORE = 1680000;
 export const MAX_ROUND2_SCORE = 2400000;
@@ -10,8 +10,8 @@ export const MAX_TOTAL_SCORE = MAX_ROUND1_SCORE + MAX_ROUND2_SCORE;
 
 export const STAT_MULTIPLIER = 2;
 export const STAR_MULTIPLIER = 7.5;
-export const ROUND2_STAR_GAIN_MULTIPLIER = 1.5;
-export const EVAL_CONSTANT = -2000;
+export const ROUND2_STAR_GAIN_BOOST = 1.5;
+export const RATING_OFFSET = -2000;
 
 const HIF_RANKS = [
   "S5",
@@ -27,73 +27,97 @@ const HIF_RANKS = [
   "A",
 ];
 
-export function getRound1Eval(score) {
-  const adjusted = Math.floor((score || 0) / 1.2);
-  let res = 0;
-  if (adjusted <= 300000) res = 0;
-  else if (adjusted <= 700000) res = adjusted * 0.01;
-  else if (adjusted <= 1000000) res = 4000 + (adjusted - 700000) * 0.003;
-  else if (adjusted <= 1200000) res = 4900 + (adjusted - 1000000) * 0.002;
-  else if (adjusted <= 1400000) res = 5300 + (adjusted - 1200000) * 0.001;
-  else res = 5500;
-  return Math.floor(res);
+// Each regime: { threshold, base, multiplier }
+// piecewise output = base + (value - prevThreshold) * multiplier for the
+// first regime whose threshold >= value. (prevThreshold = 0 for the first.)
+const ROUND1_REGIMES = [
+  { threshold: 300000, base: 0, multiplier: 0 },
+  { threshold: 700000, base: 0, multiplier: 0.01 },
+  { threshold: 1000000, base: 4000, multiplier: 0.003 },
+  { threshold: 1200000, base: 4900, multiplier: 0.002 },
+  { threshold: 1400000, base: 5300, multiplier: 0.001 },
+  { threshold: Infinity, base: 5500, multiplier: 0 },
+];
+
+const ROUND2_REGIMES = [
+  { threshold: 600000, base: 0, multiplier: 0 },
+  { threshold: 900000, base: 0, multiplier: 0.004 },
+  { threshold: 1500000, base: 1200, multiplier: 0.008 },
+  { threshold: 2000000, base: 6000, multiplier: 0.002 },
+  { threshold: 2400000, base: 7000, multiplier: 0.001 },
+  { threshold: Infinity, base: 7400, multiplier: 0 },
+];
+
+const STAR_GAIN_REGIMES = [
+  { threshold: 400000, base: 0, multiplier: 0.0001875 },
+  { threshold: 600000, base: 75, multiplier: 0.000225 },
+  { threshold: 1000000, base: 120, multiplier: 0.000075 },
+  { threshold: Infinity, base: 150, multiplier: 0 },
+];
+
+function piecewise(value, regimes) {
+  let prevThreshold = 0;
+  for (const { threshold, base, multiplier } of regimes) {
+    if (value <= threshold) return base + (value - prevThreshold) * multiplier;
+    prevThreshold = threshold;
+  }
+  return 0;
 }
 
-export function getRound2Eval(score) {
-  const s = score || 0;
-  let res = 0;
-  if (s <= 600000) res = 0;
-  else if (s <= 900000) res = (s - 600000) * 0.004;
-  else if (s <= 1500000) res = 1200 + (s - 900000) * 0.008;
-  else if (s <= 2000000) res = 6000 + (s - 1500000) * 0.002;
-  else if (s <= 2400000) res = 7000 + (s - 2000000) * 0.001;
-  else res = 7400;
-  return Math.floor(res);
+function clampToRange(value, max) {
+  return Math.min(max, Math.max(0, value || 0));
+}
+
+export function getRound1Rating(round1Score) {
+  const adjustedScore = Math.floor((round1Score || 0) / 1.2);
+  return Math.floor(piecewise(adjustedScore, ROUND1_REGIMES));
+}
+
+export function getRound2Rating(round2Score) {
+  return Math.floor(piecewise(round2Score || 0, ROUND2_REGIMES));
 }
 
 export function getStarGainFromRound2(round2Score) {
-  const s = round2Score || 0;
-  let value;
-  if (s <= 400000) value = s * 0.0001875;
-  else if (s <= 600000) value = 75 + (s - 400000) * 0.000225;
-  else if (s <= 1000000) value = 120 + (s - 600000) * 0.000075;
-  else value = 150;
-  return Math.ceil(value);
+  return Math.ceil(piecewise(round2Score || 0, STAR_GAIN_REGIMES));
 }
 
-export function getEffectiveRound2StarGain(round2Score) {
-  return Math.floor(getStarGainFromRound2(round2Score) * ROUND2_STAR_GAIN_MULTIPLIER);
-}
-
-function cap(v, max) {
-  return Math.min(max, Math.max(0, v || 0));
+export function getBoostedRound2StarGain(round2Score) {
+  return Math.floor(
+    getStarGainFromRound2(round2Score) * ROUND2_STAR_GAIN_BOOST,
+  );
 }
 
 export function calculateTotalStats(params) {
-  return params.reduce((acc, cur) => acc + cap(cur, MAX_PARAM), 0);
+  return params.reduce((sum, p) => sum + clampToRange(p, MAX_PARAMS), 0);
 }
 
-export function calculateStatStarPart(totalStats, preRound2Star, round2Score) {
-  const round2StarGain = getEffectiveRound2StarGain(round2Score);
-  const star = cap(preRound2Star, MAX_PRE_ROUND2_STAR);
-  return Math.floor(totalStats * STAT_MULTIPLIER + (round2StarGain + star) * STAR_MULTIPLIER);
+export function calculateParamStarRating(
+  totalStats,
+  preRound2Star,
+  round2Score,
+) {
+  const boostedStarGain = getBoostedRound2StarGain(round2Score);
+  const star = clampToRange(preRound2Star, MAX_PRE_ROUND2_STAR);
+  return Math.floor(
+    totalStats * STAT_MULTIPLIER + (boostedStarGain + star) * STAR_MULTIPLIER,
+  );
 }
 
-export function calculateTotalEvaluation({
+export function calculateTotalRating({
   params,
   preRound2Star,
   round1Score,
   round2Score,
 }) {
   const totalStats = calculateTotalStats(params);
-  const statStarPart = calculateStatStarPart(
+  const paramStarRating = calculateParamStarRating(
     totalStats,
     preRound2Star,
     round2Score,
   );
-  const r1 = getRound1Eval(round1Score);
-  const r2 = getRound2Eval(round2Score);
-  return statStarPart + r1 + r2 + EVAL_CONSTANT;
+  const round1Rating = getRound1Rating(round1Score);
+  const round2Rating = getRound2Rating(round2Score);
+  return paramStarRating + round1Rating + round2Rating + RATING_OFFSET;
 }
 
 export function calculateTargetRound2Scores({
@@ -103,35 +127,40 @@ export function calculateTargetRound2Scores({
   currentRound2Score,
 }) {
   const totalStats = calculateTotalStats(params);
-  const r1 = getRound1Eval(round1Score);
+  const round1Rating = getRound1Rating(round1Score);
 
-  const evalAtRound2 = (r2Score) => {
-    const statStarPart = calculateStatStarPart(
+  const ratingAtRound2 = (round2Score) => {
+    const paramStarRating = calculateParamStarRating(
       totalStats,
       preRound2Star,
-      r2Score,
+      round2Score,
     );
-    return statStarPart + r1 + getRound2Eval(r2Score) + EVAL_CONSTANT;
+    return (
+      paramStarRating +
+      round1Rating +
+      getRound2Rating(round2Score) +
+      RATING_OFFSET
+    );
   };
 
-  const currentEval = evalAtRound2(currentRound2Score || 0);
+  const currentRating = ratingAtRound2(currentRound2Score || 0);
 
   return HIF_RANKS.map((rank) => {
-    const target = TARGET_RATING_BY_RANK[rank];
-    if (currentEval >= target) return { rank, score: "achieved" };
+    const targetRating = TARGET_RATING_BY_RANK[rank];
+    if (currentRating >= targetRating) return { rank, score: 0 };
 
     let lo = 0;
     let hi = MAX_ROUND2_SCORE;
-    let ans = -1;
+    let requiredScore = null;
     while (lo <= hi) {
       const mid = Math.floor((lo + hi) / 2);
-      if (evalAtRound2(mid) >= target) {
-        ans = mid;
+      if (ratingAtRound2(mid) >= targetRating) {
+        requiredScore = mid;
         hi = mid - 1;
       } else {
         lo = mid + 1;
       }
     }
-    return { rank, score: ans === -1 ? "impossible" : ans };
+    return { rank, score: requiredScore };
   });
 }
