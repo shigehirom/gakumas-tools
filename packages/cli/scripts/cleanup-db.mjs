@@ -69,7 +69,7 @@ async function run() {
             { name: "simulation_results", collection: db.collection("simulation_results") }
         ];
 
-        const query = { supportBonus: { $lt: normalizedTarget } };
+        const query = { supportBonus: { $lt: normalizedTarget, $ne: 0 } };
         let totalToDelete = 0;
         const counts = {};
 

@@ -14,7 +14,7 @@ export default function getImages(entity, idolId = 6) {
         details: `${GK_IMG_BASE_URL}/p_drinks/details/${entity.id}.webp`,
       };
     case "pIdol":
-      return { icon: `${GK_IMG_BASE_URL}/p_idols/${entity.id}.webp` };
+      return { icon: `/images/p_idols/${entity.id}.png` };
     case "pItem":
       return {
         icon: `${GK_IMG_BASE_URL}/p_items/icons/${entity.id}.webp`,
@@ -39,8 +39,8 @@ export default function getImages(entity, idolId = 6) {
 
 export function isGkImgUrl(src) {
   return (
-    !!GK_IMG_BASE_URL &&
     typeof src == "string" &&
-    src.startsWith(GK_IMG_BASE_URL)
+    ((!!GK_IMG_BASE_URL && src.startsWith(GK_IMG_BASE_URL)) ||
+      src.startsWith("/images/p_idols/"))
   );
 }

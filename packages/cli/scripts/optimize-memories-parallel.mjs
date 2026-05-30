@@ -392,11 +392,13 @@ async function run() {
                 );
 
                 if (options.force) {
+                    const checkRuns = options.step ? Math.max(1, Math.floor(numRuns / 10)) : numRuns;
+                    const checkBonus = options.step ? 0.0 : supportBonus;
                     const deleteQuery = {
                         stageId: contestStage.id,
-                        runs: numRuns,
+                        runs: checkRuns,
                         season: season,
-                        supportBonus: { $gte: supportBonus - 0.0001, $lte: supportBonus + 0.0001 }
+                        supportBonus: { $gte: checkBonus - 0.0001, $lte: checkBonus + 0.0001 }
                     };
                     if (allowedHashPairs) {
                         deleteQuery.$or = allowedHashPairs.map(p => ({ mainHash: p.mainHash, subHash: p.subHash }));
@@ -408,7 +410,7 @@ async function run() {
                         });
                         console.error(`--force 指定 (部分): 指定された ${allowedHashes.size} 組のキャッシュを削除します...`);
                     } else {
-                        console.error(`--force 指定: キャッシュを削除します... (Stage ID: ${contestStage.id}, Runs: ${numRuns}, Season: ${season}, Bonus: ${supportBonus})`);
+                        console.error(`--force 指定: キャッシュを削除します... (Stage ID: ${contestStage.id}, Runs: ${checkRuns}, Season: ${season}, Bonus: ${checkBonus})`);
                     }
                     const delRes = await simulationResultsCollection.deleteMany(deleteQuery);
                     console.error(`削除完了: ${delRes.deletedCount} 件のキャッシュを削除しました。`);
@@ -444,11 +446,12 @@ async function run() {
         if (useCache && simulationResultsCollection && !options.force) {
             const memHashes = memories.map(m => m.hash);
             const checkRuns = options.step ? Math.max(1, Math.floor(numRuns / 10)) : numRuns;
+            const checkBonus = options.step ? 0.0 : supportBonus;
             const query = {
                 stageId: contestStage.id,
                 runs: { $gte: checkRuns },
                 season: season,
-                supportBonus: { $gte: supportBonus - 0.0001, $lte: supportBonus + 0.0001 },
+                supportBonus: { $gte: checkBonus - 0.0001, $lte: checkBonus + 0.0001 },
                 mainHash: { $in: memHashes },
                 subHash: { $in: memHashes }
             };
@@ -495,10 +498,10 @@ async function run() {
         if (options.step) {
             console.error(`\n[ステップ実行] フェーズ1: スクリーニング (${Math.max(1, Math.floor(numRuns / 10))} 試行)...`);
             const p1Runs = Math.max(1, Math.floor(numRuns / 10));
-            const newPhase1Results = await executeSimulation(contestStage, p1Runs, supportBonus, memories, workerCount, options, allowedHashes, skipHashes);
+            const newPhase1Results = await executeSimulation(contestStage, p1Runs, 0.0, memories, workerCount, options, allowedHashes, skipHashes);
             
-            // Phase 1の結果をキャッシュに保存 (新規分のみ)
-            await saveResultsToCache(newPhase1Results, p1Runs, contestStage.id, season, supportBonus, useCache, simulationResultsCollection);
+            // Phase 1の結果をキャッシュに保存 (新規分のみ, supportBonus = 0.0)
+            await saveResultsToCache(newPhase1Results, p1Runs, contestStage.id, season, 0.0, useCache, simulationResultsCollection);
 
             // キャッシュ分と新規分を統合して Top 5 を選出
             phase1Results = [...newPhase1Results, ...cachedPhase1Results];
@@ -519,8 +522,7 @@ async function run() {
             const p2Results = await executeSimulation(contestStage, numRuns, supportBonus, memories, workerCount, p2Options, new Set(p2FilterHashes), null);
             allResults.push(...p2Results);
             
-            // Phase 2の結果もキャッシュに保存
-            await saveResultsToCache(p2Results, numRuns, contestStage.id, season, supportBonus, useCache, simulationResultsCollection);
+            // Phase 2の結果はキャッシュに保存しない
 
             tournament_metadata = {
                 phase1Runs: p1Runs,
@@ -537,87 +539,80 @@ async function run() {
 
         // Merge with Cached Results for Display
         if (useCache && simulationResultsCollection) {
-            // Fetch ALL results for this set (cache + new)
-            // Re-query simply or assume we have everything?
-            // We only skipped ones that match (mainHash, subHash) from `memories`.
-            // So we should construct the list of relevant hashes to fetch?
-            // Or just fetch all for this stage/runs again? (Might be large if many idols)
-            // Better: We know which ones we skipped.
+            if (!options.step) {
+                // Fetch ALL results for this set (cache + new)
+                // Re-query simply or assume we have everything?
+                // We only skipped ones that match (mainHash, subHash) from `memories`.
+                // So we should construct the list of relevant hashes to fetch?
+                // Or just fetch all for this stage/runs again? (Might be large if many idols)
+                // Better: We know which ones we skipped.
 
-            // To be safe and simple: Fetch all results where `mainHash` IN (memories.hashes) AND `subHash` IN (memories.hashes)
-            const memHashes = memories.map(m => m.hash);
-            const finalQuery = {
-                stageId: contestStage.id,
-                runs: { $gte: numRuns },
-                season: season,
-                supportBonus: { $gte: supportBonus - 0.0001, $lte: supportBonus + 0.0001 },
-                mainHash: { $in: memHashes },
-                subHash: { $in: memHashes }
-            };
+                // To be safe and simple: Fetch all results where `mainHash` IN (memories.hashes) AND `subHash` IN (memories.hashes)
+                const memHashes = memories.map(m => m.hash);
+                const finalQuery = {
+                    stageId: contestStage.id,
+                    runs: { $gte: numRuns },
+                    season: season,
+                    supportBonus: { $gte: supportBonus - 0.0001, $lte: supportBonus + 0.0001 },
+                    mainHash: { $in: memHashes },
+                    subHash: { $in: memHashes }
+                };
 
-            try {
-                const cachedResultsRaw = await simulationResultsCollection.find(finalQuery).sort({ runs: -1 }).toArray();
+                try {
+                    const cachedResultsRaw = await simulationResultsCollection.find(finalQuery).sort({ runs: -1 }).toArray();
 
-                // Deduplicate by (mainHash, subHash) keeping the highest runs
-                const seen = new Set();
-                const cachedMapped = [];
-                for (const r of cachedResultsRaw) {
-                    const key = `${r.mainHash}_${r.subHash}`;
-                    if (!seen.has(key)) {
-                        seen.add(key);
-                        cachedMapped.push({
-                            mainFilename: r.mainFilename,
-                            mainName: r.mainName,
-                            subFilename: r.subFilename,
-                            subName: r.subName,
-                            score: r.score,
-                            min: r.min,
-                            max: r.max,
-                            median: r.median,
-                            q1: r.q1,
-                            q3: r.q3,
-                            mainHash: r.mainHash,
-                            subHash: r.subHash,
-                            stats: r.stats
-                        });
+                    // Deduplicate by (mainHash, subHash) keeping the highest runs
+                    const seen = new Set();
+                    const cachedMapped = [];
+                    for (const r of cachedResultsRaw) {
+                        const key = `${r.mainHash}_${r.subHash}`;
+                        if (!seen.has(key)) {
+                            seen.add(key);
+                            cachedMapped.push({
+                                mainFilename: r.mainFilename,
+                                mainName: r.mainName,
+                                subFilename: r.subFilename,
+                                subName: r.subName,
+                                score: r.score,
+                                min: r.min,
+                                max: r.max,
+                                median: r.median,
+                                q1: r.q1,
+                                q3: r.q3,
+                                mainHash: r.mainHash,
+                                subHash: r.subHash,
+                                stats: r.stats
+                            });
+                        }
                     }
-                }
 
-                // Deduplicate?
-                // `allResults` are definitely new and unique.
-                // `cachedResults` might include everything if we queried broad?
-                // Actually `allResults` are NOT in DB yet when we query? 
-                // Wait, I saved them just above.
-                // So `cachedResults` SHOULD contain `allResults` too now.
+                    // Deduplicate?
+                    // `allResults` are definitely new and unique.
+                    // `cachedResults` might include everything if we queried broad?
+                    // Actually `allResults` are NOT in DB yet when we query? 
+                    // Wait, I saved them just above.
+                    // So `cachedResults` SHOULD contain `allResults` too now.
 
-                // Let's use `cachedMapped` to supplement allResults
-                // We prioritize newly calculated results in `allResults`
-                const seenKeys = new Set(allResults.map(r => `${r.mainHash}_${r.subHash}`));
-                for (const r of cachedMapped) {
-                    const key = `${r.mainHash}_${r.subHash}`;
-                    if (!seenKeys.has(key)) {
-                        allResults.push(r);
+                    // Let's use `cachedMapped` to supplement allResults
+                    // We prioritize newly calculated results in `allResults`
+                    const seenKeys = new Set(allResults.map(r => `${r.mainHash}_${r.subHash}`));
+                    for (const r of cachedMapped) {
+                        const key = `${r.mainHash}_${r.subHash}`;
+                        if (!seenKeys.has(key)) {
+                            allResults.push(r);
+                        }
                     }
+                } catch (e) {
+                    console.error("Error fetching combined results:", e);
                 }
+            }
 
-                // Rehydrate meta for all results
-                for (const res of allResults) {
-                    const mem = memories.find(m => m.hash === res.mainHash); // hash check is safer than filename if we want robust
-                    // Or filename? Filename should be unique per run.
-                    if (mem) {
-                        res.meta = mem.data.meta || {};
-                        // Actually `main.meta` in worker was `main.meta`. 
-                        // `memories` items are `{ filename, data, hash }`.
-                        // `data` has `meta`? No, `data` is the JSON content.
-                        // `loadMemoriesFromDB` returns `data: m`. `m` might have meta?
-                        // `memories` from file: `data: JSON.parse(...)`.
-                        // Currently meta is not strictly used in existing code EXCEPT `synth` option logic.
-                        // `synth` logic checks `options.synth` and uses `memories` array to find `mainMem` and `subMem`.
-                    }
+            // Rehydrate meta for all results
+            for (const res of allResults) {
+                const mem = memories.find(m => m.hash === res.mainHash); // hash check is safer than filename if we want robust
+                if (mem) {
+                    res.meta = mem.data.meta || {};
                 }
-
-            } catch (e) {
-                console.error("Error fetching combined results:", e);
             }
 
             if (mongoClient) await mongoClient.close();

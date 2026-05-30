@@ -66,7 +66,7 @@ async function run() {
         const collection = db.collection("loadouts");
 
         // Find documents with supportBonus < normalizedTarget
-        const query = { supportBonus: { $lt: normalizedTarget } };
+        const query = { supportBonus: { $lt: normalizedTarget, $ne: 0 } };
         
         // Count first
         const count = await collection.countDocuments(query);

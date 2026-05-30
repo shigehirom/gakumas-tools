@@ -22,6 +22,10 @@ RUN pnpm install --frozen-lockfile
 COPY ./gakumas-tools ./gakumas-tools
 COPY ./packages ./packages
 
+# Copy local P-idol images to Next.js public directory so they can be served statically
+RUN mkdir -p gakumas-tools/public/images/p_idols && cp packages/gakumas-images/images/pIdols/*.png gakumas-tools/public/images/p_idols/
+
+
 # Development image, run the development server
 FROM base AS dev
 
@@ -56,6 +60,7 @@ RUN adduser --system --uid 1001 nextjs
 # https://nextjs.org/docs/advanced-features/output-file-tracing
 COPY --from=builder --chown=nextjs:nodejs /app/gakumas-tools/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/gakumas-tools/.next/static ./gakumas-tools/.next/static
+COPY --from=builder --chown=nextjs:nodejs /app/gakumas-tools/public ./gakumas-tools/public
 
 RUN mkdir -p gakumas-tools/.next/cache
 RUN chown -R nextjs:nodejs gakumas-tools/.next

@@ -20,3 +20,26 @@ tests/overlays/
 tests/.tesseract-cache/
 AGENTS.md
 packages/cli/.gitignore
+
+# CLI Local Private Configs
+packages/cli/gakumas-tools-e75c877bf46a.json
+packages/cli/appliance_id.json
+
+
+# Deployment and local configurations (TrueNAS)
+deploy.sh
+docker-compose.yml
+scripts/diagnose_docker.sh
+
+# Local diagnostic / test scripts
+check-missing-idols.mjs
+
+# VS Code workspaces
+*.code-workspace
+
+# Temporary files
+tmp/
+local-tools/
+cropped_portraits/
+cropped_portraits.zip
+
