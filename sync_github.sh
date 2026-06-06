@@ -20,10 +20,8 @@ git fetch upstream
 git merge upstream/master -m "Merge upstream updates" || true
 
 echo "================================================="
-echo "3. 旧形式DSLの不一致を防ぐため、公式CSVデータをクリーンに復元します..."
-echo "================================================="
-git checkout origin/master -- packages/gakumas-data/csv/
-
+echo "3. (スキップ) 公式CSVデータはupstreamから取得済みのため復元不要"
+# git checkout origin/master -- packages/gakumas-data/csv/
 echo "================================================="
 echo "4. 同期後のJSONおよびアセットのコンパイル・再生成を実行します..."
 echo "================================================="
