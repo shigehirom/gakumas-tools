@@ -6,6 +6,11 @@ node_modules/
 
 # Python
 __pycache__/
+
+# Gakumas specific temp files
+results/
+scratch/
+[0-9][0-9]-[0-9][0-9]-[0-9][0-9]_*.md
 *.py[cod]
 *$py.class
 .venv/

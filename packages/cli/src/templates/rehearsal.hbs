@@ -1,0 +1,27 @@
+# リハーサル結果: シーズン {{season}} ステージ {{stage}} : 平均合計スコア - {{totalScore}}
+
+| アイドル | 最小 | Q1 | 中央 | Q3 | 最大 | 平均 |
+| :-- | ---: | ---: | ---: | ---: | ---: | ---: |
+{{#each idols}}
+| {{idolName}} | {{min}} | {{q1}} | {{median}} | {{q3}} | {{max}} | {{score}} |
+{{/each}}
+| 合計 | {{totalMin}} | {{totalQ1}} | {{totalMedian}} | {{totalQ3}} | {{totalMax}} | {{totalScore}} |
+
+# シーズン {{season}} ステージ{{stage}} ({{plan}})
+{{#each idols}}
+## {{{idolName}}}【{{{deckDetails.mainTitle}}}】【{{{deckDetails.subTitle}}}】
+### (Vo, Da, Vi, HP) = ({{deckDetails.params.[0]}}, {{deckDetails.params.[1]}}, {{deckDetails.params.[2]}}, {{deckDetails.params.[3]}})
+### Pアイテム
+{{#each deckDetails.pItems}}
+- {{{this}}}
+{{/each}}
+### メモリー1
+{{#each deckDetails.memory1}}
+- {{{this}}}
+{{/each}}
+### メモリー2
+{{#each deckDetails.memory2}}
+- {{{this}}}
+{{/each}}
+
+{{/each}}

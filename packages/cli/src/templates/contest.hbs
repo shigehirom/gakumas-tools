@@ -1,0 +1,52 @@
+## {{round best.score}} - {{best.idolName}} 【{{best.mainTitle}}】【{{best.subTitle}}】
+
+{{#if tournament_metadata}}
+### ステップ実行統計
+- **Phase 1 試行数**: {{tournament_metadata.phase1Runs}}
+- **Phase 2 試行数**: {{tournament_metadata.phase2Runs}}
+- **枝刈り（棄却）数**: {{tournament_metadata.prunedCount}}
+{{/if}}
+
+### メモリー
+- メイン: {{best.mainTitle}} ({{best.mainName}})
+- サブ： {{best.subTitle}} ({{best.subName}})
+
+### 組合せベスト
+| # | メイン | サブ | 最小 | Q1 | 中央 | Q3 | 最大 | 平均 |
+| --: | :--- | :--- | ---: | ---: | ---: | ---: | ---: | ---: |
+{{#each topCombinations}}
+| {{inc @index}} | {{mainName}}{{#if mainTitle}}【{{mainTitle}}】{{/if}} | {{subName}}{{#if subTitle}}【{{subTitle}}】{{/if}} | {{min}} | {{round q1}} | {{round median}} | {{round q3}} | {{max}} | {{round score}} |
+{{/each}}
+
+{{#if synthResults}}
+### 改善案
+| | 改善前 | 改善後 | 差分 |
+| ---: | :--- | :--- | ---: |
+{{#each synthResults}}
+| **スコア** | {{round startScore}} | {{round newScore}} | +{{round diff}} |
+| **メモリー** |{{#each result.memories}} {{this}} | {{/each}}
+{{/each}}
+{{/if}}
+
+{{#if isCompare}}
+### メモリー比較分析 (パターン: `{{comparePattern}}`)
+| 平均スコア | メモリー名 | 試行数 |
+| ---: | :--- | ---: |
+{{#each compareResults}}
+| **{{round score}}** | {{mainName}} | {{amount}} |
+{{/each}}
+---
+{{/if}}
+
+{{#if worstCombinations}}
+{{#if isCompare}}
+### その他ワースト（参考）
+{{else}}
+### 組合せワースト
+{{/if}}
+| 平均 | メイン | サブ |
+| ---: | :--- | :--- |
+{{#each worstCombinations}}
+| {{round score}} | {{mainName}} | {{subName}} |
+{{/each}}
+{{/if}}
