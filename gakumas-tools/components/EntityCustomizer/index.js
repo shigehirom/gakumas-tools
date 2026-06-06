@@ -1,1 +1,1 @@
-export { default } from "./EntityCustomizer";
+export { default } from "./EntityCustomizer.js";

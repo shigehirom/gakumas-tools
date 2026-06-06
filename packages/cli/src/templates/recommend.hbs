@@ -1,0 +1,24 @@
+# シーズン {{season}} ステージ{{stage}} ({{plan}})
+{{#each idols}}
+## {{idolNameFull}}
+### Pアイテム
+{{#each pItemsMatched}}
+- {{this}} (手持ち)
+{{/each}}
+{{#each pItemsTarget}}
+- {{this}} (目標)
+{{/each}}
+
+### メモリー1 (実在のメモリー: {{mem1Name}})
+- {{mem1Sig}}
+{{#each mem1Cards}}
+- {{this}}
+{{/each}}
+
+### メモリー2 (今後プロデュースで生成すべき目標)
+- [固有札]
+{{#each mem2Cards}}
+- {{this}}
+{{/each}}
+
+{{/each}}

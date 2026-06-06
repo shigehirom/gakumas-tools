@@ -1,1 +1,1 @@
-export { default } from "./PlanIdolSelects";
+export { default } from "./PlanIdolSelects.js";

@@ -1,6 +1,6 @@
-import { G, S } from "../constants";
-import { deepCopy } from "../utils";
-import BaseStrategy from "./BaseStrategy";
+import { G, S } from "../constants.js";
+import { deepCopy } from "../utils.js";
+import BaseStrategy from "./BaseStrategy.js";
 
 const MAX_DEPTH = 3;
 
@@ -110,15 +110,17 @@ export default class HeuristicStrategy extends BaseStrategy {
       maxScore = this.getStateScore(nextState);
     }
 
-    this.engine.logger.logs[logIndex].data = {
-      handCards: state[S.handCards].map((card) => ({
-        id: state[S.cardMap][card].id,
-        c: state[S.cardMap][card].c11n,
-      })),
-      scores,
-      selectedIndex,
-      state: this.engine.logger.getHandStateForLogging(state),
-    };
+    if (!this.engine.logger.disabled) {
+      this.engine.logger.logs[logIndex].data = {
+        handCards: state[S.handCards].map((card) => ({
+          id: state[S.cardMap][card].id,
+          c: state[S.cardMap][card].c11n,
+        })),
+        scores,
+        selectedIndex,
+        state: this.engine.logger.getHandStateForLogging(state),
+      };
+    }
 
     return { score: maxScore, state: nextState };
   }

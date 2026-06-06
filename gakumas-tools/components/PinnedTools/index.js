@@ -1,1 +1,1 @@
-export { default } from "./PinnedTools";
+export { default } from "./PinnedTools.js";

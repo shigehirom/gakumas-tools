@@ -1,1 +1,1 @@
-export { default } from "./Dex";
+export { default } from "./Dex.js";

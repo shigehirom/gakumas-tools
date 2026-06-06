@@ -1,1 +1,1 @@
-export { default } from "./ParamOrderPicker";
+export { default } from "./ParamOrderPicker.js";

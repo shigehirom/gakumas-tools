@@ -2,7 +2,7 @@
 import { memo } from "react";
 import { List } from "react-window";
 import MemorySummary from "@/components/MemorySummary";
-import MemoriesNudge from "./MemoriesNudge";
+import MemoriesNudge from "./MemoriesNudge.js";
 import styles from "./Memories.module.scss";
 
 function MemoriesList({

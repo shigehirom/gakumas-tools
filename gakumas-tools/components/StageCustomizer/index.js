@@ -1,1 +1,1 @@
-export { default } from "./StageCustomizer";
+export { default } from "./StageCustomizer.js";

@@ -1,1 +1,1 @@
-export { default } from "./ToolHeader";
+export { default } from "./ToolHeader.js";

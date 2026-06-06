@@ -1,1 +1,1 @@
-export { default, OSHI_PROPS } from "./Oshi";
+export { default, OSHI_PROPS } from "./Oshi.js";

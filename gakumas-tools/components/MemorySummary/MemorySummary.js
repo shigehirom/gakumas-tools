@@ -6,7 +6,7 @@ import Image from "@/components/Image";
 import PIdol from "@/components/PIdol";
 import { calculateContestPower } from "@/utils/contestPower";
 import { EntityTypes } from "@/utils/entities";
-import MemorySummaryActionButtons from "./MemorySummaryActionButtons";
+import MemorySummaryActionButtons from "./MemorySummaryActionButtons.js";
 import styles from "./MemorySummary.module.scss";
 
 function MemorySummary({ memory, picking, onClick }) {

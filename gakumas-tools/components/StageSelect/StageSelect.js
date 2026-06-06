@@ -3,8 +3,8 @@ import { useTranslations } from "next-intl";
 import Button from "@/components/Button";
 import LoadoutContext from "@/contexts/LoadoutContext";
 import ModalContext from "@/contexts/ModalContext";
-import StageSelectModal from "./StageSelectModal";
-import StageSummary from "./StageSummary";
+import StageSelectModal from "./StageSelectModal.js";
+import StageSummary from "./StageSummary.js";
 import styles from "./StageSelect.module.scss";
 
 function StageSelect() {

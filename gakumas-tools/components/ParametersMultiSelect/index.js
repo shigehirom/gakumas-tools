@@ -1,1 +1,1 @@
-export { default } from "./ParametersMultiSelect";
+export { default } from "./ParametersMultiSelect.js";

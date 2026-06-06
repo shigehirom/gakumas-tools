@@ -1,0 +1,2 @@
+# Ignore Handlebars templates for CLI to prevent breaking text layouts
+*.hbs

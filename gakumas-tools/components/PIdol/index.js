@@ -1,1 +1,1 @@
-export { default } from "./PIdol";
+export { default } from "./PIdol.js";

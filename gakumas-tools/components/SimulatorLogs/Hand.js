@@ -5,7 +5,7 @@ import { SkillCards } from "gakumas-data";
 import EntityIcon from "@/components/EntityIcon";
 import c from "@/utils/classNames";
 import { EntityTypes } from "@/utils/entities";
-import HandState from "./HandState";
+import HandState from "./HandState.js";
 import styles from "./SimulatorLogs.module.scss";
 
 function Hand({ handCards, scores, selectedIndex, state, idolId, hideScores }) {

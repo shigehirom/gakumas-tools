@@ -1,1 +1,1 @@
-export { default } from "./StagePItems";
+export { default } from "./StagePItems.js";

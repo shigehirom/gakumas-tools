@@ -9,8 +9,8 @@ import {
   compareUnfilteredMemories,
   getSearchScore,
 } from "@/utils/sort";
-import MemoriesHeader from "./MemoriesHeader";
-import MemoriesList from "./MemoriesList";
+import MemoriesHeader from "./MemoriesHeader.js";
+import MemoriesList from "./MemoriesList.js";
 import styles from "./Memories.module.scss";
 
 function Memories() {

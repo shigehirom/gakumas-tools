@@ -1,4 +1,4 @@
-import { extractLines, getWhiteCanvas, loadImageFromFile } from "./common";
+import { extractLines, getWhiteCanvas, loadImageFromFile } from "./common.js";
 
 export async function getScoresFromFile(file, worker) {
   const img = await loadImageFromFile(file);

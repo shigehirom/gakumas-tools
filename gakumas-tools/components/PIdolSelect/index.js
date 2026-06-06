@@ -1,1 +1,1 @@
-export { default } from "./PIdolSelect";
+export { default } from "./PIdolSelect.js";

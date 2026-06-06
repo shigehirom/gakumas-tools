@@ -1,1 +1,1 @@
-export { default } from "./StageSelect";
+export { default } from "./StageSelect.js";

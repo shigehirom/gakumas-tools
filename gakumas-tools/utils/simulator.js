@@ -4,8 +4,8 @@ import { MIN_BUCKET_SIZE } from "@/simulator/constants";
 import {
   deserializeCustomizations,
   serializeCustomizations,
-} from "./customizations";
-import { deserializeIds, serializeIds } from "./ids";
+} from "./customizations.js";
+import { deserializeIds, serializeIds } from "./ids.js";
 
 const DEFAULTS = {
   stageId: Stages.getAll().findLast((s) => s.type == "contest" && !s.preview)

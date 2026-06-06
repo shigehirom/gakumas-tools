@@ -1,6 +1,6 @@
 import { memo } from "react";
 import { useTranslations } from "next-intl";
-import ToolsList from "./ToolsList";
+import ToolsList from "./ToolsList.js";
 import styles from "./Welcome.module.scss";
 
 function Welcome() {

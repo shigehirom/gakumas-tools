@@ -1,12 +1,13 @@
-import { S } from "../constants";
-import BuffManager from "./BuffManager";
-import CardManager from "./CardManager";
-import EffectManager from "./EffectManager";
-import Evaluator from "./Evaluator";
-import Executor from "./Executor";
-import StageLogger from "./StageLogger";
-import TurnManager from "./TurnManager";
-import { deepCopy } from "../utils";
+import { S } from "../constants.js";
+import BuffManager from "./BuffManager.js";
+import CardManager from "./CardManager.js";
+import EffectManager from "./EffectManager.js";
+import Evaluator from "./Evaluator.js";
+import Executor from "./Executor.js";
+import StageLogger from "./StageLogger.js";
+import TurnManager from "./TurnManager.js";
+import Compiler from "./Compiler.js";
+import { deepCopy } from "../utils.js";
 
 export default class StageEngine {
   constructor(config, linkConfigs) {
@@ -19,6 +20,11 @@ export default class StageEngine {
     this.turnManager = new TurnManager(this);
     this.evaluator = new Evaluator(this);
     this.executor = new Executor(this);
+    this.compiler = new Compiler(this);
+    this.useJit =
+      typeof process !== "undefined" &&
+      process.env &&
+      process.env.USE_JIT === "1";
   }
 
   getConfig(state) {

@@ -1,1 +1,1 @@
-export { default } from "./EntityBank";
+export { default } from "./EntityBank.js";

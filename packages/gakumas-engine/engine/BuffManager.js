@@ -4,8 +4,8 @@ import {
   S,
   STANCE_CHANGED_EFFECTS,
   UNFRESH_PHASES,
-} from "../constants";
-import EngineComponent from "./EngineComponent";
+} from "../constants.js";
+import EngineComponent from "./EngineComponent.js";
 
 const BUFF_TYPES = [
   { action: "setScoreBuff", field: S.scoreBuffs },

@@ -2,7 +2,7 @@ import { memo, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import ButtonGroup from "@/components/ButtonGroup";
 import { structureLogs } from "@/utils/simulator";
-import Logs from "./Logs";
+import Logs from "./Logs.js";
 import styles from "./SimulatorLogs.module.scss";
 
 function SimulatorLogs({ minRun, averageRun, maxRun, idolId }) {

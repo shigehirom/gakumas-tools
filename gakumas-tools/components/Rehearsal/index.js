@@ -1,1 +1,1 @@
-export { default } from "./Rehearsal";
+export { default } from "./Rehearsal.js";

@@ -1,1 +1,1 @@
-export { default } from "./StageSkillCards";
+export { default } from "./StageSkillCards.js";

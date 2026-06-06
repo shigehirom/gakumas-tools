@@ -1,6 +1,6 @@
 import { memo } from "react";
 import { useTranslations } from "next-intl";
-import Logs from "./Logs";
+import Logs from "./Logs.js";
 import c from "@/utils/classNames";
 import styles from "./SimulatorLogs.module.scss";
 

@@ -9,9 +9,9 @@ import {
   resolveEntityIcon,
 } from "@/utils/entities";
 import { useDrag, useDrop } from "@/utils/safeDnd";
-import CustomizationCounts from "./CustomizationCounts";
-import Indications from "./Indications";
-import TierIndicator from "./TierIndicator";
+import CustomizationCounts from "./CustomizationCounts.js";
+import Indications from "./Indications.js";
+import TierIndicator from "./TierIndicator.js";
 import styles from "./EntityIcon.module.scss";
 
 function EntityIcon({
