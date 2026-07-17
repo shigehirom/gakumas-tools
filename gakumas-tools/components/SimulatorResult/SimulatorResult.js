@@ -18,7 +18,7 @@ import { logEvent } from "@/utils/logging";
 import { findOptimalParams } from "@/utils/paramOptimizer";
 import SimulatorResultGraphs from "./SimulatorResultGraphs";
 import styles from "./SimulatorResult.module.scss";
-import KofiAd from "../KofiAd.js";
+import KofiAd from "../KofiAd";
 
 const TABS = ["stats", "logs", "compare"];
 const TAB_STORAGE_KEY = "simulatorResultTab";

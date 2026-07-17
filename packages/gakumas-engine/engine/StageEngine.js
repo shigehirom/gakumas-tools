@@ -1,9 +1,9 @@
 import { S } from "../constants.js";
 import BuffManager from "./BuffManager.js";
-import CardManager from "./CardManager.js";
+import CardManager from "./CardManager/index.js";
 import EffectManager from "./EffectManager.js";
 import Evaluator from "./Evaluator.js";
-import Executor from "./Executor.js";
+import Executor from "./Executor/index.js";
 import StageLogger from "./StageLogger.js";
 import TurnManager from "./TurnManager.js";
 import Compiler from "./Compiler.js";

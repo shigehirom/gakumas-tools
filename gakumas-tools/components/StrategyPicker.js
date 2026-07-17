@@ -1,5 +1,5 @@
 import { useTranslations } from "next-intl";
-import ButtonGroup from "./ButtonGroup.js";
+import ButtonGroup from "./ButtonGroup";
 
 export default function StrategyPicker({ strategy, setStrategy }) {
   const t = useTranslations("StrategyPicker");

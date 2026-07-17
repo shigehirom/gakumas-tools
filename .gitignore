@@ -71,3 +71,11 @@ local-tools/
 cropped_portraits/
 cropped_portraits.zip
 
+# Upstream checker local state & logs
+scripts/.github-upstream-last-commit
+logs/check-upstream.log
+
+# Broken git directory backup
+.git-broken/
+
+

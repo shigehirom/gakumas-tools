@@ -8,6 +8,7 @@ import { registerRehearsalCommand } from './commands/rehearsal';
 import { registerLoadoutCommand } from './commands/loadout';
 import { registerDuplicatesCommand } from './commands/duplicates';
 import { registerOptimizeDeckCommand } from './commands/optimize-deck';
+import { registerMatchHistoryCommand } from './commands/match-history';
 import * as fs from 'fs';
 import * as path from 'path';
 import { GlobalCapture } from './utils/capture';
@@ -133,23 +134,61 @@ if (parsed.options.gdrive || parsed.options.local) {
         uploaded = true;
         const output = GlobalCapture.getCapturedOutput();
         if (output && output.trim().length > 0) {
-            if (parsed.options.local) {
-                try {
-                    const baseDir = process.env.INIT_CWD || process.cwd();
-                    const localPath = path.resolve(baseDir, parsed.options.local);
-                    fs.writeFileSync(localPath, output, 'utf-8');
-                    console.error(`\n[Gakumas CLI] Saved report locally to: ${localPath}`);
-                } catch (e) {
-                    console.error('[Gakumas CLI] Local save error in exit hook:', e);
-                }
-            }
+            let finalOutput = output;
+            let gdriveUrl: string | undefined = undefined;
+
             if (parsed.options.gdrive) {
                 try {
                     console.error(`\n[Gakumas CLI] Uploading report to Google Drive: ${parsed.options.gdrive}...`);
-                    await GoogleDriveClient.uploadFile(parsed.options.gdrive, output);
-                    console.error(`[Gakumas CLI] Upload successful!`);
+                    gdriveUrl = await GoogleDriveClient.uploadFile(parsed.options.gdrive, output);
+                    if (gdriveUrl) {
+                        console.error(`[Gakumas CLI] Upload successful! URL: ${gdriveUrl}`);
+                        
+                        // YAMLフロントマターを先頭に付与
+                        const yamlFrontmatter = `---\nreference_url: "${gdriveUrl}"\n---\n\n`;
+                        finalOutput = yamlFrontmatter + output;
+
+                        // Google Drive上のファイルをYAMLフロントマター付きの内容で更新する
+                        console.error(`[Gakumas CLI] Updating Google Drive file with YAML frontmatter...`);
+                        await GoogleDriveClient.uploadFile(parsed.options.gdrive, finalOutput);
+                        
+                        // URLを .gdriveurl ファイルに保存
+                        const baseDir = process.env.CLI_DOCS_DIR
+                            ? path.resolve(process.env.INIT_CWD || process.cwd(), process.env.CLI_DOCS_DIR)
+                            : (process.env.INIT_CWD || process.cwd());
+                        const referenceName = parsed.options.local || parsed.options.gdrive;
+                        const urlPath = path.resolve(baseDir, `${referenceName}.gdriveurl`);
+                        
+                        const outputDir = path.dirname(urlPath);
+                        if (!fs.existsSync(outputDir)) {
+                            fs.mkdirSync(outputDir, { recursive: true });
+                        }
+                        fs.writeFileSync(urlPath, gdriveUrl, 'utf-8');
+                    } else {
+                        console.error(`[Gakumas CLI] Upload successful, but URL could not be retrieved.`);
+                    }
                 } catch (e) {
                     console.error('[Gakumas CLI] Upload error in exit hook:', e);
+                }
+            }
+
+            if (parsed.options.local) {
+                try {
+                    const baseDir = process.env.CLI_DOCS_DIR
+                        ? path.resolve(process.env.INIT_CWD || process.cwd(), process.env.CLI_DOCS_DIR)
+                        : (process.env.INIT_CWD || process.cwd());
+                    const localPath = path.resolve(baseDir, parsed.options.local);
+                    
+                    const outputDir = path.dirname(localPath);
+                    if (!fs.existsSync(outputDir)) {
+                        fs.mkdirSync(outputDir, { recursive: true });
+                    }
+
+                    // YAMLフロントマター付きの最終出力をローカルに保存
+                    fs.writeFileSync(localPath, finalOutput, 'utf-8');
+                    console.error(`\n[Gakumas CLI] Saved report locally to: ${localPath}`);
+                } catch (e) {
+                    console.error('[Gakumas CLI] Local save error in exit hook:', e);
                 }
             }
         }
@@ -165,6 +204,7 @@ registerRehearsalCommand(cli);
 registerLoadoutCommand(cli);
 registerDuplicatesCommand(cli);
 registerOptimizeDeckCommand(cli);
+registerMatchHistoryCommand(cli);
 
 cli.help();
 cli.version('0.1.0');

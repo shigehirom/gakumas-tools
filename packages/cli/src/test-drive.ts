@@ -7,7 +7,10 @@ import * as fs from 'fs';
 // Load .env.local manually since we aren't using index.ts
 const possiblePaths = [
     path.resolve(process.cwd(), '.env.local'),
-    path.resolve(process.cwd(), '../gakumas-tools/gakumas-tools/.env.local'),
+    path.resolve(__dirname, '../../.env.local'),
+    path.resolve(__dirname, '../../../.env.local'),
+    path.resolve(__dirname, '../../../gakumas-tools/.env.local'),
+    path.resolve(process.cwd(), 'gakumas-tools/.env.local')
 ];
 
 for (const p of possiblePaths) {

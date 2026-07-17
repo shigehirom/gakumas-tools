@@ -1,0 +1,22 @@
+* text=auto
+
+# Explicitly mark text files to use LF
+*.js text eol=lf
+*.mjs text eol=lf
+*.ts text eol=lf
+*.py text eol=lf
+*.md text eol=lf
+*.json text eol=lf
+*.csv text eol=lf
+*.html text eol=lf
+*.css text eol=lf
+
+# Explicitly mark binary files
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.gif binary
+*.ico binary
+*.tar.gz binary
+*.zip binary

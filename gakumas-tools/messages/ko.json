@@ -473,6 +473,7 @@
     "concentrationEffectBuff": "집중 강화",
     "enthusiasmBuff": "열의 증가",
     "fullPowerChargeBuff": "전력치 증가량 증가",
+    "fullPowerEffectBuff": "전력 강화",
     "turn": "턴",
     "cardDrawn": "드로우한 카드",
     "upgradedHand": "손패를 모두 레슨 중 강화",
@@ -523,7 +524,9 @@
     "scanningVideo": "프레임 {analyzed}/{total} 분석 중 · 지금까지 {found}개의 결과",
     "videoComplete": "완료! {count}개의 리허설 결과를 찾았습니다.",
     "videoError": "동영상 처리 중 오류: {message}",
-    "imageError": "{count}개의 스크린샷을 분석하지 못해 건너뛰었습니다."
+    "imageError": "{count}개의 스크린샷을 분석하지 못해 건너뛰었습니다.",
+    "needsChecking": "{count}개의 행을 확인해야 합니다",
+    "confirmRow": "이 행의 값이 올바른지 확인"
   },
   "KofiAd": {
     "prompt": "이 프로젝트 후원하기"

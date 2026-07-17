@@ -1,18 +1,13 @@
 "use client";
-import {
-  memo,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
   FaCheck,
   FaDownload,
   FaFileCsv,
   FaFileImage,
+  FaPlus,
+  FaTriangleExclamation,
   FaVideo,
 } from "react-icons/fa6";
 import { createWorker } from "tesseract.js";
@@ -111,9 +106,9 @@ function Rehearsal() {
           );
         },
       })) {
-        const scores = await getScoresFromImage(canvas, worker);
-        if (scores && scores.length === 3) {
-          results.push({ scores, src: await canvasToObjectURL(canvas) });
+        const { scores, flags } = await getScoresFromImage(canvas, worker);
+        if (scores && scores.some((stage) => stage.some((v) => v))) {
+          results.push({ scores, flags, src: await canvasToObjectURL(canvas) });
         }
       }
       setProcessingStatus(t("videoComplete", { count: results.length }));
@@ -124,17 +119,21 @@ function Rehearsal() {
 
   const processImages = useCallback(async (imageFiles) => {
     const workers = workersRef.current;
-    const scored = await runBatched(imageFiles, workers, async (file, worker) => {
-      try {
-        const scores = await getScoresFromFile(file, worker);
-        return scores && { scores, src: URL.createObjectURL(file) };
-      } catch (err) {
-        console.error(`Error parsing ${file.name}:`, err);
-        return null;
-      } finally {
-        setProgress((p) => p + 1);
-      }
-    });
+    const scored = await runBatched(
+      imageFiles,
+      workers,
+      async (file, worker) => {
+        try {
+          const { scores, flags } = await getScoresFromFile(file, worker);
+          return scores && { scores, flags, src: URL.createObjectURL(file) };
+        } catch (err) {
+          console.error(`Error parsing ${file.name}:`, err);
+          return null;
+        } finally {
+          setProgress((p) => p + 1);
+        }
+      },
+    );
     const results = scored.filter(Boolean);
     return { results, failures: scored.length - results.length };
   }, []);
@@ -209,6 +208,15 @@ function Rehearsal() {
     downloadBlob(new Blob([csv], { type: "text/csv" }), "rehearsal_data.csv");
   }, [data]);
 
+  // Rows with at least one stage the OCR could not verify against the screen's
+  // own stage-total checksum. Their values are kept and shown (never zeroed) but
+  // highlighted in the table and excluded from the stats until the user reviews
+  // them (edits a cell, or confirms the row with the ✓).
+  const flaggedCount = useMemo(
+    () => data.filter((r) => r.flags?.some((f) => f === "flagged")).length,
+    [data],
+  );
+
   const boxPlotData = useMemo(() => buildBoxPlotData(data), [data]);
   // Stable identity so BoxPlot's memo holds and the chart doesn't re-animate
   // on unrelated re-renders.
@@ -251,6 +259,26 @@ function Rehearsal() {
                     ? stage.map((s, sk) => (sk === k ? value : s))
                     : stage,
                 ),
+                // Editing a value in a flagged stage resolves it: the user has
+                // reviewed it, so clear that stage's flag (it rejoins the stats).
+                flags: row.flags?.map((f, fj) => (fj === j ? "ok" : f)),
+              }
+            : row,
+        ),
+      ),
+    [],
+  );
+
+  // Confirm a correct-but-flagged row as-is (no edit needed): clear all its
+  // flagged stages, folding the values back into the stats.
+  const handleVerifyRow = useCallback(
+    (i) =>
+      setData((d) =>
+        d.map((row, ri) =>
+          ri === i
+            ? {
+                ...row,
+                flags: row.flags?.map((f) => (f === "flagged" ? "ok" : f)),
               }
             : row,
         ),
@@ -340,58 +368,76 @@ function Rehearsal() {
         </div>
       )}
 
-      {!!data.length && (
-        <>
-          <div className={styles.toolbar}>
-            <Button style="default" size="sm" onClick={download}>
-              <FaDownload /> CSV
-            </Button>
-          </div>
+      <div className={styles.toolbar}>
+        <Button style="default" size="sm" onClick={download}>
+          <FaDownload /> CSV
+        </Button>
+        {flaggedCount > 0 && (
+          <span className={styles.flaggedNotice}>
+            <FaTriangleExclamation />{" "}
+            {t("needsChecking", { count: flaggedCount })}
+          </span>
+        )}
+      </div>
 
-          <BoxPlot
-            labels={boxPlotLabels}
-            data={boxPlotData}
-            showLegend={false}
+      <BoxPlot labels={boxPlotLabels} data={boxPlotData} showLegend={false} />
+
+      {selectedData && (
+        <div className={styles.statsWrapper}>
+          <Table
+            className={styles.stats}
+            headers={[
+              tRes("min"),
+              tRes("average"),
+              tRes("median"),
+              tRes("max"),
+            ]}
+            rows={[
+              [
+                selectedData.min,
+                selectedData.average,
+                selectedData.median,
+                selectedData.max,
+              ],
+            ]}
           />
-
-          {selectedData && (
-            <div className={styles.statsWrapper}>
-              <Table
-                className={styles.stats}
-                headers={[
-                  tRes("min"),
-                  tRes("average"),
-                  tRes("median"),
-                  tRes("max"),
-                ]}
-                rows={[
-                  [
-                    selectedData.min,
-                    selectedData.average,
-                    selectedData.median,
-                    selectedData.max,
-                  ],
-                ]}
-              />
-              <DistributionPlot
-                label={`${t("score")} (n=${selectedData.scores.length})`}
-                data={selectedData.bucketedScores}
-                bucketSize={selectedData.bucketSize}
-                color="rgba(68, 187, 255, 0.75)"
-              />
-            </div>
-          )}
-          <div className={styles.tableWrapper}>
-            <RehearsalTable
-              data={data}
-              selected={selected}
-              onChartClick={handleChartClick}
-              onRowDelete={handleRowDelete}
-              onCellEdit={handleCellEdit}
-            />
-          </div>
-        </>
+          <DistributionPlot
+            label={`${t("score")} (n=${selectedData.scores.length})`}
+            data={selectedData.bucketedScores}
+            bucketSize={selectedData.bucketSize}
+            color="rgba(68, 187, 255, 0.75)"
+          />
+        </div>
       )}
+      <div className={styles.tableWrapper}>
+        <RehearsalTable
+          data={data}
+          selected={selected}
+          onChartClick={handleChartClick}
+          onRowDelete={handleRowDelete}
+          onCellEdit={handleCellEdit}
+          onVerifyRow={handleVerifyRow}
+        />
+        <Button
+          className={styles.addButton}
+          fill
+          onClick={() =>
+            setData((d) => [
+              ...d,
+              {
+                scores: [
+                  [0, 0, 0],
+                  [0, 0, 0],
+                  [0, 0, 0],
+                ],
+                flags: ["ok", "ok", "ok"],
+              },
+            ])
+          }
+        >
+          <FaPlus />
+        </Button>
+      </div>
 
       <div className={styles.ad}>
         <KofiAd />

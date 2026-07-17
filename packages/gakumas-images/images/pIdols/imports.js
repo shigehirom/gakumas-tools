@@ -113,6 +113,7 @@ import image_119 from "./119.png";
 import image_120 from "./120.png";
 import image_121 from "./121.png";
 import image_122 from "./122.png";
+import image_123 from "./123.png";
 import image_124 from "./124.png";
 import image_125 from "./125.png";
 import image_126 from "./126.png";
@@ -122,6 +123,9 @@ import image_135 from "./135.png";
 import image_138 from "./138.png";
 import image_139 from "./139.png";
 import image_140 from "./140.png";
+import image_141 from "./141.png";
+import image_142 from "./142.png";
+import image_145 from "./145.png";
 
 const IMAGES = {
   '1': image_1,
@@ -239,6 +243,7 @@ const IMAGES = {
   '120': image_120,
   '121': image_121,
   '122': image_122,
+  '123': image_123,
   '124': image_124,
   '125': image_125,
   '126': image_126,
@@ -248,6 +253,9 @@ const IMAGES = {
   '138': image_138,
   '139': image_139,
   '140': image_140,
+  '141': image_141,
+  '142': image_142,
+  '145': image_145,
 };
 
 export default IMAGES;

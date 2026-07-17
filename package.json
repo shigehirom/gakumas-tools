@@ -2,6 +2,7 @@
   "name": "gakumas-tools-monorepo",
   "version": "0.1.0",
   "scripts": {
+    "cli": "pnpm -s --filter gakumas-cli run -s start --",
     "dev": "pnpm --filter gakumas-tools dev",
     "build": "pnpm --filter gakumas-tools build",
     "process": "python -m scripts.process_screenshots_iphone",
@@ -19,6 +20,7 @@
     "test:memory:visualize": "node --loader ./scripts/extensionless-loader.mjs ./tests/memoryBoxes.mjs --visualize",
     "test:rehearsal": "node --loader ./scripts/extensionless-loader.mjs ./tests/rehearsalScores.mjs",
     "test:rehearsal:update": "node --loader ./scripts/extensionless-loader.mjs ./tests/rehearsalScores.mjs --update",
+    "test:rehearsal:unit": "node --test tests/rehearsalRecovery.test.mjs",
     "regression:add": "node --loader ./scripts/extensionless-loader.mjs ./tests/add.mjs",
     "regression:bootstrap": "node --loader ./scripts/extensionless-loader.mjs ./tests/generate-suite.mjs",
     "regression:coverage": "node --loader ./scripts/extensionless-loader.mjs ./tests/coverage.mjs",
@@ -37,5 +39,5 @@
     "sharp": "^0.34.5",
     "tesseract.js": "^7.0.0"
   },
-  "packageManager": "pnpm@11.0.6"
+  "packageManager": "pnpm@11.13.1"
 }

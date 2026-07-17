@@ -6,6 +6,27 @@ Dates are based on Eastern Time Zone.
 
 
 
+## 2026-07-07
+
+- Add preview of go my way ume
+
+## 2026-06-26
+
+- Update GO MY WAY!! Kotone
+- Add GO MY WAY!! Saki
+
+## 2026-06-25
+
+- Add preview of GO MY WAY!! Kotone
+
+## 2026-06-15
+
+- Add p-idol legend cards
+- Add season 47 preview
+
+## 2026-06-14
+
+- Add sugar flavor preview
 
 ## 2026-06-05
 

@@ -56,7 +56,8 @@ export async function resolve(specifier, context, nextResolve) {
       throw error;
     }
 
-    for (const candidate of [`${specifier}.js`, `${specifier}/index.js`]) {
+    const baseSpecifier = specifier.endsWith('.js') ? specifier.slice(0, -3) : specifier;
+    for (const candidate of [`${baseSpecifier}.js`, `${baseSpecifier}/index.js`]) {
       try {
         return await nextResolve(candidate, context);
       } catch {}

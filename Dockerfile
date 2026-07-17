@@ -63,7 +63,8 @@ COPY --from=builder --chown=nextjs:nodejs /app/gakumas-tools/.next/static ./gaku
 COPY --from=builder --chown=nextjs:nodejs /app/gakumas-tools/public ./gakumas-tools/public
 
 RUN mkdir -p gakumas-tools/.next/cache
-RUN chown -R nextjs:nodejs gakumas-tools/.next
+RUN chown -R nextjs:nodejs gakumas-tools/.next && \
+    find /app -maxdepth 3 -name ".env*" -exec chown nextjs:nodejs {} + -exec chmod 644 {} +
 
 USER nextjs
 EXPOSE 3000

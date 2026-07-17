@@ -2,25 +2,152 @@ import json
 import os
 import glob
 import re
+import urllib.request
+import urllib.parse
 
 # Config
-GAKUMAS_TOOLS_PATH = "/Users/shigehiro/gakumas-workspace/gakumas-tools"
-SUPPORT_CARDS_PATH = "/Users/shigehiro/gakumas-workspace/gakumas-support_cards/support_cards"
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+GAKUMAS_TOOLS_PATH = SCRIPT_DIR
+SUPPORT_CARDS_PATH = os.path.abspath(os.path.join(SCRIPT_DIR, "../gakumas-support_cards/support_cards"))
 OUTPUT_DIR = "/Users/shigehiro/Library/CloudStorage/GoogleDrive-shigehiro.miyashita@gmail.com/マイドライブ/Documents/学園アイドルマスター/notebookLM"
 
+# Load .env.local
+ENV_LOCAL_PATH = os.path.join(GAKUMAS_TOOLS_PATH, ".env.local")
+ENV_VARS = {}
+if os.path.exists(ENV_LOCAL_PATH):
+    with open(ENV_LOCAL_PATH, "r", encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line or line.startswith("#"):
+                continue
+            if "=" in line:
+                k, v = line.split("=", 1)
+                ENV_VARS[k.strip()] = v.strip().strip('"\'')
+
+GOOGLE_CLIENT_ID = ENV_VARS.get("GOOGLE_CLIENT_ID")
+GOOGLE_CLIENT_SECRET = ENV_VARS.get("GOOGLE_CLIENT_SECRET")
+GOOGLE_DRIVE_FOLDER_ID = ENV_VARS.get("GOOGLE_DRIVE_RAG_FOLDER_ID") or ENV_VARS.get("GOOGLE_DRIVE_FOLDER_ID")
+
 os.makedirs(OUTPUT_DIR, exist_ok=True)
-os.makedirs(os.path.join(OUTPUT_DIR, "txt"), exist_ok=True)
+
+def refresh_access_token(client_id, client_secret, refresh_token):
+    url = "https://oauth2.googleapis.com/token"
+    data = urllib.parse.urlencode({
+        "client_id": client_id,
+        "client_secret": client_secret,
+        "refresh_token": refresh_token,
+        "grant_type": "refresh_token"
+    }).encode("utf-8")
+    
+    req = urllib.request.Request(url, data=data, method="POST")
+    with urllib.request.urlopen(req) as response:
+        res_data = json.loads(response.read().decode("utf-8"))
+        return res_data.get("access_token")
+
+def get_drive_access_token():
+    token_path = os.path.expanduser("~/.config/gakumas-tools/tokens.json")
+    if not os.path.exists(token_path):
+        print(f"[Warning] Token file not found at {token_path}. Please authenticate via CLI.")
+        return None
+        
+    with open(token_path, "r", encoding="utf-8") as f:
+        tokens = json.load(f)
+        
+    access_token = tokens.get("access_token")
+    refresh_token = tokens.get("refresh_token")
+    
+    if refresh_token and GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET:
+        try:
+            new_access_token = refresh_access_token(GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, refresh_token)
+            if new_access_token:
+                tokens["access_token"] = new_access_token
+                with open(token_path, "w", encoding="utf-8") as f:
+                    json.dump(tokens, f, indent=2)
+                return new_access_token
+        except Exception as e:
+            print(f"[Warning] Failed to refresh token: {e}")
+            
+    return access_token
+
+def upload_to_drive(filename, content):
+    if not GOOGLE_DRIVE_FOLDER_ID:
+        print("[Warning] GOOGLE_DRIVE_FOLDER_ID not set. Skipping Drive upload.")
+        return
+        
+    access_token = get_drive_access_token()
+    if not access_token:
+        print("[Warning] Could not get Google Drive access token. Skipping Drive upload.")
+        return
+
+    # Search for existing file
+    query = f"name = '{filename}' and '{GOOGLE_DRIVE_FOLDER_ID}' in parents and trashed = false"
+    url = f"https://www.googleapis.com/drive/v3/files?q={urllib.parse.quote(query)}&fields=files(id)"
+    
+    headers = {
+        "Authorization": f"Bearer {access_token}"
+    }
+    
+    req = urllib.request.Request(url, headers=headers, method="GET")
+    try:
+        with urllib.request.urlopen(req) as response:
+            res = json.loads(response.read().decode("utf-8"))
+            files = res.get("files", [])
+    except Exception as e:
+        print(f"Error searching file on Drive: {e}")
+        return
+
+    if files:
+        file_id = files[0]["id"]
+        # Update content (PATCH)
+        upload_url = f"https://www.googleapis.com/upload/drive/v3/files/{file_id}?uploadType=media"
+        headers["Content-Type"] = "text/markdown; charset=utf-8"
+        data = content.encode("utf-8")
+        req = urllib.request.Request(upload_url, data=data, headers=headers, method="PATCH")
+        print(f"Updating existing file on Google Drive: {filename} (ID: {file_id})")
+    else:
+        # Create new file (POST multipart)
+        upload_url = "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart"
+        boundary = "foo_bar_baz"
+        headers["Content-Type"] = f"multipart/related; boundary={boundary}"
+        
+        metadata = {
+            "name": filename,
+            "parents": [GOOGLE_DRIVE_FOLDER_ID]
+        }
+        
+        body = []
+        body.append(f"--{boundary}".encode("utf-8"))
+        body.append(b"Content-Type: application/json; charset=UTF-8")
+        body.append(b"")
+        body.append(json.dumps(metadata).encode("utf-8"))
+        body.append(f"--{boundary}".encode("utf-8"))
+        body.append(b"Content-Type: text/markdown; charset=utf-8")
+        body.append(b"")
+        body.append(content.encode("utf-8"))
+        body.append(f"--{boundary}--".encode("utf-8"))
+        
+        data = b"\r\n".join(body)
+        req = urllib.request.Request(upload_url, data=data, headers=headers, method="POST")
+        print(f"Creating new file on Google Drive: {filename}")
+
+    try:
+        with urllib.request.urlopen(req) as response:
+            result = json.loads(response.read().decode("utf-8"))
+            print(f"Successfully uploaded {filename} to Google Drive (ID: {result.get('id')})")
+    except Exception as e:
+        print(f"Error uploading file to Drive: {e}")
+        if hasattr(e, "read"):
+            print(e.read().decode("utf-8"))
 
 def save_doc(filename_base, content):
     md_path = os.path.join(OUTPUT_DIR, f"{filename_base}.md")
     with open(md_path, "w", encoding="utf-8") as f:
         f.write(content)
     print(f"Generated {md_path}")
+
     
-    txt_path = os.path.join(OUTPUT_DIR, "txt", f"{filename_base}.txt")
-    with open(txt_path, "w", encoding="utf-8") as f:
-        f.write(content)
-    print(f"Generated {txt_path}")
+    # Also upload to Google Drive
+    upload_to_drive(f"{filename_base}.md", content)
 
 # Helper: Load JSON
 def load_json(path):

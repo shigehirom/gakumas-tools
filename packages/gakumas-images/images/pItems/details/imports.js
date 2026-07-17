@@ -445,6 +445,21 @@ import image_444 from "./444.png";
 import image_445 from "./445.png";
 import image_446 from "./446.png";
 import image_447 from "./447.png";
+import image_448 from "./448.png";
+import image_449 from "./449.png";
+import image_450 from "./450.png";
+import image_451 from "./451.png";
+import image_452 from "./452.png";
+import image_453 from "./453.png";
+import image_454 from "./454.png";
+import image_455 from "./455.png";
+import image_456 from "./456.png";
+import image_457 from "./457.png";
+import image_458 from "./458.png";
+import image_459 from "./459.png";
+import image_460 from "./460.png";
+import image_461 from "./461.png";
+import image_462 from "./462.png";
 
 const IMAGES = {
   '1': image_1,
@@ -894,6 +909,21 @@ const IMAGES = {
   '445': image_445,
   '446': image_446,
   '447': image_447,
+  '448': image_448,
+  '449': image_449,
+  '450': image_450,
+  '451': image_451,
+  '452': image_452,
+  '453': image_453,
+  '454': image_454,
+  '455': image_455,
+  '456': image_456,
+  '457': image_457,
+  '458': image_458,
+  '459': image_459,
+  '460': image_460,
+  '461': image_461,
+  '462': image_462,
 };
 
 export default IMAGES;

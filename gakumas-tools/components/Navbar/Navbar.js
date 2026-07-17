@@ -7,7 +7,7 @@ import ToolHeader from "@/components/ToolHeader";
 import c from "@/utils/classNames";
 import { TOOLS } from "@/utils/tools";
 import NavbarLink from "./NavbarLink.js";
-import NavbarMenu from "./NavbarMenu.js";
+import NavbarMenu from "./NavbarMenu";
 import styles from "./Navbar.module.scss";
 
 // Width of the underline relative to the link itself (60% = matches the old

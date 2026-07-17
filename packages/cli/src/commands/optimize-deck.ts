@@ -4,11 +4,13 @@ import * as path from 'path';
 export function registerOptimizeDeckCommand(cli: any) {
     cli.command('optimize-deck <prefix>', 'Optimize contest deck across 3 stages based on generated local MD reports')
         .action((prefix: string, options?: any) => {
-            const cwd = process.env.INIT_CWD || process.cwd();
+            const baseDir = process.env.CLI_DOCS_DIR
+                ? path.resolve(process.env.INIT_CWD || process.cwd(), process.env.CLI_DOCS_DIR)
+                : (process.env.INIT_CWD || process.cwd());
             
-            const file1 = path.join(cwd, `${prefix}-1_all.md`);
-            const file2 = path.join(cwd, `${prefix}-2_all.md`);
-            const file3 = path.join(cwd, `${prefix}-3_all.md`);
+            const file1 = path.join(baseDir, `${prefix}-1_all.md`);
+            const file2 = path.join(baseDir, `${prefix}-2_all.md`);
+            const file3 = path.join(baseDir, `${prefix}-3_all.md`);
             
             if (!fs.existsSync(file1)) {
                 console.error(`Error: File not found: ${file1}`);

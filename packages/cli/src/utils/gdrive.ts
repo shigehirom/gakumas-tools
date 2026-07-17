@@ -41,11 +41,19 @@ export class GoogleDriveClient {
             console.warn('Error reading stored token, requesting new one...');
         }
 
-        await this.getNewToken(oAuth2Client);
-        this.auth = oAuth2Client;
+        try {
+            await this.getNewToken(oAuth2Client);
+            this.auth = oAuth2Client;
+        } catch (err: any) {
+            console.error('Failed to initialize Google Drive client auth:', err.message);
+        }
     }
 
     private static async getNewToken(oAuth2Client: any): Promise<void> {
+        if (!process.stdin.isTTY) {
+            throw new Error('Google Drive authentication is required, but the terminal is non-interactive (non-TTY). Please run the command manually from an interactive shell once to authenticate.');
+        }
+
         const authUrl = oAuth2Client.generateAuthUrl({
             access_type: 'offline',
             scope: SCOPES,
@@ -82,16 +90,16 @@ export class GoogleDriveClient {
         });
     }
 
-    static async uploadFile(fileName: string, content: string) {
+    static async uploadFile(fileName: string, content: string): Promise<string | undefined> {
         const folderId = process.env.GOOGLE_DRIVE_FOLDER_ID;
         if (!folderId) {
             console.error('GOOGLE_DRIVE_FOLDER_ID is not set.');
-            return;
+            return undefined;
         }
 
         if (!this.auth) {
             await this.init();
-            if (!this.auth) return; // Init failed
+            if (!this.auth) return undefined; // Init failed
         }
 
         const drive = google.drive({ version: 'v3', auth: this.auth! });
@@ -117,21 +125,37 @@ export class GoogleDriveClient {
             const existingFiles = listRes.data.files;
             const isDebug = process.argv.includes('--debug');
 
+            let file;
             if (existingFiles && existingFiles.length > 0) {
-                if (isDebug) console.log(`Found ${existingFiles.length} existing files with the same name. Deleting them to overwrite...`);
-                for (const existingFile of existingFiles) {
-                    await drive.files.delete({ fileId: existingFile.id! });
+                const targetFile = existingFiles[0];
+                if (isDebug) console.log(`Found existing file ${fileName} (ID: ${targetFile.id}). Updating content...`);
+                
+                // Update existing file content
+                file = await drive.files.update({
+                    fileId: targetFile.id!,
+                    media: media,
+                    fields: 'id, webViewLink',
+                });
+                
+                // If there are duplicate files, clean them up
+                if (existingFiles.length > 1) {
+                    if (isDebug) console.log(`Found ${existingFiles.length - 1} duplicate files. Deleting them...`);
+                    for (let i = 1; i < existingFiles.length; i++) {
+                        await drive.files.delete({ fileId: existingFiles[i].id! });
+                    }
                 }
+            } else {
+                // Create new file
+                if (isDebug) console.log(`Uploading new file ${fileName} to Google Drive (Folder ID: ${folderId})...`);
+                file = await drive.files.create({
+                    requestBody: fileMetadata,
+                    media: media,
+                    fields: 'id, webViewLink',
+                });
             }
 
-            // Create new file
-            if (isDebug) console.log(`Uploading new file ${fileName} to Google Drive (Folder ID: ${folderId})...`);
-            const file = await drive.files.create({
-                requestBody: fileMetadata,
-                media: media,
-                fields: 'id',
-            });
-            if (isDebug) console.log('File Created. Id:', file.data.id);
+            if (isDebug) console.log('File Uploaded/Updated. Id:', file.data.id);
+            return file.data.webViewLink || undefined;
 
         } catch (err: any) {
             console.error('Upload failed:', err.message);
@@ -146,6 +170,7 @@ export class GoogleDriveClient {
                     console.error('Failed to remove token file:', unlinkErr.message);
                 }
             }
+            return undefined;
         }
     }
 }

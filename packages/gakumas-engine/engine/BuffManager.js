@@ -28,6 +28,7 @@ const BUFF_TYPES = [
   { action: "setEnthusiasmBuff", field: S.enthusiasmBuffs },
   { action: "setEnthusiasmBonus", field: S.enthusiasmBonusBuffs },
   { action: "setFullPowerChargeBuff", field: S.fullPowerChargeBuffs },
+  { action: "setFullPowerEffectBuff", field: S.fullPowerEffectBuffs },
 ];
 
 export default class BuffManager extends EngineComponent {
@@ -117,6 +118,7 @@ export default class BuffManager extends EngineComponent {
     state[S.enthusiasmBuffs] = [];
     state[S.enthusiasmBonusBuffs] = [];
     state[S.fullPowerChargeBuffs] = [];
+    state[S.fullPowerEffectBuffs] = [];
 
     // Sense
     state[S.goodConditionTurns] = 0;
@@ -154,6 +156,7 @@ export default class BuffManager extends EngineComponent {
     // Other
     state[S.nullifySelect] = 0;
     state[S.freeCardUses] = 0;
+    state[S.paidCardUses] = 0;
     state[S.scoreTimes] = 0;
   }
 
@@ -170,7 +173,7 @@ export default class BuffManager extends EngineComponent {
       arr.push({
         amount,
         turns,
-        fresh: !UNFRESH_PHASES.includes(state[S.phase]),
+        fresh: !state[S.unfreshPhase],
       });
     }
     this.logger.log(state, logLabel, {
