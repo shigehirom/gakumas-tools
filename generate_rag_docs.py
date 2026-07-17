@@ -186,20 +186,20 @@ DSL_DICT = {
     "setEnthusiasmBonus": "好調（値）ボーナス付与",
     "prideTurns": "プライド（ターン数）",
     "leisure": "余裕",
-    "strength2": "絶好調",
-    "strength": "絶好調",
+    "strength2": "強気",
+    "strength": "強気",
     "preservation2": "温存",
     "preservation": "温存",
     "perfectConditionTurns": "絶好調",
     "drawCard": "カードを引く",
     "cardUsesRemaining": "使用回数",
-    "setStance(strength)": "絶好調状態になる",
+    "setStance(strength)": "強気スタンスになる",
     "consumedGenki": "消費した元気",
     "fixedStamina": "固定体力",
     "maxStamina": "最大体力",
     "cardsUsed": "使用したカード枚数",
     "isPreservation": "温存状態",
-    "isStrength": "絶好調状態",
+    "isStrength": "強気状態",
     "isFullPower": "全力状態",
     "at:startOfTurn": "ターン開始時",
     "at:endOfTurn": "ターン終了時",
@@ -258,9 +258,9 @@ def translate_dsl(text):
     if not isinstance(text, str):
         return str(text)
     
-    # 1. Replace exact DSL_DICT matches
-    for k, v in DSL_DICT.items():
-        text = text.replace(k, v)
+    # 1. Replace exact DSL_DICT matches (sorted by key length descending to prevent partial match issues)
+    for k in sorted(DSL_DICT.keys(), key=len, reverse=True):
+        text = text.replace(k, DSL_DICT[k])
         
     # 2. Regex replace numeric IDs with Names e.g. addCardToDeck(23) -> addCardToDeck(23: 眠気)
     # Match patterns like (ID) or [baseId(ID)] or target:ID
@@ -292,7 +292,7 @@ def generate_game_mechanics():
 *   **ロジック (Logic):** 「好印象」「やる気」を駆使してスコアを稼ぐプラン。
     *   **好印象:** ターン終了時に好印象の値だけスコアを獲得する。
     *   **やる気:** 元気増加系のスキルを使用した際、増加する元気の量にやる気の値が加算される。
-*   **アノマリー (Anomaly):** 「毒」や「温存」、「体力低下時」など特殊なギミックを用いるプラン。
+*   **アノマリー (Anomaly):** 「温存」や「強気」、「全力」、「スタンス変更」など特殊なギミックを用いるプラン。
 
 ## 2. 主要なステータス効果
 *   **元気 (Shield/Health):** アピール（スキル）を使用する際の体力消費を肩代わりするバリアのようなもの。
