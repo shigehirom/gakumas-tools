@@ -1,11 +1,11 @@
-import { extractLines, getWhiteCanvas, loadImageFromFile } from "./common.js";
+import { extractLines, getWhiteCanvas, loadImageFromFile } from "./common";
 import {
   allTokens,
   parseScoreToken,
   pairTotalLine,
   recoverStage,
   stageVerified,
-} from "./rehearsalRecovery.js";
+} from "./rehearsalRecovery";
 
 const NUMERIC_LINE_REGEX = /^[\d\s,.—-]+$/;
 const OCR_MIN_WIDTH = 1200;

@@ -3,9 +3,8 @@ import {
   EOT_DECREMENT_FIELDS,
   S,
   STANCE_CHANGED_EFFECTS,
-  UNFRESH_PHASES,
-} from "../constants.js";
-import EngineComponent from "./EngineComponent.js";
+} from "../constants";
+import EngineComponent from "./EngineComponent";
 
 const BUFF_TYPES = [
   { action: "setScoreBuff", field: S.scoreBuffs },

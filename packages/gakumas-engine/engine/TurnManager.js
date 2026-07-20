@@ -3,9 +3,9 @@ import {
   FULL_POWER_CHANGED_EFFECTS,
   GOOD_IMPRESSION_EFFECTS,
   S,
-} from "../constants.js";
-import EngineComponent from "./EngineComponent.js";
-import { getRand, shuffle } from "../utils.js";
+} from "../constants";
+import EngineComponent from "./EngineComponent";
+import { getRand, shuffle } from "../utils";
 
 export default class TurnManager extends EngineComponent {
   constructor(engine) {

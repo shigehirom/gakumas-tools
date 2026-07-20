@@ -251,7 +251,44 @@ DSL_DICT = {
     "group": "グループ",
     "uneaseTurns": "不調",
     "nullifyDebuff": "デバフ無効",
-    "addCardToHand": "手札に追加"
+    "addCardToHand": "手札に追加",
+
+    # 追加されたイベントトリガー (at:...)
+    "at:beforeStartOfTurn": "ターン開始前",
+    "at:afterStartOfTurn": "ターン開始直後",
+    "at:beforeCardUsed": "カード使用前",
+    "at:afterCardUsed": "カード使用後",
+    "at:cardUsed": "カード使用時",
+    "at:stanceChanged": "スタンス変更時",
+    "at:staminaDecreased": "体力減少時",
+    "at:everyTurn": "毎ターン",
+
+    # 追加された変数・状態
+    "turnsRemaining": "残りターン数",
+    "turnsElapsed": "経過ターン数",
+    "prevStance": "前回のスタンス",
+    "stance": "現在のスタンス",
+    "usedCardBaseId": "使用カードID",
+    "cardHasEffect": "効果に含むカード",
+    "isDirectEffect": "直接効果",
+    "parentPhase": "親フェーズ",
+    "processCost": "コスト処理",
+    "lockStanceTurns": "スタンス固定ターン数",
+    "nullifyCostCards": "消費体力無効カード数",
+
+    # 追加された特殊アクション
+    "holdThisCard": "このカードをキープ",
+    "holdSelected": "指定カードをキープ",
+    "useSelected": "指定カードを使用",
+    "useAllFree": "すべてのフリーカードを使用",
+
+    # グローバルプレフィックス関連の翻訳
+    "g.scoreTimes": "スコア適用倍率",
+    "g.score": "スコア",
+    "g.stamina": "体力",
+    "g.genki": "元気",
+    "g.typedCost": "指定消費体力",
+    "g.": ""
 }
 
 def translate_dsl(text):
