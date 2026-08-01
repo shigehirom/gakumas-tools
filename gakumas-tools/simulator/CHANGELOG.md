@@ -29,6 +29,16 @@ Dates are based on Eastern Time Zone.
 - Add sugar flavor preview
 
 
+
+
+## 2026-07-31
+
+- Fix full power effect activation order
+
+## 2026-07-27
+
+- Add primastella saki and ume
+
 ## 2026-07-21
 
 - Update garakutaroad saki and itemize action effect logs
