@@ -28,6 +28,7 @@ if (!SHEET_ID) {
 
 const args = process.argv.slice(2);
 const force = args.includes('--force');
+const exportMode = args.includes('--export');
 
 async function main() {
   let auth;
@@ -97,6 +98,67 @@ async function main() {
   if (idxMap['ID'] === undefined || idxMap['is_owned'] === undefined) {
     console.error('Spreadsheet is missing required columns (ID, is_owned).');
     process.exit(1);
+  }
+
+  // Check for missing P-idols from master
+  const existingIds = new Set();
+  for (let i = 1; i < rows.length; i++) {
+    if (rows[i] && rows[i][idxMap['ID']]) {
+      existingIds.add(parseInt(rows[i][idxMap['ID']], 10));
+    }
+  }
+
+  const allPIdolList = Object.values(pIdolsDict);
+  const missingPIdols = allPIdolList.filter(p => !existingIds.has(p.id));
+
+  if (exportMode) {
+    if (missingPIdols.length === 0) {
+      console.log("All P-Idols from gakumas-tools master are already present in Google Sheets!");
+      process.exit(0);
+    }
+
+    console.log(`\nFound ${missingPIdols.length} new P-Idols to add to Google Sheets:`);
+    const newRows = [];
+    for (const p of missingPIdols) {
+      const baseIdol = idolsDict[p.idolId.toString()];
+      const idol_name = baseIdol ? baseIdol.name : "";
+      console.log(`  + ID: ${p.id} | [${p.rarity}] ${idol_name} 【${p.title}】 (${p.plan})`);
+
+      const newRow = new Array(headers.length).fill('');
+      if (idxMap['ID'] !== undefined) newRow[idxMap['ID']] = String(p.id);
+      if (idxMap['アイドル名'] !== undefined) newRow[idxMap['アイドル名']] = idol_name;
+      else if (idxMap['idol_name'] !== undefined) newRow[idxMap['idol_name']] = idol_name;
+      if (idxMap['カード名'] !== undefined) newRow[idxMap['カード名']] = p.title;
+      else if (idxMap['title'] !== undefined) newRow[idxMap['title']] = p.title;
+      if (idxMap['レアリティ'] !== undefined) newRow[idxMap['レアリティ']] = p.rarity;
+      else if (idxMap['rarity'] !== undefined) newRow[idxMap['rarity']] = p.rarity;
+      if (idxMap['プラン'] !== undefined) newRow[idxMap['プラン']] = p.plan;
+      else if (idxMap['plan'] !== undefined) newRow[idxMap['plan']] = p.plan;
+      if (idxMap['得意効果'] !== undefined) newRow[idxMap['得意効果']] = p.recommendedEffect || '';
+      else if (idxMap['recommendedEffect'] !== undefined) newRow[idxMap['recommendedEffect']] = p.recommendedEffect || '';
+      if (idxMap['is_owned'] !== undefined) newRow[idxMap['is_owned']] = 'FALSE';
+      if (idxMap['awaken_level'] !== undefined) newRow[idxMap['awaken_level']] = '0';
+      if (idxMap['talent_level'] !== undefined) newRow[idxMap['talent_level']] = '1';
+
+      newRows.push(newRow);
+    }
+
+    console.log(`\nAppending ${newRows.length} rows to Google Sheets 'P-Idols' tab...`);
+    await sheets.spreadsheets.values.append({
+      spreadsheetId: SHEET_ID,
+      range: 'P-Idols!A:Z',
+      valueInputOption: 'USER_ENTERED',
+      requestBody: {
+        values: newRows,
+      },
+    });
+
+    console.log(`[+] Successfully added ${newRows.length} P-Idols to Google Sheets!`);
+    process.exit(0);
+  }
+
+  if (missingPIdols.length > 0) {
+    console.log(`[Info] There are ${missingPIdols.length} new P-Idols available in gakumas-tools. Run with '--export' to append them to Google Sheets.`);
   }
 
   const ownedPIdols = [];
