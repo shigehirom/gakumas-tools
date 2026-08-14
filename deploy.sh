@@ -22,6 +22,6 @@ ssh -t $TARGET "cd $TARGET_DIR && \
   echo '==> Building Web UI...' && \
   sudo docker compose build && \
   sudo docker compose down && \
-  (sudo docker compose up -d || echo 'Notice: Port 30000 might be managed by TrueNAS Apps')"
+  (sudo docker compose up -d || sudo docker restart \$(sudo docker ps -a -q -f name=gakumas-tools) 2>/dev/null || true)"
 
 echo "Deployment complete!"
