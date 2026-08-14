@@ -3,6 +3,8 @@
   "version": "0.1.0",
   "scripts": {
     "cli": "pnpm -s --filter gakumas-cli run -s start --",
+    "bot": "pnpm --filter gakumas-discord-bot start",
+    "bot:build": "pnpm --filter gakumas-discord-bot build",
     "dev": "pnpm --filter gakumas-tools dev",
     "build": "pnpm --filter gakumas-tools build",
     "process": "python -m scripts.process_screenshots_iphone",
@@ -39,5 +41,5 @@
     "sharp": "^0.34.5",
     "tesseract.js": "^7.0.0"
   },
-  "packageManager": "pnpm@11.15.1"
+  "packageManager": "pnpm@11.21.0"
 }

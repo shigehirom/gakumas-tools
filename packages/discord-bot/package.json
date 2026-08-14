@@ -1,0 +1,29 @@
+{
+  "name": "gakumas-discord-bot",
+  "version": "1.0.0",
+  "description": "Discord Bot for Gakumas Tools simulation and deck inspection",
+  "main": "dist/index.js",
+  "scripts": {
+    "start": "TS_NODE_TRANSPILE_ONLY=true ts-node src/index.ts",
+    "deploy-commands": "TS_NODE_TRANSPILE_ONLY=true ts-node src/deploy-commands.ts",
+    "build": "tsc"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "@types/node": "^25.0.10",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "discord.js": "^14.18.0",
+    "dotenv": "^16.4.7",
+    "gakumas-data": "workspace:*",
+    "mongodb": "^7.0.0",
+    "onnxruntime-node": "1.24",
+    "sharp": "^0.34.5",
+    "tesseract.js": "^7.0.0"
+  }
+}

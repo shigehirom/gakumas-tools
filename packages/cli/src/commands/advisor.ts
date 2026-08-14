@@ -5,6 +5,9 @@ import * as path from 'path';
 export function registerAdvisorCommand(cli: any) {
     cli.command('advisor <stage> [runs] [idolName] [plan]', 'Memory tuning and target setting advisor')
         .option('--mode <mode>', 'Advisor mode: params or cards')
+        .option('--main <name>', 'Specific main memory name to diagnose')
+        .option('--sub <name>', 'Specific sub memory name to diagnose')
+        .option('--optimized [file]', 'Path to optimized deck markdown file (default: auto-detect latest)')
         .option('--supportBonus <value>', 'Support bonus value (default: 0.04)')
         .option('--discord', 'Send summary report to Discord Webhook')
         .option('--sort <order>', 'Sort order of report: normal or reverse')
@@ -32,6 +35,10 @@ export function registerAdvisorCommand(cli: any) {
             if (plan) args.push('--plan', plan);
             
             args.push('--mode', options.mode);
+
+            if (options.main) args.push('--main', options.main);
+            if (options.sub) args.push('--sub', options.sub);
+            if (options.optimized) args.push('--optimized', typeof options.optimized === 'string' ? options.optimized : 'auto');
 
             if (options.supportBonus) {
                 args.push('--supportBonus', options.supportBonus);

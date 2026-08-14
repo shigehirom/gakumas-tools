@@ -4,6 +4,7 @@ import { Worker } from 'worker_threads';
 import crypto from "crypto";
 import os from 'os';
 import path from "path";
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -11,8 +12,107 @@ const __dirname = path.dirname(__filename);
 
 const IDOL_NAME_TO_ID = {
     "saki": 1, "temari": 2, "kotone": 3, "mao": 4, "lilja": 5, "china": 6,
-    "sumika": 7, "hiro": 8, "rina": 9, "rinami": 9, "ume": 10, "sena": 11, "misuzu": 12, "tsubame": 13
+    "sumika": 7, "hiro": 8, "rina": 9, "rinami": 9, "ume": 10, "sena": 11, "misuzu": 12, "tsubame": 13, "asari": 14
 };
+
+const IDOL_ID_TO_NAME_JA = {
+    1: "花海咲季", 2: "月村手毬", 3: "藤田ことね", 4: "有村麻央", 5: "葛城リーリヤ",
+    6: "倉本千奈", 7: "紫雲清夏", 8: "篠澤広", 9: "姫崎莉波", 10: "花海佑芽",
+    11: "十王星南", 12: "秦谷美鈴", 13: "雨夜燕", 14: "根緒亜紗里"
+};
+
+function cleanMemoryName(name) {
+    if (!name) return "";
+    return name.replace(/【.*?】/g, '').trim();
+}
+
+function parseOptimizedDeck(filePath) {
+    if (!fs.existsSync(filePath)) return null;
+    const content = fs.readFileSync(filePath, 'utf-8');
+    const lines = content.split('\n');
+    
+    const deck = { stage1: [], stage2: [], stage3: [] };
+    let currentStage = null;
+    
+    for (const line of lines) {
+        const trimmed = line.trim();
+        const stageMatch = trimmed.match(/^###\s*■\s*ステージ(\d)/);
+        if (stageMatch) {
+            currentStage = `stage${stageMatch[1]}`;
+            continue;
+        }
+        
+        if (currentStage && trimmed.startsWith('|')) {
+            if (trimmed.includes('アイドル') || trimmed.includes(':---')) continue;
+            
+            const cols = trimmed.split('|').map(c => c.trim());
+            if (cols.length >= 6) {
+                deck[currentStage].push({
+                    idol: cols[1],
+                    mainMem: cleanMemoryName(cols[3]),
+                    subMem: cleanMemoryName(cols[4]),
+                    rawMain: cols[3],
+                    rawSub: cols[4]
+                });
+            }
+        }
+    }
+    return deck;
+}
+
+function findLatestOptimizedFile(dirPath, season) {
+    if (!fs.existsSync(dirPath)) return null;
+    const files = fs.readdirSync(dirPath);
+    const pattern = new RegExp(`^(\\d{2}-\\d{2}-\\d{2})_${season}_optimized\\.md$`);
+    const matched = [];
+    for (const file of files) {
+        const match = file.match(pattern);
+        if (match) {
+            matched.push({
+                dateStr: match[1],
+                filePath: path.join(dirPath, file)
+            });
+        }
+    }
+    if (matched.length === 0) return null;
+    matched.sort((a, b) => b.dateStr.localeCompare(a.dateStr));
+    return matched[0].filePath;
+}
+
+function getMemoryLabelWithSong(filename, memories) {
+    const clean = cleanMemoryName(filename);
+    const mem = memories.find(m => cleanMemoryName(m.filename) === clean);
+    if (mem && mem.data && mem.data.pIdolId) {
+        const pIdol = PIdols.getById(mem.data.pIdolId);
+        const title = pIdol ? (pIdol.title || pIdol.name) : null;
+        if (title) {
+            return `\`${clean}\`【${title}】`;
+        }
+    }
+    return `\`${filename}\``;
+}
+
+function getMemoryCustomizedCards(mem, getCardById) {
+    if (!mem || !mem.data || !mem.data.skillCardIds) return [];
+    
+    const results = [];
+    mem.data.skillCardIds.forEach((id, idx) => {
+        if (id <= 0) return;
+        const card = getCardById(id);
+        if (!card || card.sourceType === 'pIdol' || card.sourceType === 'support') return;
+        
+        const custom = mem.data.customizations?.[idx] || {};
+        if (Object.keys(custom).length > 0) {
+            results.push({
+                card,
+                customization: custom,
+                slotIndex: idx
+            });
+        }
+    });
+    
+    return results;
+}
 
 function calculateMemoryHash(memoryData) {
     const parts = [
@@ -28,7 +128,7 @@ function calculateMemoryHash(memoryData) {
 // Hierarchy Definition
 // 1 = SSR+, 2 = SSR, 3 = SR+, 4 = SR, 5 = R+, 6 = R, 7 = N+, 8 = N, 9 = Trouble/Other
 function getCardHierarchy(card) {
-    if (card.sourceType === 'pIdol') return -1; // 固有カードは交換不可
+    if (card.sourceType === 'pIdol' || card.sourceType === 'support') return -1; // 固有カード・サポートカードは合成不可
     let rank = 9;
     if (card.rarity === 'SSR') rank = card.upgraded ? 1 : 2;
     else if (card.rarity === 'SR') rank = card.upgraded ? 3 : 4;
@@ -216,84 +316,171 @@ async function run() {
     const workerCount = Math.max(1, cpuCount);
 
     // -------------------------------------------------------------
-    // Phase 0: Find current Best Loadout (Screening 200 runs)
+    // Phase 0: Resolve Base Loadout & Equipped Deck Memories
     // -------------------------------------------------------------
-    console.error(`[Advisor] Phase 0: Finding current best loadout among ${memories.length} memories (200 runs)...`);
-    const initialLoadouts = [];
-    for (const main of memories) {
-        for (const sub of memories) {
-            const loadout = {
-                id: `${main.hash}_${sub.hash}`,
-                mainFilename: main.filename,
-                subFilename: sub.filename,
-                params: [...main.data.params],
-                pItemIds: [...(main.data.pItemIds || [])].filter(id => id > 0),
-                skillCardIdGroups: [main.data.skillCardIds, sub.data.skillCardIds],
-                customizationGroups: [
-                    main.data.customizations || [{}, {}, {}, {}, {}, {}],
-                    sub.data.customizations || [{}, {}, {}, {}, {}, {}]
-                ]
-            };
-            // Apply Sub parameter 20%
-            loadout.params = loadout.params.map((p, idx) => p + Math.floor((sub.data.params[idx] || 0) * 0.2));
-            initialLoadouts.push(loadout);
+    const cliDocsDir = process.env.CLI_DOCS_DIR 
+        ? path.resolve(process.env.INIT_CWD || process.cwd(), process.env.CLI_DOCS_DIR)
+        : path.resolve(__dirname, '../../../../shared/documents');
+    
+    let optimizedFilePath = null;
+    if (options.optimized && options.optimized !== 'auto') {
+        optimizedFilePath = path.resolve(process.cwd(), options.optimized);
+    } else {
+        optimizedFilePath = findLatestOptimizedFile(cliDocsDir, season);
+    }
+
+    const allEquippedMemoryNames = new Set();
+    let optimizedStageEntry = null;
+
+    if (optimizedFilePath && fs.existsSync(optimizedFilePath)) {
+        console.error(`[Advisor] Reading active deck configuration from: ${path.basename(optimizedFilePath)}`);
+        const parsedDeck = parseOptimizedDeck(optimizedFilePath);
+        if (parsedDeck) {
+            for (const stg of ['stage1', 'stage2', 'stage3']) {
+                for (const item of (parsedDeck[stg] || [])) {
+                    if (item.mainMem) allEquippedMemoryNames.add(item.mainMem);
+                    if (item.subMem) allEquippedMemoryNames.add(item.subMem);
+                }
+            }
+
+            const stageKey = `stage${stageNumber}`;
+            const idolId = options.idolName ? IDOL_NAME_TO_ID[options.idolName.toLowerCase()] : null;
+            const idolJaName = idolId ? IDOL_ID_TO_NAME_JA[idolId] : null;
+
+            if (idolJaName && parsedDeck[stageKey]) {
+                optimizedStageEntry = parsedDeck[stageKey].find(e => e.idol === idolJaName);
+            }
         }
     }
 
-    // Try finding cached results in simulation_results to skip screening if possible
-    let baseResult = null;
-    let mongoClient = null;
-    let cachedResults = [];
-    try {
-        mongoClient = new MongoClient(uri);
-        await mongoClient.connect();
-        const db = mongoClient.db(process.env.MONGODB_DB || "gakumas-tools");
-        const cacheCollection = db.collection("simulation_results");
-        
-        const hashes = memories.map(m => m.hash);
-        const query = {
-            stageId: contestStage.id,
-            runs: { $gte: 200 },
-            season: season,
-            mainHash: { $in: hashes },
-            subHash: { $in: hashes }
-        };
-        cachedResults = await cacheCollection.find(query).toArray();
-    } catch (e) {
-        console.error("[Advisor] Cache DB Lookup failed, will run screening:", e);
-    } finally {
-        if (mongoClient) await mongoClient.close();
+    let bestLoadoutRaw = null;
+
+    // A. Manual specification via --main and --sub
+    if (options.main && options.sub) {
+        const mainMem = memories.find(m => cleanMemoryName(m.filename) === cleanMemoryName(options.main));
+        const subMem = memories.find(m => cleanMemoryName(m.filename) === cleanMemoryName(options.sub));
+        if (mainMem && subMem) {
+            console.error(`[Advisor] Using manually specified base loadout: ${mainMem.filename} + ${subMem.filename}`);
+            const loadout = {
+                id: `${mainMem.hash}_${subMem.hash}`,
+                mainFilename: mainMem.filename,
+                subFilename: subMem.filename,
+                params: [...mainMem.data.params],
+                pItemIds: [...(mainMem.data.pItemIds || [])].filter(id => id > 0),
+                skillCardIdGroups: [mainMem.data.skillCardIds, subMem.data.skillCardIds],
+                customizationGroups: [
+                    mainMem.data.customizations || [{}, {}, {}, {}, {}, {}],
+                    subMem.data.customizations || [{}, {}, {}, {}, {}, {}]
+                ]
+            };
+            loadout.params = loadout.params.map((p, idx) => p + Math.floor((subMem.data.params[idx] || 0) * 0.2));
+            bestLoadoutRaw = loadout;
+        } else {
+            console.error(`[Advisor] Warning: Specified --main (${options.main}) or --sub (${options.sub}) not found in DB.`);
+        }
     }
 
-    let screeningResults = [];
-    if (cachedResults.length > 0) {
-        console.error(`[Advisor] Loaded ${cachedResults.length} results from cache.`);
-        screeningResults = cachedResults.map(r => ({
-            id: `${r.mainHash}_${r.subHash}`,
-            score: r.score,
-            median: r.median,
-            max: r.max,
-            min: r.min,
-            stats: r.stats
-        }));
-    } else {
-        console.error(`[Advisor] Simulating ${initialLoadouts.length} loadout combinations...`);
-        screeningResults = await executeSimulation(contestStage, 200, supportBonus, initialLoadouts, workerCount);
+    // B. Auto-extract from optimized deck file if not manually given
+    if (!bestLoadoutRaw && optimizedStageEntry) {
+        const mainMem = memories.find(m => cleanMemoryName(m.filename) === cleanMemoryName(optimizedStageEntry.mainMem));
+        const subMem = memories.find(m => cleanMemoryName(m.filename) === cleanMemoryName(optimizedStageEntry.subMem));
+        if (mainMem && subMem) {
+            console.error(`[Advisor] Auto-detected active deck from optimized report: ${mainMem.filename} + ${subMem.filename}`);
+            const loadout = {
+                id: `${mainMem.hash}_${subMem.hash}`,
+                mainFilename: mainMem.filename,
+                subFilename: subMem.filename,
+                params: [...mainMem.data.params],
+                pItemIds: [...(mainMem.data.pItemIds || [])].filter(id => id > 0),
+                skillCardIdGroups: [mainMem.data.skillCardIds, subMem.data.skillCardIds],
+                customizationGroups: [
+                    mainMem.data.customizations || [{}, {}, {}, {}, {}, {}],
+                    subMem.data.customizations || [{}, {}, {}, {}, {}, {}]
+                ]
+            };
+            loadout.params = loadout.params.map((p, idx) => p + Math.floor((subMem.data.params[idx] || 0) * 0.2));
+            bestLoadoutRaw = loadout;
+        }
     }
 
-    if (screeningResults.length === 0) {
-        console.error("[Advisor] Screening failed to produce results.");
-        process.exit(1);
-    }
-
-    // Sort to find best
-    screeningResults.sort((a, b) => b.median - a.median);
-    const bestPairInfo = screeningResults[0];
-    const bestLoadoutRaw = initialLoadouts.find(l => l.id === bestPairInfo.id);
-
+    // C. Fallback: Screening 200 runs
     if (!bestLoadoutRaw) {
-        console.error("[Advisor] Error identifying best loadout details.");
-        process.exit(1);
+        console.error(`[Advisor] Phase 0: Finding current best loadout among ${memories.length} memories (200 runs)...`);
+        const initialLoadouts = [];
+        for (const main of memories) {
+            for (const sub of memories) {
+                const loadout = {
+                    id: `${main.hash}_${sub.hash}`,
+                    mainFilename: main.filename,
+                    subFilename: sub.filename,
+                    params: [...main.data.params],
+                    pItemIds: [...(main.data.pItemIds || [])].filter(id => id > 0),
+                    skillCardIdGroups: [main.data.skillCardIds, sub.data.skillCardIds],
+                    customizationGroups: [
+                        main.data.customizations || [{}, {}, {}, {}, {}, {}],
+                        sub.data.customizations || [{}, {}, {}, {}, {}, {}]
+                    ]
+                };
+                // Apply Sub parameter 20%
+                loadout.params = loadout.params.map((p, idx) => p + Math.floor((sub.data.params[idx] || 0) * 0.2));
+                initialLoadouts.push(loadout);
+            }
+        }
+
+        // Try finding cached results in simulation_results to skip screening if possible
+        let mongoClient = null;
+        let cachedResults = [];
+        try {
+            mongoClient = new MongoClient(uri);
+            await mongoClient.connect();
+            const db = mongoClient.db(process.env.MONGODB_DB || "gakumas-tools");
+            const cacheCollection = db.collection("simulation_results");
+            
+            const hashes = memories.map(m => m.hash);
+            const query = {
+                stageId: contestStage.id,
+                runs: { $gte: 200 },
+                season: season,
+                mainHash: { $in: hashes },
+                subHash: { $in: hashes }
+            };
+            cachedResults = await cacheCollection.find(query).toArray();
+        } catch (e) {
+            console.error("[Advisor] Cache DB Lookup failed, will run screening:", e);
+        } finally {
+            if (mongoClient) await mongoClient.close();
+        }
+
+        let screeningResults = [];
+        if (cachedResults.length > 0) {
+            console.error(`[Advisor] Loaded ${cachedResults.length} results from cache.`);
+            screeningResults = cachedResults.map(r => ({
+                id: `${r.mainHash}_${r.subHash}`,
+                score: r.score,
+                median: r.median,
+                max: r.max,
+                min: r.min,
+                stats: r.stats
+            }));
+        } else {
+            console.error(`[Advisor] Simulating ${initialLoadouts.length} loadout combinations...`);
+            screeningResults = await executeSimulation(contestStage, 200, supportBonus, initialLoadouts, workerCount);
+        }
+
+        if (screeningResults.length === 0) {
+            console.error("[Advisor] Screening failed to produce results.");
+            process.exit(1);
+        }
+
+        // Sort to find best
+        screeningResults.sort((a, b) => b.median - a.median);
+        const bestPairInfo = screeningResults[0];
+        bestLoadoutRaw = initialLoadouts.find(l => l.id === bestPairInfo.id);
+
+        if (!bestLoadoutRaw) {
+            console.error("[Advisor] Error identifying best loadout details.");
+            process.exit(1);
+        }
     }
 
     // Get detailed base stats with full runs
@@ -302,15 +489,18 @@ async function run() {
     const baseSimResultArray = await executeSimulation(contestStage, numRuns, supportBonus, [bestLoadoutRaw], 1);
     const baseSimResult = baseSimResultArray[0];
 
-    console.log(`\n# メモリーチューニング診断レポート (${options.mode === 'params' ? 'パラメータ感度分析' : 'スキルカード交換提案'})\n`);
+    console.log(`\n# メモリーチューニング診断レポート (${options.mode === 'params' ? 'パラメータ感度分析' : 'スキルカード合成提案'})\n`);
     console.log(`- **対象ステージ**: ${contestStage.name} (シーズン${season} ステージ${stageNumber})`);
     console.log(`- **推奨プラン**: ${options.plan || '未指定'}`);
     console.log(`- **アイドル**: ${options.idolName || '指定なし'}`);
     console.log(`- **サポートボーナス**: ${(supportBonus * 100).toFixed(2)}%`);
     console.log(`- **試行回数**: ${numRuns} 回\n`);
+    const mainLabel = getMemoryLabelWithSong(bestLoadoutRaw.mainFilename, memories);
+    const subLabel = getMemoryLabelWithSong(bestLoadoutRaw.subFilename, memories);
+
     console.log(`### ■ 診断基準（ベースロードアウト）`);
-    console.log(`- **メインメモリ**: \`${bestLoadoutRaw.mainFilename}\``);
-    console.log(`- **サブメモリ**: \`${bestLoadoutRaw.subFilename}\``);
+    console.log(`- **メインメモリ**: ${mainLabel}`);
+    console.log(`- **サブメモリ**: ${subLabel}`);
     console.log(`- **現在の基準スコア平均値**: **${Math.round(baseSimResult.score).toLocaleString()} Pt**`);
     console.log(`- **現在の基準スコア中央値 ($Q_2$)**: **${Math.round(baseSimResult.median).toLocaleString()} Pt**`);
     console.log(`- **スコア分布**: Min ${Math.round(baseSimResult.min).toLocaleString()} / Max ${Math.round(baseSimResult.max).toLocaleString()} Pt\n`);
@@ -396,7 +586,7 @@ async function run() {
         console.log(reportMarkdown);
 
     // -------------------------------------------------------------
-    // Mode B: Skill Card Replacement Advisor
+    // Mode B: Skill Card Synthesis Advisor
     // -------------------------------------------------------------
     } else if (options.mode === 'cards') {
         const planFilter = options.plan || 'free';
@@ -404,14 +594,13 @@ async function run() {
 
         const getCardById = (id) => allCards.find(c => c.id === id);
 
-        // Gather all unique skill card IDs present in the user's memories for this idol and plan
-        const ownedCardIds = new Set();
-        memories.forEach(m => {
-            if (m.data && m.data.skillCardIds) {
-                m.data.skillCardIds.forEach(id => {
-                    if (id > 0) ownedCardIds.add(id);
-                });
-            }
+        // Exclude main and sub memories of the current base loadout, AND all equipped memories in the active deck
+        const availableMaterialMemories = memories.filter(m => {
+            const clean = cleanMemoryName(m.filename);
+            if (clean === cleanMemoryName(bestLoadoutRaw.mainFilename)) return false;
+            if (clean === cleanMemoryName(bestLoadoutRaw.subFilename)) return false;
+            if (allEquippedMemoryNames.has(clean)) return false;
+            return true;
         });
 
         // Map main and sub cards
@@ -426,20 +615,40 @@ async function run() {
             { label: "サブ", index: 1, cards: subCards }
         ];
 
+        // Gather all customized material cards across available material memories
+        const matchingMaterials = [];
+        availableMaterialMemories.forEach(m => {
+            const customCards = getMemoryCustomizedCards(m, getCardById);
+            customCards.forEach(cItem => {
+                matchingMaterials.push({
+                    mem: m,
+                    card: cItem.card,
+                    customization: cItem.customization
+                });
+            });
+        });
+
+        const ownedCustomizedCardIds = new Set(matchingMaterials.map(m => m.card.id));
+
         for (const group of groups) {
             for (let cardIdx = 0; cardIdx < group.cards.length; cardIdx++) {
                 const originalCard = group.cards[cardIdx];
-                if (originalCard.sourceType === 'pIdol') continue; // Skip signature card
+                if (originalCard.sourceType === 'pIdol' || originalCard.sourceType === 'support') continue; // Skip signature & support cards
+
+                // In Gakumas, ONLY customized cards can be synthesized ("未カスタマイズのカードは合成できません")
+                const cardCustomization = bestLoadoutRaw.customizationGroups[group.index]?.[cardIdx] || {};
+                if (Object.keys(cardCustomization).length === 0) continue;
 
                 const originalHierarchy = getCardHierarchy(originalCard);
+                if (originalHierarchy === -1) continue;
 
                 // Find candidate replacements
                 const candidates = allCards.filter(c => {
-                    if (c.sourceType === 'pIdol') return false; // Skip unique pIdols
+                    if (c.sourceType === 'pIdol' || c.sourceType === 'support') return false; // Skip unique pIdols & support cards
                     if (c.id === originalCard.id) return false; // Skip self
                     
-                    // Only allow replacement cards that are already present in the user's memories for this plan/idol
-                    if (!ownedCardIds.has(c.id)) return false;
+                    // Only allow replacement cards that exist as customized cards in user's material memories
+                    if (!ownedCustomizedCardIds.has(c.id)) return false;
 
                     // Plan compatibility
                     if (planFilter !== 'free') {
@@ -450,10 +659,25 @@ async function run() {
                     const candidateHierarchy = getCardHierarchy(c);
                     if (candidateHierarchy === -1 || candidateHierarchy < originalHierarchy) return false;
 
-                    // Unique constraint: If candidate is unique, it shouldn't already exist in the loadout
+                    // 1. Cannot duplicate exact card ID already in this memory
+                    const currentMemoryCardIds = bestLoadoutRaw.skillCardIdGroups[group.index];
+                    if (currentMemoryCardIds.includes(c.id)) return false;
+
+                    // 2. Cannot duplicate card with the same base name already present in this memory (other slots)
+                    const otherCardNamesInMem = group.cards
+                        .filter((_, idx) => idx !== cardIdx)
+                        .map(gc => gc.name.replace(/\+$/, ''));
+                    if (otherCardNamesInMem.includes(c.name.replace(/\+$/, ''))) return false;
+
+                    // 3. Unique constraint: If candidate is unique, it shouldn't already exist anywhere in the loadout (main + sub)
                     if (c.unique) {
-                        const alreadyExists = bestLoadoutRaw.skillCardIdGroups.some(grp => grp.includes(c.id));
-                        if (alreadyExists) return false;
+                        const otherCardsInDeck = [
+                            ...bestLoadoutRaw.skillCardIdGroups[0].map((id, idx) => (group.index === 0 && idx === cardIdx) ? null : getCardById(id)),
+                            ...bestLoadoutRaw.skillCardIdGroups[1].map((id, idx) => (group.index === 1 && idx === cardIdx) ? null : getCardById(id))
+                        ].filter(Boolean);
+                        if (otherCardsInDeck.some(dc => dc.id === c.id || dc.name.replace(/\+$/, '') === c.name.replace(/\+$/, ''))) {
+                            return false;
+                        }
                     }
 
                     return true;
@@ -461,19 +685,21 @@ async function run() {
 
                 // Generate virtual loadouts for each candidate
                 candidates.forEach(cand => {
+                    // Find a material memory that supplies this candidate to inherit its customization
+                    const sample = matchingMaterials.find(m => m.card.id === cand.id);
+                    const inheritedCustomization = sample ? { ...sample.customization } : {};
+
                     const newIdGroups = [
                         [...bestLoadoutRaw.skillCardIdGroups[0]],
                         [...bestLoadoutRaw.skillCardIdGroups[1]]
                     ];
-                    // Replace
                     newIdGroups[group.index][cardIdx] = cand.id;
 
                     const newCustomizations = [
                         [...bestLoadoutRaw.customizationGroups[0]],
                         [...bestLoadoutRaw.customizationGroups[1]]
                     ];
-                    // Reset customization for the replaced card (since we test without customization)
-                    newCustomizations[group.index][cardIdx] = {};
+                    newCustomizations[group.index][cardIdx] = inheritedCustomization;
 
                     virtualLoadouts.push({
                         id: `${group.label}_idx${cardIdx}_replace_${originalCard.id}_with_${cand.id}`,
@@ -487,7 +713,8 @@ async function run() {
                             groupLabel: group.label,
                             cardIdx,
                             originalCard,
-                            replacedWith: cand
+                            replacedWith: cand,
+                            customization: inheritedCustomization
                         }
                     });
                 });
@@ -515,11 +742,11 @@ async function run() {
 
         const top5Candidates = candidatesToShow.slice(0, 5);
 
-        reportMarkdown += `### ■ スキルカード交換提案結果 (期待値上位5件)\n\n`;
+        reportMarkdown += `### ■ スキルカード合成提案結果 (期待値上位5件)\n\n`;
         if (top5Candidates.length === 0) {
-            reportMarkdown += `基準スコアを上回る、または同等の交換候補は見つかりませんでした。\n`;
+            reportMarkdown += `基準スコアを上回る、または同等の合成候補は見つかりませんでした。\n`;
         } else {
-            reportMarkdown += `| 対象カード (位置) | ランク | 交換先カード | ランク | スコア中央値 ($Q_2$) | 基準差 (中央値) | 判定 |\n`;
+            reportMarkdown += `| 対象カード (位置) | ランク | 合成先カード | ランク | スコア中央値 ($Q_2$) | 基準差 (中央値) | 判定 |\n`;
             reportMarkdown += `| :--- | :---: | :--- | :---: | ---: | ---: | :---: |\n`;
 
             top5Candidates.forEach(res => {
@@ -538,52 +765,42 @@ async function run() {
                 reportMarkdown += `| ${res.meta.originalCard.name} (${res.meta.groupLabel}) | ${origRank} | **${res.meta.replacedWith.name}** | ${destRank} | ${Math.round(res.median).toLocaleString()} | ${diffSign} Pt (${diffPctSign}%) | ${evalLabel} |\n`;
             });
 
-            reportMarkdown += `\n### ■ 各候補の交換用手持ちメモリー詳細 (出現確率)\n\n`;
+            reportMarkdown += `\n### ■ 各候補の合成用手持ちメモリー詳細 (出現確率)\n\n`;
             
             top5Candidates.forEach((res, index) => {
                 const candCard = res.meta.replacedWith;
                 const origCard = res.meta.originalCard;
+                const origRank = getCardHierarchy(origCard);
                 const destRank = getCardHierarchy(candCard);
 
-                // Find user memories containing this candidate card
-                const matchingMemories = memories.filter(m => 
-                    m.data && m.data.skillCardIds && m.data.skillCardIds.includes(candCard.id)
-                );
+                // Find user memories that provide this candidate as a customized card
+                const memoryReports = [];
+                availableMaterialMemories.forEach(mem => {
+                    const customCards = getMemoryCustomizedCards(mem, getCardById);
+                    const matchingCard = customCards.find(c => c.card.id === candCard.id);
+                    if (matchingCard) {
+                        const cRank = getCardHierarchy(matchingCard.card);
+                        if (cRank >= origRank) {
+                            memoryReports.push({
+                                filename: mem.filename,
+                                count: customCards.length,
+                                prob: customCards.length > 0 ? (100 / customCards.length).toFixed(1) : "100.0"
+                            });
+                        }
+                    }
+                });
+
+                // Sort by probability descending (count ascending)
+                memoryReports.sort((a, b) => a.count - b.count);
 
                 reportMarkdown += `${index + 1}. **${origCard.name} (${res.meta.groupLabel})** ➔ **${candCard.name}** (${HIERARCHY_NAMES[destRank] || 'N'})\n`;
                 
-                if (matchingMemories.length === 0) {
+                if (memoryReports.length === 0) {
                     reportMarkdown += `   - ⚠️ 対象カードを所持している手持ちメモリーが見つかりませんでした。\n`;
                 } else {
-                    const memoryReports = [];
-                    matchingMemories.forEach(mem => {
-                        let countBelowOrEqual = 0;
-                        const cardsInMem = mem.data.skillCardIds.map(id => getCardById(id)).filter(Boolean);
-                        
-                        cardsInMem.forEach(c => {
-                            if (c.sourceType === 'pIdol') return; // 固有カードは除外
-                            if (c.rarity === 'T') return;         // トラブルカードは除外
-                            
-                            const cRank = getCardHierarchy(c);
-                            if (cRank >= destRank) { // 交換先カードのランク以下
-                                countBelowOrEqual++;
-                            }
-                        });
-
-                        const probabilityPct = countBelowOrEqual > 0 ? (100 / countBelowOrEqual).toFixed(1) : "0.0";
-                        memoryReports.push({
-                            filename: mem.filename,
-                            count: countBelowOrEqual,
-                            prob: probabilityPct
-                        });
-                    });
-
-                    // Sort by probability descending (count ascending)
-                    memoryReports.sort((a, b) => a.count - b.count);
-
-                    reportMarkdown += `   - **交換確率（出現確率が高い順）**:\n`;
+                    reportMarkdown += `   - **合成確率（出現確率が高い順）**:\n`;
                     memoryReports.forEach(mr => {
-                        reportMarkdown += `     - 📁 \`${mr.filename}\` : 対象以下カード ${mr.count}枚 (確率: **${mr.prob}%**)\n`;
+                        reportMarkdown += `     - 📁 ${getMemoryLabelWithSong(mr.filename, memories)} : 対象以下カード ${mr.count}枚 (確率: **${mr.prob}%**)\n`;
                     });
                 }
                 reportMarkdown += `\n`;
@@ -624,7 +841,7 @@ async function run() {
                 discordMsg += `- ${row.name}: ${row.median} (${row.diff})\n`;
             });
         } else {
-            discordMsg += `**カード交換提案ハイライト**:\n`;
+            discordMsg += `**カード合成提案ハイライト**:\n`;
             const lines = reportMarkdown.split("\n").filter(l => l.startsWith("|") && !l.includes("対象カード") && !l.includes(":---"));
             const parsedRows = lines.map(line => {
                 const cols = line.split("|").map(x => x.trim());
@@ -638,7 +855,7 @@ async function run() {
                 discordMsg += `- ${row.from} ➔ **${row.to}**: ${row.median} (${row.diff})\n`;
             });
             if (parsedRows.length === 0) {
-                discordMsg += `有効な交換候補はありませんでした。\n`;
+                discordMsg += `有効な合成候補はありませんでした。\n`;
             }
         }
 

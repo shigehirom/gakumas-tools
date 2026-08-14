@@ -1,103 +1,170 @@
 # Gakumas Tools CLI Utility
 
-`gakumas-tools` の機能をより使いやすく、拡張可能にするための新しいCLIユーティリティです。
-TypeScriptで実装されており、テンプレートエンジンによる柔軟な出力や Google Drive 連携などをサポートしています。
+`gakumas-tools` のシミュレーションエンジンおよびデータ管理機能をより使いやすく、拡張可能にするための統合 TypeScript CLI ユーティリティです。
+Handlebars テンプレートエンジンによる構造化 Markdown 出力、Google Drive / ローカルファイル自動保存、Discord Webhook 連携、および高度な編成最適化・調教アドバイザー機能をサポートしています。
 
-## インストール
+---
 
-プロジェクトのルートから `pnpm cli` で実行可能です。個別に開発する場合は `packages/cli` ディレクトリで以下のコマンドを実行します。
+## 📦 インストール & 準備
+
+プロジェクトルート（`gakumas-tools`）から `pnpm cli` で実行可能です。個別にビルドする場合は `packages/cli` ディレクトリで以下のコマンドを実行します。
 
 ```bash
+cd packages/cli
 pnpm install
 pnpm build
 ```
 
-## 使い方
-
-以下のコマンドで実行します。
-
-```bash
-pnpm cli <command> [options]
-```
-
-または、エイリアスを設定して `gakumas` コマンドなどで呼び出せるようにすることを推奨します。
+### 便利なエイリアス設定
+ターミナルやシェル設定（`~/.bashrc` や `~/.zshrc`）にエイリアスを設定しておくと、任意の場所から `gakumas` コマンドで呼び出せます。
 
 ```bash
-alias gakumas='pnpm --dir /path/to/gakumas-tools cli'
+alias gakumas='pnpm --dir /root/gakumas-workspace/gakumas-tools cli'
 ```
-
-### グローバルオプション
-
-- `--gdrive [filename]`: 標準出力をキャプチャし、Google Drive にアップロードします。ファイル名を省略した場合は、コマンドに応じたデフォルトの名前が自動生成されます。初回実行時には OAuth2 認証のための URL が表示されます。アップロードの進捗はターミナルに表示されます。
 
 ---
 
-### コマンド一覧
+## 🌐 グローバルオプション
 
-#### 1. コンテスト最適化 (`contest`)
+すべてのコマンド共通で使用できるオプションです。
 
-MongoDB上のメモリーを使用して、指定ステージでの最適編成を探索します。
+| オプション | 説明 |
+|---|---|
+| `--gdrive [filename]` | 出力レポートを Google Drive へ自動アップロードします。ファイル名を省略した場合はコマンド引数と日付から自動命名されます。アップロード成功時に Markdown 先頭へ YAML フロントマター（`reference_url`）が付与され、URL は `.gdriveurl` にも保存されます。 |
+| `--local [filename]` | 出力レポートをローカルファイル（Markdown）として保存します。保存先ディレクトリは環境変数 `CLI_DOCS_DIR`（未指定時はカレントディレクトリ）に従います。 |
+
+---
+
+## 🛠️ コマンドリファレンス
+
+### 1. コンテスト最適化 (`contest`)
+MongoDB 上のメモリデータを使用し、指定ステージにおける最適なメモリ組み合わせ（メイン＋サブ2枚）を高速に探索・シミュレーションします。
 
 ```bash
 gakumas contest <stage> [runs] [idolName] [plan] [options]
 ```
 
-*   **引数**:
-    *   `stage`: ステージ番号 (例: `37-3`)
-    *   `runs`: 1組み合わせあたりの試行回数 (デフォルト: `1000`)。省略して `idolName` を指定することも可能です (例: `gakumas contest 37-3 hiro`)。
-    *   `idolName`: 特定のアイドルのみ計算する場合。カンマ区切りで複数指定可能。`all` を指定すると全アイドルを順次計算します。
-        *   例: `saki`, `temari`, `kotone`, `tsubame`, `mao`, `lilja`, `china`, `sumika`, `hiro`, `sena`, `misuzu`, `ume`, `rinami`, `all`
-    *   `plan`: 特定のプランのみ計算する場合 (`sense`, `logic`, `anomaly`)。省略時はステージ情報から自動設定されます。
-*   **オプション**:
-    *   `--synth`: 合成シミュレーションを実行し、スキルカード交換の提案を行います。
-    *   `--force`: キャッシュを無視して強制的に再計算を行い、既存のキャッシュを更新します。
-    *   `--compare <pattern>`: 指定したパターン（ワイルドカード `*` 使用可）に一致する名前を持つメモリーとの組み合わせのみを対象にします。
-    *   `--showWorst`: 各メモリーをメインにした際の平均スコアが低い「ワースト10」も表示します。
-    *   `--json`: 結果をJSON形式で出力します。
-    *   `--save [count]`: スコア上位N件の組み合わせをLoadout（編成）としてデータベースに保存します。(デフォルト: 1, 最大: 5)
-    *   `--name <name>`: 保存するLoadoutの名前を指定します。連番が付与されます。
-    *   `--userId <id>`: 特定のユーザーIDにLoadoutを紐づけて保存します。
-    *   `--supportBonus <value>`: サポートボーナスの値を指定します。(デフォルト: 0.04)
-    *   `--step`: 2段階シミュレーションを実行します。
-        -   フェーズ1（スクリーニング）: 全組み合わせを少なめの試行回数で実行し、上位N件を抽出。
-        -   フェーズ2（本シミュレーション）: 抽出された上位N件を、指定された全試行回数で再シミュレート（キャッシュを無視）。
+* **引数**:
+  * `stage`: ステージ番号 (例: `46-1`, `37-3`)
+  * `runs`: 1組み合わせあたりの試行回数 (デフォルト: `1000`)。省略してアイドル名を指定することも可能 (例: `gakumas contest 46-1 hiro`)。
+  * `idolName`: 特定のアイドルのみ計算する場合。カンマ区切りで複数指定可能 (`saki,temari`)。`all` を指定すると全アイドルを順次計算します。
+  * `plan`: プラン絞り込み (`sense`, `logic`, `anomaly`)。省略時はステージ情報から自動決定。
+* **主なオプション**:
+  * `--save [count]`: スコア上位 N 件の組み合わせを Loadout（編成）として DB に保存 (デフォルト: 1, 最大: 5)。
+  * `--name <name>`: 保存する Loadout の名前プレフィックスを指定。
+  * `--userId <id>`: 特定のユーザー ID に紐づけて保存。
+  * `--supportBonus <value>`: サポートボーナス値を指定 (例: `0.12` または `12.00`。デフォルト: `.env.local` の設定値または `0.04`)。
+  * `--step`: 2段階シミュレーション（スクリーニング → 上位候補のみ本シミュレーション）を実行。
+  * `--force`: キャッシュを無視して強制的に再計算し、DB キャッシュを更新。
+  * `--synth`: スキルカード合成シミュレーションと合成提案を実行。
+  * `--compare <pattern>`: 指定パターン（ワイルドカード `*` 可）に一致するメモリとの組み合わせのみを対象にして比較。
+  * `--showWorst`: 平均スコアの低いワースト組み合わせも表示。
+  * `--allResults`: 全ての組み合わせシミュレーション結果を出力。
+  * `--filterHashes <hashes>`: 指定ハッシュリスト（JSON 配列文字列）に絞り込んで計算。
+  * `--json`: 結果を JSON 形式で出力。
 
 ---
 
-#### 2. メモリー統計 (`stats`)
+### 2. メモリ調教・目標設定アドバイザー (`advisor`)
+最適化された編成や特定のメモリ構成に対して、ステータス向上（パラメータ）やスキルカードの入れ替えによるスコア影響を詳細に診断・アドバイスします。
 
-保存されているメモリーの統計情報を表示します。
+```bash
+gakumas advisor <stage> [runs] [idolName] [plan] --mode <params|cards> [options]
+```
+
+* **必須オプション**:
+  * `--mode <mode>`: アドバイザーの診断モード（`params`: ステータス配分診断 / `cards`: スキルカード選択診断）。
+* **オプション**:
+  * `--main <name>`: 診断対象とするメインメモリの名前を指定。
+  * `--sub <name>`: 診断対象とするサブメモリの名前を指定。
+  * `--optimized [file]`: 参照するデッキ最適化 Markdown ファイルのパス (省略時は最新ファイルを自動検出)。
+  * `--supportBonus <value>`: サポートボーナスの値を指定。
+  * `--discord`: 診断サマリーを Discord Webhook (`DISCORD_WEBHOOK_URL`) へ送信。
+  * `--sort <order>`: レポートの並び順 (`normal` または `reverse`)。
+
+---
+
+### 3. リハーサル・合計スコア予測 (`rehearsal`)
+保存された Loadout（編成）を複数指定し、コンテスト等の実戦を想定したチーム合計スコアを予測シミュレーションします。
+
+```bash
+gakumas rehearsal <runs> [...decks] [options]
+```
+
+* **引数**:
+  * `runs`: 1デッキあたりのシミュレーション試行回数 (例: `200`)
+  * `decks`: Loadout として保存されている編成名（通常は3デッキ指定）。
+* **出力**: 各アイドルのスコア統計（最小・平均・最大・中央値・標準偏差）とチーム合計スコアの分布レポート。
+
+---
+
+### 4. デッキ編成最適化 (`optimize-deck`)
+コンテストの3ステージ間で「同一アイドルかつ同一衣装（Pアイドル）」の重複を回避しつつ、チーム総合の期待中央値が最大となる組み合わせを探索します。
+
+```bash
+gakumas optimize-deck <prefix> [options]
+```
+
+* **引数**:
+  * `prefix`: `contest` コマンド等で出力された3ステージ分の Markdown ファイルのプレフィックス (例: `26-08-14_46`)。
+  * ※ `<prefix>-1_all.md`, `<prefix>-2_all.md`, `<prefix>-3_all.md` を読み込んで最適化します。
+
+---
+
+### 5. 理想メモリー推薦出力 (`recommend`)
+理想メモリー Markdown ファイルの内容を解析し、推奨されるメモリ構成や目標スコアを出力します。
+
+```bash
+gakumas recommend <file> [options]
+```
+
+* **引数**:
+  * `file`: 理想メモリーが定義された Markdown ファイルのパス。
+
+---
+
+### 6. 対戦履歴 CSV テンプレート生成 (`match-history`)
+コンテストの対戦結果を記録するための CSV テンプレートファイルを自動生成します。
+
+```bash
+gakumas match-history <season> <startDate> <endDate>
+```
+
+* **引数**:
+  * `season`: コンテストシーズン番号 (例: `46`)
+  * `startDate`: 開始日 (例: `2026-08-15`)
+  * `endDate`: 終了日 (例: `2026-08-30`)
+* **出力先**: `CLI_INSTRUCTIONS_DIR`（未設定時は `/root/gakumas-workspace/shared/agent-instructions/match_history_<season>.csv`）
+
+---
+
+### 7. メモリー統計 (`stats`)
+MongoDB に登録されているメモリーの統計情報を表示します。
 
 ```bash
 gakumas stats [idol] [options]
 ```
 
-*   **引数**:
-    *   `idol`: アイドル名（例: `hiro`, `saki`）。
-        *   省略時: 全アイドルの所持数サマリーを表示します。
-        *   `all` 指定時: 全アイドルの詳細な内訳（プラン・楽曲別）を順次表示します。
-        *   名前指定時: そのアイドルの詳細な内訳を表示します。
-*   **オプション**:
-    *   `--json`: 結果をJSON形式で出力します。
+* **引数**:
+  * `idol`: アイドル名（`saki`, `hiro` 等）。
+    * 省略時: 全アイドルの所持数サマリーを表示。
+    * `all`: 全アイドルの詳細内訳（プラン・楽曲別）を表示。
+* **オプション**:
+  * `--json`: JSON 形式で出力。
 
 ---
 
-#### 3. メモリー一覧 (`list`)
-
-保存されているメモリーの名前一覧を表示します。
+### 8. メモリー一覧 (`list`)
+登録されているメモリーの名前一覧を表示します。
 
 ```bash
 gakumas list [idolName]
 ```
 
-*   **引数**:
-    *   `idolName`: 特定のアイドルのメモリーのみ一覧表示します。
-
 ---
 
-#### 4. レポート生成 (`dump`)
-
-メモリーの詳細レポートを Markdown 形式で出力します。
+### 9. メモリー詳細レポート (`dump`)
+メモリーの詳細情報（ステータス、スキルカード、Pアイテム）を Markdown 形式で出力します。
 
 ```bash
 gakumas dump [idolName] [outputFile]
@@ -105,98 +172,70 @@ gakumas dump [idolName] [outputFile]
 
 ---
 
-#### 5. メモリー削除 (`rm`)
-
-パターンに一致するメモリーを対話形式で削除します。
+### 10. メモリー削除 (`rm`)
+不要なメモリーを対話形式で確認しながら一括削除します。
 
 ```bash
 gakumas rm <pattern>
 ```
 
-*   **引数**:
-    *   `pattern`: 削除対象のメモリー名パターン。ワイルドカード `*` が使用可能で、内部的に正規表現に変換されます。
-*   **動作**:
-    *   一致する各メモリーについて、ステータスやスキルカードを表示し、削除するかどうかの確認 (`y/N`) を行います。
+* **引数**:
+  * `pattern`: 削除対象のメモリー名パターン（ワイルドカード `*` 使用可）。
 
 ---
 
-#### 6.編成一覧 (`loadout`)
-
-保存されている編成（Loadout）の一覧を表示します。
+### 11. 編成一覧 (`loadout`)
+DB に保存されている編成（Loadout）の一覧を表示します。
 
 ```bash
 gakumas loadout [options]
 ```
 
-*   **オプション**:
-    *   `--verbose`: 各編成のステータス、Pアイテム、セットされたスキルカードやカスタマイズを含む詳細な情報をMarkdown形式で出力します。省略した場合は、名前とステージ情報のみを1行ずつ短く一覧表示します。
+* **オプション**:
+  * `--verbose`: Pアイテム、スキルカード、カスタマイズを含む詳細な編成情報を Markdown 形式で出力。
 
 ---
 
-#### 7. リハーサル・スコア予測 (`rehearsal`)
-
-保存されたLoadout（メモリー編成）を複数指定し、合計スコアを予測シミュレーションします。コンテストなどの複数デッキで合計スコアを競う場合の予測に便利です。
-
-```bash
-gakumas rehearsal <runs> [...decks]
-```
-
-*   **引数**:
-    *   `runs`: 1デッキあたりのシミュレーション試行回数 (例: `100`)
-    *   `decks`: Loadoutとして保存されている編成名（複数指定可能）。3デッキを指定するのが一般的です。
-*   **動作**:
-    *   指定された編成それぞれについてシミュレーションを実行し、各アイドルのスコアとそれらの合計スコア（最小・平均・最大）をMarkdown形式で出力します。
-
----
-
-#### 8. デッキ編成最適化 (`optimize-deck`)
-
-コンテストの3ステージ間で「同一アイドルかつ同一衣装」の重複を回避しつつ、総合的な期待中央値が最大となる最適な編成組み合わせを探索します。
-
-```bash
-gakumas optimize-deck <prefix>
-```
-
-*   **引数**:
-    *   `prefix`: 事前に `contest` コマンド等で出力されたローカルMarkdownレポートのプレフィックス (例: `26-06-02_46`)。
-    *   ※ `<prefix>-1_all.md`, `<prefix>-2_all.md`, `<prefix>-3_all.md` の3ステージ分のファイルを読み込んで解析します。
-
----
-
-#### 9. 重複メモリー検索 (`duplicates`)
-
-登録されているメモリーの中から、類似・重複しているものを検索します。
+### 12. 重複メモリー検索 (`duplicates`)
+類似・重複している育成メモリを自動検出し、整理を支援します。
 
 ```bash
 gakumas duplicates [plan] [idol] [threshold]
 ```
 
-*   **引数**:
-    *   `plan`: 特定のプラン (`sense`, `logic`, `anomaly`) に絞り込む場合。
-    *   `idol`: 特定のアイドル名に絞り込む場合。
-    *   `threshold`: 重複とみなすための閾値（オプショナル）。
-
 ---
 
-## 設定 (`.env.local`)
+## ⚙️ 環境設定 (`.env.local`)
 
-以下の項目を `.env.local` に設定してください。
+プロジェクトルートの `.env.local` に以下の設定を記述します。
 
 ```env
 # MongoDB 接続設定
-MONGODB_URI=mongodb://...
-MONGODB_DB=gakumas-tools  # 省略時は URI 内のデータベースまたは "gakumas-tools" が使用されます
+MONGODB_URI=mongodb://192.168.100.4:27017
+MONGODB_DB=gakumas-tools
 
-# Google Drive 連携設定 (オプション)
-GOOGLE_CLIENT_ID=your-client-id
-GOOGLE_CLIENT_SECRET=your-client-secret
-GOOGLE_DRIVE_FOLDER_ID=your-folder-id
+# サポートボーナス設定 (例: 12.00% = 0.12 または 12.00)
+SUPPORT_BONUS=12.00
 
-# SUPPORT BONUS
-SUPPORT_BONUS=12.00 # 12.00% の場合。0.12 でも同じ扱い。
+# レポート・指示書 出力先ディレクトリ (オプショナル)
+CLI_DOCS_DIR=shared/reports
+CLI_INSTRUCTIONS_DIR=shared/agent-instructions
+
+# Google Drive 連携設定 (オプショナル)
+GOOGLE_CLIENT_ID=your-google-client-id
+GOOGLE_CLIENT_SECRET=your-google-client-secret
+GOOGLE_DRIVE_FOLDER_ID=your-gdrive-folder-id
+
+# Discord 通知連携 (オプショナル)
+DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/...
+
+# デフォルト ユーザー ID (オプショナル)
+CLI_USER_ID=your-user-id
 ```
 
-## 開発者向け情報
+---
 
-*   **テンプレート**: `src/templates/` にある `.hbs` ファイルを編集することで、出力フォーマットをカスタマイズできます。詳細は [TEMPLATES.md](./TEMPLATES.md) を参照してください。
-*   **スクリプト**: 実際のロジックは `scripts/` 内の `.mjs` ファイルに記述されています。
+## 🧱 内部設計とカスタマイズ
+
+* **テンプレートエンジン**: `src/templates/` 内の Handlebars (`.hbs`) テンプレートにより、Markdown の出力形式を自由にカスタマイズ可能です。詳細は [TEMPLATES.md](./TEMPLATES.md) を参照してください。
+* **オーケストレーションアーキテクチャ**: TypeScript CLI がフロントエンド（引数解析、ファイル/Drive出力、フォーマット）を担当し、ヘビーな並列計算処理は `scripts/` 内の Node.js JS ワーカーへ委譲する設計となっています。

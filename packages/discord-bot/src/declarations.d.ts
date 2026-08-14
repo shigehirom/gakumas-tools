@@ -1,0 +1,1 @@
+// Custom declarations if needed

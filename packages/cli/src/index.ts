@@ -9,6 +9,8 @@ import { registerLoadoutCommand } from './commands/loadout';
 import { registerDuplicatesCommand } from './commands/duplicates';
 import { registerOptimizeDeckCommand } from './commands/optimize-deck';
 import { registerMatchHistoryCommand } from './commands/match-history';
+import { registerAdvisorCommand } from './commands/advisor';
+import { registerRecommendCommand } from './commands/recommend';
 import * as fs from 'fs';
 import * as path from 'path';
 import { GlobalCapture } from './utils/capture';
@@ -116,6 +118,21 @@ if (needsDefaultName) {
     } else if (cmdName === 'optimize-deck') {
         const prefix = parsed.args[1] || 'unknown';
         defaultName = `${prefix}_optimized.md`;
+    } else if (cmdName === 'advisor') {
+        const stage = parsed.args[1] || 'unknown';
+        let idol = 'all';
+        if (parsed.args.length > 3) {
+            idol = parsed.args[3];
+        } else if (parsed.args.length === 3 && isNaN(Number(parsed.args[2]))) {
+            idol = parsed.args[2];
+        }
+        idol = idol.replace(/,/g, '+');
+        const mode = parsed.options.mode || 'cards';
+        defaultName = `${datePrefix}_advisor_${stage}_${idol}_${mode}.md`;
+    } else if (cmdName === 'recommend') {
+        const file = parsed.args[1] || 'unknown';
+        const base = path.basename(file, path.extname(file));
+        defaultName = `${datePrefix}_recommend_${base}.md`;
     }
 
     if (parsed.options.gdrive === true || parsed.options.gdrive === '') {
@@ -205,6 +222,8 @@ registerLoadoutCommand(cli);
 registerDuplicatesCommand(cli);
 registerOptimizeDeckCommand(cli);
 registerMatchHistoryCommand(cli);
+registerAdvisorCommand(cli);
+registerRecommendCommand(cli);
 
 cli.help();
 cli.version('0.1.0');

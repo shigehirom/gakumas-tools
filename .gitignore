@@ -52,7 +52,10 @@ packages/cli/.gitignore
 # CLI Local Private Configs
 packages/cli/gakumas-tools-e75c877bf46a.json
 packages/cli/appliance_id.json
-
+*.gdriveurl
+*.token.json
+gakumas-tools-*.json
+appliance_id.json
 
 # Deployment and local configurations (TrueNAS)
 deploy.sh
