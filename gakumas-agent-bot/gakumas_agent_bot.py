@@ -138,7 +138,6 @@ HELP_TEXT = """**🎓 初星学園プロデューサー科 相談室（あさり
 """
 
 _KNOWN_COMMANDS = frozenset(["/help", "/quota", "/status", "/cancel", "/retry", "/continue", "/new", "/model", "/clear", "/sync"])
-
 # ────────────────────── スマート自動ルーター ────────────────────────────────
 
 def route_query_to_model(query: str) -> tuple[str, str, str]:
@@ -581,62 +580,7 @@ class GakumasAntigravityBot(discord.Client):
                 await interaction.followup.send(f"⚠️ **[エラー]**: `{e}`", ephemeral=True)
 
         @self.tree.command(name="sync", description="スプレッドシートやWikiとのデータ同期を実行します")
-        @discord.app_commands.describe(
-            target="同期する対象を選択してください（デフォルト: inventory）",
-            force="Wiki同期時に強制上書きするかどうか（デフォルト: False）"
-        )
-        @discord.app_commands.choices(target=[
-            discord.app_commands.Choice(name="📦 inventory: スプレッドシート ➔ MongoDB (Pアイドル & 所持サポカ)", value="inventory"),
-            discord.app_commands.Choice(name="🃏 support: Seesaa Wiki ➔ サポカマスタ / MongoDB", value="support"),
-            discord.app_commands.Choice(name="📊 sheet: MongoDB ➔ スプレッドシート (エクスポート)", value="sheet"),
-            discord.app_commands.Choice(name="🔄 all: すべて同期", value="all"),
-        ])
-        async def slash_sync(interaction: discord.Interaction, target: str = "inventory", force: bool = False) -> None:
-            await interaction.response.defer(thinking=True)
-            try:
-                if target in ("inventory", "all"):
-                    res = await bot.sync_service.sync_inventory()
-                    embed = discord.Embed(
-                        title="📦 インベントリ同期完了",
-                        description="Googleスプレッドシートから MongoDB への所持データ同期が完了しました。",
-                        color=0x34A853,
-                    )
-                    sc = res.get("support_cards", {})
-                    embed.add_field(
-                        name="🃏 サポートカード (Support-Cards ➔ MongoDB)",
-                        value=f"・新規追加: `{sc.get('inserted', 0)}` 件\n・更新: `{sc.get('updated', 0)}` 件\n・除外: `{sc.get('deleted', 0)}` 件",
-                        inline=False,
-                    )
-                    pi = res.get("p_idols", {})
-                    embed.add_field(
-                        name="🌟 Pアイドル (P-Idols ➔ MongoDB)",
-                        value=f"・新規追加: `{pi.get('inserted', 0)}` 件\n・更新: `{pi.get('updated', 0)}` 件\n・除外: `{pi.get('deleted', 0)}` 件",
-                        inline=False,
-                    )
-                    embed.set_footer(text="初星学園 データベース同期システム")
-                    await interaction.followup.send(embed=embed)
-                elif target == "support":
-                    res = await bot.sync_service.sync_support(force=force)
-                    embed = discord.Embed(
-                        title="🃏 サポートカードマスタ同期完了",
-                        description=f"Seesaa Wiki からのマスタデータ同期が完了しました。\n取得カード数: `{res.get('fetched', 0)}` 件 ｜ 処理済み: `{res.get('processed', 0)}` 件",
-                        color=0x4285F4,
-                    )
-                    await interaction.followup.send(embed=embed)
-                elif target == "sheet":
-                    res = await bot.sync_service.sync_sheet()
-                    embed = discord.Embed(
-                        title="📊 スプレッドシート エクスポート完了",
-                        description="MongoDB から Googleスプレッドシートへの書き出しが完了しました。",
-                        color=0xFBBC05,
-                    )
-                    await interaction.followup.send(embed=embed)
-            except Exception as e:
-                log.error("[Slash Sync Error] %s", e, exc_info=True)
-                await interaction.followup.send(f"⚠️ **[同期エラー]**: `{e}`")
 
-
-    async def _execute_chat(self, channel: discord.TextChannel, prompt: str) -> None:
         model_name = "gemini-3.6-flash" if self.user_selected_mode == "gemini" else LLM_MODEL
         label = "あさり先生 (Gemini 3.6 Flash)" if self.user_selected_mode == "gemini" else "Qwen 2.5 7B (Local)"
 
@@ -961,40 +905,11 @@ class GakumasAntigravityBot(discord.Client):
                     return
 
                 if content.startswith("/sync"):
-                    async with message.channel.typing():
-                        try:
-                            res = await self.sync_service.sync_inventory()
-                            embed = discord.Embed(
-                                title="📦 インベントリ同期完了",
-                                description="Googleスプレッドシートから MongoDB への所持データ同期が完了しました。",
-                                color=0x34A853,
-                            )
-                            sc = res.get("support_cards", {})
-                            embed.add_field(
-                                name="🃏 サポートカード (Support-Cards ➔ MongoDB)",
-                                value=f"・新規追加: `{sc.get('inserted', 0)}` 件\n・更新: `{sc.get('updated', 0)}` 件\n・除外: `{sc.get('deleted', 0)}` 件",
-                                inline=False,
-                            )
-                            pi = res.get("p_idols", {})
-                            embed.add_field(
-                                name="🌟 Pアイドル (P-Idols ➔ MongoDB)",
-                                value=f"・新規追加: `{pi.get('inserted', 0)}` 件\n・更新: `{pi.get('updated', 0)}` 件\n・除外: `{pi.get('deleted', 0)}` 件",
-                                inline=False,
-                            )
-                            embed.set_footer(text="初星学園 データベース同期システム")
-                            await message.channel.send(embed=embed)
-                        except Exception as e:
-                            log.error("[on_message sync error] %s", e, exc_info=True)
-                            await message.channel.send(f"⚠️ **[同期エラー]**: `{e}`")
-                    return
-
-                if content == "/cancel":
                     self.gemini_service.cancel()
                     self.ollama_service.cancel()
                     await message.channel.send("🛑 **[System]** 応答をキャンセルしました。")
                     return
 
-                if content.startswith("/model"):
                     parts = content.split()
                     if len(parts) > 1 and parts[1].lower() in AVAILABLE_MODELS:
                         m = parts[1].lower()

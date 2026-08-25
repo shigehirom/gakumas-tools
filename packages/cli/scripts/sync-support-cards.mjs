@@ -7,8 +7,15 @@ import { getAuthClient, loadEnvLocal } from './utils/sheetsAuth.mjs';
 loadEnvLocal();
 
 const MONGODB_URI = process.env.MONGODB_URI;
-const MONGODB_DB = process.env.MONGODB_DB || 'gakumas';
-const JSON_DIR = path.resolve(process.cwd(), 'gakumas-support_cards/support_cards');
+const MONGODB_DB = process.env.MONGODB_DB || 'gakumas-tools';
+const possibleJsonDirs = [
+  path.resolve(process.cwd(), 'gakumas-support_cards/support_cards'),
+  path.resolve(process.cwd(), '../gakumas-support_cards/support_cards'),
+  '/app/gakumas-support_cards/support_cards',
+  '/root/gakumas-workspace/gakumas-support_cards/support_cards',
+  '/Users/shigehiro/gakumas-workspace/gakumas-support_cards/support_cards'
+];
+const JSON_DIR = possibleJsonDirs.find(d => fs.existsSync(d)) || possibleJsonDirs[0];
 
 const SHEET_ID = process.env.SYNC_SHEET_ID;
 const SHEET_RANGE = 'Support-Cards!A:Z';
@@ -85,7 +92,7 @@ async function main() {
 
       // Load additional JSON data
       // For Support Cards, JSON is read from gakumas-support_cards/support_cards
-      const jsonPath = path.join('/Users/shigehiro/gakumas-workspace/gakumas-support_cards/support_cards', `${cardName}.json`);
+      const jsonPath = path.join(JSON_DIR, `${cardName}.json`);
       let obtainedSkillCard = null;
       let obtainedItem = null;
       let imageUrl = null;

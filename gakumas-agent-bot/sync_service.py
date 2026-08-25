@@ -27,47 +27,11 @@ log = logging.getLogger("gakumas_sync")
 # パス設定
 def _find_dir(candidates: list[Path]) -> Path:
     for c in candidates:
-        if c.exists():
-            return c
-    return candidates[0]
-
-WORKSPACE_ROOT = _find_dir([
-    Path("/app"),
-    Path("/root/gakumas-workspace"),
-    Path(__file__).resolve().parent.parent,
-])
-OG_TOOLS_DIR = _find_dir([
-    WORKSPACE_ROOT / "gakumas-og-tools",
-    Path("/app/gakumas-og-tools"),
-    Path("/root/gakumas-workspace/gakumas-og-tools"),
-])
-OG_TOOLS_SCRIPTS = OG_TOOLS_DIR / "scripts"
-SUPPORT_CARDS_MASTER_PATH = _find_dir([
     OG_TOOLS_DIR / "support_cards_master.json",
     Path("/app/support_cards_master.json"),
     Path("/root/gakumas-workspace/gakumas-og-tools/support_cards_master.json"),
 ])
 P_IDOLS_JSON_PATH = _find_dir([
-    WORKSPACE_ROOT / "gakumas-tools" / "packages" / "gakumas-data" / "json" / "p_idols.json",
-    WORKSPACE_ROOT / "packages" / "gakumas-data" / "json" / "p_idols.json",
-    Path("/app/packages/gakumas-data/json/p_idols.json"),
-])
-IDOLS_JSON_PATH = _find_dir([
-    WORKSPACE_ROOT / "gakumas-tools" / "packages" / "gakumas-data" / "json" / "idols.json",
-    WORKSPACE_ROOT / "packages" / "gakumas-data" / "json" / "idols.json",
-    Path("/app/packages/gakumas-data/json/idols.json"),
-])
-SKILL_CARDS_JSON_PATH = _find_dir([
-    WORKSPACE_ROOT / "gakumas-tools" / "packages" / "gakumas-data" / "json" / "skill_cards.json",
-    WORKSPACE_ROOT / "packages" / "gakumas-data" / "json" / "skill_cards.json",
-    Path("/app/packages/gakumas-data/json/skill_cards.json"),
-])
-
-
-def _is_owned_val(val: Any) -> bool:
-    if not val:
-        return False
-    v = str(val).strip().lower()
     return v in ["true", "1", "○", "◯", "所持", "yes", "y", "ok", "checked"]
 
 
