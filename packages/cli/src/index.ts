@@ -11,6 +11,7 @@ import { registerOptimizeDeckCommand } from './commands/optimize-deck';
 import { registerMatchHistoryCommand } from './commands/match-history';
 import { registerAdvisorCommand } from './commands/advisor';
 import { registerRecommendCommand } from './commands/recommend';
+import { registerValidateAdvisoryCommand } from './commands/validate-advisory';
 import * as fs from 'fs';
 import * as path from 'path';
 import { GlobalCapture } from './utils/capture';
@@ -224,6 +225,7 @@ registerOptimizeDeckCommand(cli);
 registerMatchHistoryCommand(cli);
 registerAdvisorCommand(cli);
 registerRecommendCommand(cli);
+registerValidateAdvisoryCommand(cli);
 
 cli.help();
 cli.version('0.1.0');

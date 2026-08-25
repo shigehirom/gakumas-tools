@@ -11,8 +11,8 @@ export {
   serializePatches,
   deserializeEffectSequence,
   deserializePatchSequence,
-} from "./utils/effects";
-export { parseEffects, parsePatches } from "./utils/parser";
-export { Tokenizer } from "./utils/parser/tokenizer";
-export { TokenType } from "./utils/parser/tokens";
-export { transformEffects, transformPatches } from "./utils/transformer";
+} from "./utils/effects.js";
+export { parseEffects, parsePatches } from "./utils/parser/index.js";
+export { Tokenizer } from "./utils/parser/tokenizer.js";
+export { TokenType } from "./utils/parser/tokens.js";
+export { transformEffects, transformPatches } from "./utils/transformer/index.js";
