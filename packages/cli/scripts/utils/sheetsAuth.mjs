@@ -6,20 +6,28 @@ import { google } from 'googleapis';
 
 // Load environment variables from .env.local manually to avoid external dependencies
 export function loadEnvLocal() {
-  const envPath = path.resolve(process.cwd(), '.env.local');
-  if (fs.existsSync(envPath)) {
-    const envContent = fs.readFileSync(envPath, 'utf8');
-    envContent.split('\n').forEach(line => {
-      const match = line.match(/^([^=]+)=(.*)$/);
-      if (match) {
-        let key = match[1].trim();
-        let value = match[2].trim();
-        if (value.startsWith('"') && value.endsWith('"')) {
-          value = value.slice(1, -1);
+  const candidates = [
+    path.resolve(process.cwd(), '.env.local'),
+    path.resolve(process.cwd(), '../../.env.local'),
+    '/root/gakumas-workspace/gakumas-tools/.env.local',
+    '/app/.env.local',
+  ];
+  for (const envPath of candidates) {
+    if (fs.existsSync(envPath)) {
+      const envContent = fs.readFileSync(envPath, 'utf8');
+      envContent.split('\n').forEach(line => {
+        const match = line.match(/^([^=]+)=(.*)$/);
+        if (match) {
+          let key = match[1].trim();
+          let value = match[2].trim();
+          if (value.startsWith('"') && value.endsWith('"')) {
+            value = value.slice(1, -1);
+          }
+          process.env[key] = value;
         }
-        process.env[key] = value;
-      }
-    });
+      });
+      break;
+    }
   }
 }
 
@@ -35,8 +43,23 @@ export async function getAuthClient() {
   }
 
   const SCOPES = ['https://www.googleapis.com/auth/spreadsheets'];
-  const TOKEN_DIR = path.join(os.homedir(), '.config', 'gakumas-tools');
-  const TOKEN_PATH = path.join(TOKEN_DIR, 'sheets_tokens.json');
+  const tokenDirs = [
+    path.join(os.homedir(), '.config', 'gakumas-tools'),
+    '/root/.config/gakumas-tools',
+    '/app/.config/gakumas-tools',
+    path.resolve(process.cwd(), '.config/gakumas-tools'),
+    path.resolve(process.cwd(), '../../.config/gakumas-tools'),
+  ];
+  let TOKEN_DIR = tokenDirs[0];
+  let TOKEN_PATH = path.join(TOKEN_DIR, 'sheets_tokens.json');
+  for (const dir of tokenDirs) {
+    const p = path.join(dir, 'sheets_tokens.json');
+    if (fs.existsSync(p)) {
+      TOKEN_DIR = dir;
+      TOKEN_PATH = p;
+      break;
+    }
+  }
 
   const oAuth2Client = new google.auth.OAuth2(
     CLIENT_ID,

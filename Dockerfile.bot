@@ -26,6 +26,11 @@ COPY scripts ./scripts
 COPY packages ./packages
 COPY gakumas-tools ./gakumas-tools
 COPY ./documents ./documents
+COPY ./agent-instructions ./agent-instructions
+COPY ./.config* ./.config
+COPY .env.local* ./.env.local
+COPY .env.local* ./packages/discord-bot/.env.local
+RUN mkdir -p /root/.config/gakumas-tools && (cp -r ./.config/gakumas-tools/* /root/.config/gakumas-tools/ 2>/dev/null || true)
 
 # Build workspace packages
 RUN pnpm build
