@@ -13,6 +13,13 @@ export {
   deserializePatchSequence,
 } from "./utils/effects.js";
 export { parseEffects, parsePatches } from "./utils/parser/index.js";
+export {
+  calculateMemoryStamina,
+  getAvailableTrueEndScenarios,
+  getMemoryStaminaBreakdown,
+  getSenseiStaminaBonus,
+} from "./utils/stamina.js";
 export { Tokenizer } from "./utils/parser/tokenizer.js";
 export { TokenType } from "./utils/parser/tokens.js";
 export { transformEffects, transformPatches } from "./utils/transformer/index.js";
+
