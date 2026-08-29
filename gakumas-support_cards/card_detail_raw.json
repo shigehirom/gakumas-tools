@@ -1,0 +1,84 @@
+[
+    {
+        "url": "https://seesaawiki.jp/gakumasu/d/%be%e5%a4%ab%a5%c3%a1%aa%a1%aa",
+        "card_name": "上かッ！！",
+        "rarity": "SSR",
+        "plan_restriction": "logic",
+        "type": "ダンス",
+        "skill_card_support": "ダンスレッスン/確率大",
+        "support_abilities": [
+            {
+                "unlock_condition": "初期",
+                "ability": "ダンスパラメータボーナス+*8.5%*",
+                "uncap_0": "6.5%",
+                "uncap_1": "7%",
+                "uncap_2": "7.5%",
+                "uncap_3": "7.5%",
+                "uncap_4": "8.5%"
+            },
+            {
+                "unlock_condition": "初期",
+                "ability": "SPレッスン終了時、所持スキルカードが20枚以上の場合、ダンス上昇+*21*（プロデュース中4回）",
+                "uncap_0": "15",
+                "uncap_1": "15",
+                "uncap_2": "21",
+                "uncap_3": "21",
+                "uncap_4": "21"
+            },
+            {
+                "unlock_condition": "Lv2",
+                "ability": "このサポートカードのスキルカードサポート発生率を*100%*増加",
+                "uncap_0": "66.1%",
+                "uncap_1": "74.6%",
+                "uncap_2": "83.1%",
+                "uncap_3": "83.1%",
+                "uncap_4": "100%"
+            },
+            {
+                "unlock_condition": "Lv5",
+                "ability": "ダンスSPレッスン終了時、ダンス上昇+*17*",
+                "uncap_0": "13",
+                "uncap_1": "13",
+                "uncap_2": "13",
+                "uncap_3": "13",
+                "uncap_4": "17"
+            },
+            {
+                "unlock_condition": "Lv10",
+                "ability": "スキルカード（SSR）獲得時、ダンス上昇+*6*",
+                "uncap_0": "5",
+                "uncap_1": "5",
+                "uncap_2": "5",
+                "uncap_3": "5",
+                "uncap_4": "6"
+            },
+            {
+                "unlock_condition": "Lv25",
+                "ability": "このサポートカードのイベントによるパラメータ上昇を+*100%*増加",
+                "uncap_0": "50%",
+                "uncap_1": "75%",
+                "uncap_2": "75%",
+                "uncap_3": "75%",
+                "uncap_4": "100%"
+            }
+        ],
+        "support_events": [
+            {
+                "unlock_condition": "初期",
+                "effect": "スキルカード",
+                "commu": "お助けねこちゃん"
+            },
+            {
+                "unlock_condition": "Lv20",
+                "effect": "ダンス上昇+20",
+                "commu": "ねこちゃんと副会長"
+            },
+            {
+                "unlock_condition": "Lv40",
+                "effect": "ランダムなスキルカードを強化",
+                "commu": "芸は道によって賢し"
+            }
+        ],
+        "obtained_skill_card": "頭上に注意！"
+    }
+]

@@ -27,5 +27,10 @@ export const config = {
     docsDir: process.env.CLI_DOCS_DIR 
         ? path.resolve(process.cwd(), process.env.CLI_DOCS_DIR)
         : path.resolve('/root/gakumas-workspace/gakumas-tools/packages/cli'),
-    userId: process.env.CLI_USER_ID || '755794545861591082'
+    instructionsDir: process.env.CLI_INSTRUCTIONS_DIR || '/root/gakumas-workspace/shared/agent-instructions',
+    geminiApiKey: process.env.GEMINI_API_KEY || '',
+    userId: process.env.CLI_USER_ID || '755794545861591082',
+    syncSheetId: process.env.SYNC_SHEET_ID || '',
 };
+
+

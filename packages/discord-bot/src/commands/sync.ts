@@ -13,9 +13,11 @@ export const syncCommand = {
                 .addChoices(
                     { name: '📦 全インベントリ (Pアイドル + サポカ)', value: 'all' },
                     { name: '🃏 サポートカード (Support-Cards)', value: 'support' },
-                    { name: '🌟 Pアイドル (P-Idols)', value: 'pidol' }
+                    { name: '🌟 Pアイドル (P-Idols)', value: 'pidol' },
+                    { name: '🏆 コンテスト対戦記録 (Contest)', value: 'contest' }
                 )
         ),
+
     async execute(interaction: ChatInputCommandInteraction) {
         await interaction.deferReply();
 
@@ -27,6 +29,8 @@ export const syncCommand = {
         let scError = '';
         let piOutput = '';
         let piError = '';
+        let ctOutput = '';
+        let ctError = '';
 
         const runNodeScript = (scriptName: string): Promise<{ stdout: string; stderr: string; code: number }> => {
             return new Promise((resolve) => {
@@ -65,6 +69,14 @@ export const syncCommand = {
                 piOutput = res.stdout;
                 piError = res.stderr;
             }
+
+            // 3. コンテスト対戦記録同期（MongoDB → Contest シート）
+            if (target === 'contest') {
+                const res = await runNodeScript('sync-contest-matches.mjs');
+                ctOutput = res.stdout;
+                ctError = res.stderr;
+            }
+
 
             const embed = new EmbedBuilder()
                 .setTitle('📦 インベントリ同期完了')
@@ -121,7 +133,29 @@ export const syncCommand = {
                 }
             }
 
+            // コンテスト同期結果
+            if (target === 'contest') {
+                if (ctError && !ctOutput.includes('rows written') && !ctOutput.includes('documents')) {
+                    embed.addFields({
+                        name: '🏆 コンテスト対戦記録 (MongoDB ➔ Contest シート)',
+                        value: `⚠️ エラー: ${ctError.slice(0, 300)}`,
+                        inline: false
+                    });
+                } else {
+                    const rowMatch = ctOutput.match(/(\d+)\s+rows?\s+written/i);
+                    const rows = rowMatch ? rowMatch[1] : '?';
+                    embed.addFields({
+                        name: '🏆 コンテスト対戦記録 (MongoDB ➔ Contest シート)',
+                        value: `・書き込み: \`${rows}\` 行\n\`/sync contest\` でシートを最新状態に更新しました。`,
+                        inline: false
+                    });
+                }
+                embed.setTitle('🏆 コンテスト対戦記録 同期完了');
+                embed.setDescription('MongoDB → Google Sheets `Contest` タブへの同期処理を実行しました。');
+            }
+
             embed.setFooter({ text: '初星学園 データベース同期システム' });
+
             embed.setTimestamp();
 
             await interaction.editReply({ embeds: [embed] });

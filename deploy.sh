@@ -8,7 +8,9 @@ echo "Deploying to TrueNAS ($TARGET)..."
 
 # 0. TrueNAS 側で記録された最新の対戦履歴（match_history_*.csv）を保護・同期
 echo "Fetching latest match history from TrueNAS..."
-rsync -avz --include='match_history_*.csv' --exclude='*' $TARGET:$TARGET_DIR/agent-instructions/ ../shared/agent-instructions/ 2>/dev/null || true
+rsync -avz --inplace --no-owner --no-group --no-perms --include='match_history_*.csv' --exclude='*' $TARGET:${TARGET_DIR}agent-instructions/ ../shared/agent-instructions/
+rsync -avz --inplace --no-owner --no-group --no-perms --include='match_history_*.csv' --exclude='*' $TARGET:${TARGET_DIR}agent-instructions/ ./agent-instructions/
+
 
 # 1. 共有アセット・Botコード・ナレッジ・設定の同期準備
 mkdir -p ./documents && cp ../shared/documents/*.md ./documents/ 2>/dev/null || true
@@ -17,6 +19,7 @@ mkdir -p ./.config/gakumas-tools && cp -r ~/.config/gakumas-tools/* ./.config/ga
 mkdir -p ./shared/gakumas-dev/knowledge && cp -r ../shared/gakumas-dev/knowledge/* ./shared/gakumas-dev/knowledge/ 2>/dev/null || true
 mkdir -p ./gakumas-agent-bot && cp -r ../gakumas-agent-bot/* ./gakumas-agent-bot/ 2>/dev/null || true
 mkdir -p ./gakumas-support_cards && cp -r ../gakumas-support_cards/* ./gakumas-support_cards/ 2>/dev/null || true
+mkdir -p ./gk-img && cp -r ../gk-img/* ./gk-img/ 2>/dev/null || true
 
 # 2. TrueNAS への rsync 転送
 rsync -avz --delete \

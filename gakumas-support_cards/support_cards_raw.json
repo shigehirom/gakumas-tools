@@ -1,0 +1,1498 @@
+[
+    {
+        "card_id": 1,
+        "character_name": "アイドル",
+        "card_name": "概要",
+        "rarity": "一覧",
+        "type": "早見表",
+        "raw_ability_text": "編成"
+    },
+    {
+        "card_id": 2,
+        "character_name": "サポート",
+        "card_name": "概要",
+        "rarity": "一覧",
+        "type": "早見表",
+        "raw_ability_text": "メモリー"
+    },
+    {
+        "card_id": 3,
+        "character_name": "レア",
+        "card_name": "カード名",
+        "rarity": "タイプ",
+        "type": "プラン",
+        "raw_ability_text": "イベ1\nアイテム\nor\nカード"
+    },
+    {
+        "card_id": 4,
+        "character_name": "SSR",
+        "card_name": "あなたとふたり、電車で",
+        "rarity": "ｱVo",
+        "type": "ｴアノマリー",
+        "raw_ability_text": "ｱｱ\nスキルカード\nガタゴトすやすや"
+    },
+    {
+        "card_id": 5,
+        "character_name": "SSR",
+        "card_name": "上かッ！！",
+        "rarity": "ｶDa",
+        "type": "ｳロジック",
+        "raw_ability_text": "ｱｱ\nスキルカード\n頭上に注意！"
+    },
+    {
+        "card_id": 6,
+        "character_name": "SSR",
+        "card_name": "長旅おつかれさま！",
+        "rarity": "ｻVi",
+        "type": "ｲセンス",
+        "raw_ability_text": "ｲｱ\nコンテスト\nアイテム\n夢を叶えるために"
+    },
+    {
+        "card_id": 7,
+        "character_name": "SSR",
+        "card_name": "進化したお弁当、気になる",
+        "rarity": "ｻVi",
+        "type": "ｳロジック",
+        "raw_ability_text": "ｲｱ\nコンテスト\nアイテム\n咲季の完全食・改"
+    },
+    {
+        "card_id": 8,
+        "character_name": "SSR",
+        "card_name": "あたしの勝ち、ですね〜！",
+        "rarity": "ｻVi",
+        "type": "ｴアノマリー",
+        "raw_ability_text": "ｱｱ\nスキルカード\nせーのでぱくっ！"
+    },
+    {
+        "card_id": 9,
+        "character_name": "SSR",
+        "card_name": "合格おめでとう！",
+        "rarity": "ｶDa",
+        "type": "ｲセンス",
+        "raw_ability_text": "ｲｱ\nプロデュース\nアイテム\n花海メモリアル"
+    },
+    {
+        "card_id": 10,
+        "character_name": "SSR",
+        "card_name": "かかってらっしゃい！",
+        "rarity": "ｻVi",
+        "type": "ｳロジック",
+        "raw_ability_text": "ｱｱ\nスキルカード\nお姉ちゃん、参戦！"
+    },
+    {
+        "card_id": 11,
+        "character_name": "SSR",
+        "card_name": "思い出の宝箱だ、ね",
+        "rarity": "ｱVo",
+        "type": "ｳロジック",
+        "raw_ability_text": "ｱｱ\nスキルカード\nふれんどめもりーず"
+    },
+    {
+        "card_id": 12,
+        "character_name": "SSR",
+        "card_name": "手毬のリサイタル、だね",
+        "rarity": "ｱVo",
+        "type": "ｴアノマリー",
+        "raw_ability_text": "ｱｱ\nスキルカード\n寒空リサイタル"
+    },
+    {
+        "card_id": 13,
+        "character_name": "SSR",
+        "card_name": "堂々とサボってる！？",
+        "rarity": "ｱVo",
+        "type": "ｳロジック",
+        "raw_ability_text": "ｱｱ\nスキルカード\nあこがれ不良ムーブ"
+    },
+    {
+        "card_id": 14,
+        "character_name": "SSR",
+        "card_name": "自分と向き合う時間だ",
+        "rarity": "ｶDa",
+        "type": "ｲセンス",
+        "raw_ability_text": "ｳｱ\nプロデュース\nアイテム\n無我の境地"
+    },
+    {
+        "card_id": 15,
+        "character_name": "SSR",
+        "card_name": "なぜこんなところにッ！？",
+        "rarity": "ｶDa",
+        "type": "ｴアノマリー",
+        "raw_ability_text": "ｳｱ\nプロデュース\nアイテム\n完全制覇でポン"
+    },
+    {
+        "card_id": 16,
+        "character_name": "SSR",
+        "card_name": "メリクリ、おねーちゃん♪",
+        "rarity": "ｶDa",
+        "type": "ｴアノマリー",
+        "raw_ability_text": "ｱｱ\nスキルカード\nいたずらサンタさん"
+    },
+    {
+        "card_id": 17,
+        "character_name": "SSR",
+        "card_name": "やっと見つけたぞ！",
+        "rarity": "ｶDa",
+        "type": "ｳロジック",
+        "raw_ability_text": "ｲｱ\nコンテスト\nアイテム\n寝心地は良好"
+    },
+    {
+        "card_id": 18,
+        "character_name": "SSR",
+        "card_name": "レディ・セット、ゴー！",
+        "rarity": "ｱVo",
+        "type": "ｲセンス",
+        "raw_ability_text": "ｱｱ\nスキルカード\n奥義、受け流し！"
+    },
+    {
+        "card_id": 19,
+        "character_name": "SSR",
+        "card_name": "クールダウンが大切よ！",
+        "rarity": "ｻVi",
+        "type": "ｲセンス",
+        "raw_ability_text": "ｱｱ\nスキルカード\nほぐれるひととき"
+    },
+    {
+        "card_id": 20,
+        "character_name": "SSR",
+        "card_name": "月村手毬、興味深いわね",
+        "rarity": "ｱVo",
+        "type": "ｳロジック",
+        "raw_ability_text": "ｱｱ\nスキルカード\n対象、ロックオン"
+    },
+    {
+        "card_id": 21,
+        "character_name": "SSR",
+        "card_name": "これは――お城ッ！！",
+        "rarity": "ｱVo",
+        "type": "ｲセンス",
+        "raw_ability_text": "ｳｱ\nプロデュース\nアイテム\nお礼のティーセット"
+    },
+    {
+        "card_id": 22,
+        "character_name": "SSR(限定パック購入)",
+        "card_name": "大運動会、開催っ！",
+        "rarity": "ｱVo",
+        "type": "ｱフリー",
+        "raw_ability_text": "ｱｱ\nスキルカード\n勝利をつかめ！"
+    },
+    {
+        "card_id": 23,
+        "character_name": "SSR",
+        "card_name": "ちょっと詳しいんです！",
+        "rarity": "ｻVi",
+        "type": "ｳロジック",
+        "raw_ability_text": "ｲｱ\nコンテスト\nアイテム\n月刊アニメトーク♪"
+    },
+    {
+        "card_id": 24,
+        "character_name": "SSR",
+        "card_name": "ｖギャルピーーースッｖ",
+        "rarity": "ｱVo",
+        "type": "ｴアノマリー",
+        "raw_ability_text": "ｲｱ\nコンテスト\nアイテム\nしぼまない思い出"
+    },
+    {
+        "card_id": 25,
+        "character_name": "SSR",
+        "card_name": "おっと、危ないよ",
+        "rarity": "ｱVo",
+        "type": "ｳロジック",
+        "raw_ability_text": "ｳｱ\nプロデュース\nアイテム\n体力作りの教材？"
+    },
+    {
+        "card_id": 26,
+        "character_name": "SSR",
+        "card_name": "おい、来てやったぞ！",
+        "rarity": "ｶDa",
+        "type": "ｲセンス",
+        "raw_ability_text": "ｳｱ\nプロデュース\nアイテム\nピークタイムフラッグ"
+    },
+    {
+        "card_id": 27,
+        "character_name": "SSR",
+        "card_name": "いつまでも続けばいいのに",
+        "rarity": "ｶDa",
+        "type": "ｱフリー",
+        "raw_ability_text": "ｱｱ\nスキルカード\n夏夜に咲く思い出"
+    },
+    {
+        "card_id": 28,
+        "character_name": "SSR",
+        "card_name": "放っておけない気になる子",
+        "rarity": "ｱVo",
+        "type": "ｴアノマリー",
+        "raw_ability_text": "ｳｱ\nプロデュース\nアイテム\n面白くて心配な子"
+    },
+    {
+        "card_id": 29,
+        "character_name": "SSR",
+        "card_name": "どんな関係なんですか？",
+        "rarity": "ｱVo",
+        "type": "ｳロジック",
+        "raw_ability_text": "ｲｱ\nコンテスト\nアイテム\n手作りサブスク弁当"
+    },
+    {
+        "card_id": 30,
+        "character_name": "SSR",
+        "card_name": "いつも頑張ってるね。",
+        "rarity": "ｻVi",
+        "type": "ｲセンス",
+        "raw_ability_text": "ｲｱ\nコンテスト\nアイテム\n包まれるやさしさ"
+    },
+    {
+        "card_id": 31,
+        "character_name": "SSR",
+        "card_name": "推し活なひととき、だね！",
+        "rarity": "ｻVi",
+        "type": "ｳロジック",
+        "raw_ability_text": "ｳｱ\nプロデュース\nアイテム\nおとものミミズク"
+    },
+    {
+        "card_id": 32,
+        "character_name": "SSR",
+        "card_name": "よくやったな、倉本。",
+        "rarity": "ｶDa",
+        "type": "ｴアノマリー",
+        "raw_ability_text": "ｲｱ\nコンテスト\nアイテム\n居残りの生徒会室"
+    },
+    {
+        "card_id": 33,
+        "character_name": "SSR",
+        "card_name": "ひとりごとです",
+        "rarity": "ｻVi",
+        "type": "ｴアノマリー",
+        "raw_ability_text": "ｳｱ\nプロデュース\nアイテム\n思い出カタメコイメ"
+    },
+    {
+        "card_id": 34,
+        "character_name": "SSR",
+        "card_name": "利用し合うのが友達！",
+        "rarity": "ｶDa",
+        "type": "ｱフリー",
+        "raw_ability_text": "ｳｱ\nプロデュース\nアイテム\nパワーをくれるモノ"
+    },
+    {
+        "card_id": 35,
+        "character_name": "SSR",
+        "card_name": "相変わらず不器用ね",
+        "rarity": "ｱVo",
+        "type": "ｳロジック",
+        "raw_ability_text": "ｳｱ\nプロデュース\nアイテム\n幼馴染の意地"
+    },
+    {
+        "card_id": 36,
+        "character_name": "SSR",
+        "card_name": "相手にとって不足なしよ！",
+        "rarity": "ｻVi",
+        "type": "ｴアノマリー",
+        "raw_ability_text": "ｱｱ\nスキルカード\n対戦お願いします！"
+    },
+    {
+        "card_id": 37,
+        "character_name": "SSR",
+        "card_name": "ここから始まるんだね！",
+        "rarity": "ｶDa",
+        "type": "ｲセンス",
+        "raw_ability_text": "ｲｱ\nコンテスト\nアイテム\n夢へのスタートライン"
+    },
+    {
+        "card_id": 38,
+        "character_name": "SSR",
+        "card_name": "ひとりで立てますか？",
+        "rarity": "ｶDa",
+        "type": "ｱフリー",
+        "raw_ability_text": "ｲｱ\nコンテスト\nアイテム\nひとりだちシューズ"
+    },
+    {
+        "card_id": 39,
+        "character_name": "SSR",
+        "card_name": "新生活のはじまりだね",
+        "rarity": "ｻVi",
+        "type": "ｴアノマリー",
+        "raw_ability_text": "ｳｱ\nプロデュース\nアイテム\n体力自慢の本気"
+    },
+    {
+        "card_id": 40,
+        "character_name": "SSR",
+        "card_name": "あなたたちのことが好き",
+        "rarity": "ｶDa",
+        "type": "ｳロジック",
+        "raw_ability_text": "ｳｱ\nプロデュース\nアイテム\nゆうじょーのきろく"
+    },
+    {
+        "card_id": 41,
+        "character_name": "SSR",
+        "card_name": "絶対にお渡ししますわっ！",
+        "rarity": "ｱVo",
+        "type": "ｳロジック",
+        "raw_ability_text": "ｲｱ\nコンテスト\nアイテム\nお姉さまビッグラブ"
+    },
+    {
+        "card_id": 42,
+        "character_name": "SSR",
+        "card_name": "バレンタイン♡会議中ーっ！",
+        "rarity": "ｻVi",
+        "type": "ｴアノマリー",
+        "raw_ability_text": "ｱｱ\nスキルカード\nバレンタイン大作戦！"
+    },
+    {
+        "card_id": 43,
+        "character_name": "SSR",
+        "card_name": "はいっ、みんなも一緒に♪",
+        "rarity": "ｱVo",
+        "type": "ｴアノマリー",
+        "raw_ability_text": "ｳｱ\nプロデュース\nアイテム\nぜったいいっぱい！"
+    },
+    {
+        "card_id": 44,
+        "character_name": "SSR",
+        "card_name": "これが私達の、3年間",
+        "rarity": "ｶDa",
+        "type": "ｱフリー",
+        "raw_ability_text": "ｳｱ\nプロデュース\nアイテム\nすごすぎるバトン"
+    },
+    {
+        "card_id": 45,
+        "character_name": "SSR",
+        "card_name": "もう一度、最初から！",
+        "rarity": "ｱVo",
+        "type": "ｲセンス",
+        "raw_ability_text": "ｱｱ\nスキルカード\n練習再開！"
+    },
+    {
+        "card_id": 46,
+        "character_name": "SSR",
+        "card_name": "待ちなさーい！",
+        "rarity": "ｶDa",
+        "type": "ｴアノマリー",
+        "raw_ability_text": "ｲｱ\nコンテスト\nアイテム\nはいぼくせんげん"
+    },
+    {
+        "card_id": 47,
+        "character_name": "SSR",
+        "card_name": "あったかいね",
+        "rarity": "ｻVi",
+        "type": "ｳロジック",
+        "raw_ability_text": "ｲｱ\nコンテスト\nアイテム\nぬくもりふたりぶん"
+    },
+    {
+        "card_id": 48,
+        "character_name": "SSR",
+        "card_name": "キラキラして綺麗〜っ！",
+        "rarity": "ｶDa",
+        "type": "ｲセンス",
+        "raw_ability_text": "ｱｱ\nスキルカード\n光の夜"
+    },
+    {
+        "card_id": 49,
+        "character_name": "SSR",
+        "card_name": "ぜったい追いついてやる！",
+        "rarity": "ｻVi",
+        "type": "ｱフリー",
+        "raw_ability_text": "ｱｱ\nスキルカード\n紅葉ランニング"
+    },
+    {
+        "card_id": 50,
+        "character_name": "SSR",
+        "card_name": "そろそろ焼けたかな？",
+        "rarity": "ｶDa",
+        "type": "ｳロジック",
+        "raw_ability_text": "ｱｱ\nスキルカード\nほかほか焼き芋"
+    },
+    {
+        "card_id": 51,
+        "character_name": "SSR",
+        "card_name": "食欲の秋なんです",
+        "rarity": "ﾀAs",
+        "type": "ｱフリー",
+        "raw_ability_text": "ｳｱ\nプロデュース\nアイテム\nごちそうさまでした"
+    },
+    {
+        "card_id": 52,
+        "character_name": "SSR",
+        "card_name": "会長、準備は万端です",
+        "rarity": "ｻVi",
+        "type": "ｳロジック",
+        "raw_ability_text": "ｳｱ\nプロデュース\nアイテム\n会長の完璧な計画"
+    },
+    {
+        "card_id": 53,
+        "character_name": "SSR",
+        "card_name": "すっかり秋色ですわね！",
+        "rarity": "ｱVo",
+        "type": "ｲセンス",
+        "raw_ability_text": "ｳｱ\nプロデュース\nアイテム\nつやつやでふさふさ"
+    },
+    {
+        "card_id": 54,
+        "character_name": "SSR",
+        "card_name": "似合うんじゃない？",
+        "rarity": "ｶDa",
+        "type": "ｳロジック",
+        "raw_ability_text": "ｲｱ\nコンテスト\nアイテム\nいじっぱりバルーン"
+    },
+    {
+        "card_id": 55,
+        "character_name": "SSR",
+        "card_name": "二人ならあっという間だね",
+        "rarity": "ｱVo",
+        "type": "ｱフリー",
+        "raw_ability_text": "ｲｱ\nコンテスト\nアイテム\nとろけた時間"
+    },
+    {
+        "card_id": 56,
+        "character_name": "SSR",
+        "card_name": "新たな挑戦の成功ですわ！",
+        "rarity": "ｻVi",
+        "type": "ｱフリー",
+        "raw_ability_text": "ｳｱ\nプロデュース\nアイテム\nとうちょーのきろく"
+    },
+    {
+        "card_id": 57,
+        "character_name": "SSR",
+        "card_name": "ゆっくりと過ごしましょう",
+        "rarity": "ｻVi",
+        "type": "ｳロジック",
+        "raw_ability_text": "ｱｱ\nスキルカード\nその本、おもしろい？"
+    },
+    {
+        "card_id": 58,
+        "character_name": "SSR",
+        "card_name": "あっちも行きたいですわ！",
+        "rarity": "ｶDa",
+        "type": "ｲセンス",
+        "raw_ability_text": "ｳｱ\nプロデュース\nアイテム\nほっこりまんぷく"
+    },
+    {
+        "card_id": 59,
+        "character_name": "SSR",
+        "card_name": "夏を満喫するわよ！",
+        "rarity": "ｶDa",
+        "type": "ｳロジック",
+        "raw_ability_text": "ｲｱ\nコンテスト\nアイテム\n873シューター"
+    },
+    {
+        "card_id": 60,
+        "character_name": "SSR",
+        "card_name": "花火、やりませんか……？",
+        "rarity": "ｻVi",
+        "type": "ｲセンス",
+        "raw_ability_text": "ｱｱ\nスキルカード\n交わる感情"
+    },
+    {
+        "card_id": 61,
+        "character_name": "SSR",
+        "card_name": "夏を楽しみましょう！",
+        "rarity": "ｱVo",
+        "type": "ｲセンス",
+        "raw_ability_text": "ｲｱ\nコンテスト\nアイテム\nオーバーパワーボール"
+    },
+    {
+        "card_id": 62,
+        "character_name": "SSR",
+        "card_name": "一時休戦です",
+        "rarity": "ｱVo",
+        "type": "ｲセンス",
+        "raw_ability_text": "ｱｱ\nスキルカード\nはじける水しぶき"
+    },
+    {
+        "card_id": 63,
+        "character_name": "SSR",
+        "card_name": "もうっ！　冷たいよ！",
+        "rarity": "ｶDa",
+        "type": "ｳロジック",
+        "raw_ability_text": "ｲｱ\nコンテスト\nアイテム\n負けず嫌いの勲章"
+    },
+    {
+        "card_id": 64,
+        "character_name": "SSR",
+        "card_name": "「ア」じゃなくて「エ」！",
+        "rarity": "ｻVi",
+        "type": "ｳロジック",
+        "raw_ability_text": "ｱｱ\nスキルカード\nお泊り猛勉強"
+    },
+    {
+        "card_id": 65,
+        "character_name": "SSR",
+        "card_name": "晴れたね",
+        "rarity": "ｶDa",
+        "type": "ｱフリー",
+        "raw_ability_text": "ｲｱ\nコンテスト\nアイテム\n虹かけるクロス"
+    },
+    {
+        "card_id": 66,
+        "character_name": "SSR",
+        "card_name": "まだ上がりませんように！",
+        "rarity": "ｱVo",
+        "type": "ｱフリー",
+        "raw_ability_text": "ｱｱ\nスキルカード\nみずたまりスキップ"
+    },
+    {
+        "card_id": 67,
+        "character_name": "SSR",
+        "card_name": "何やってるんだろう、",
+        "rarity": "ｱVo",
+        "type": "ｱフリー",
+        "raw_ability_text": "ｲｱ\nコンテスト\nアイテム\n天川ラーメン巡り"
+    },
+    {
+        "card_id": 68,
+        "character_name": "SSR",
+        "card_name": "あなたにも作ってあげる！",
+        "rarity": "ｻVi",
+        "type": "ｱフリー",
+        "raw_ability_text": "ｲｱ\nコンテスト\nアイテム\n得体のしれないモノ"
+    },
+    {
+        "card_id": 69,
+        "character_name": "SSR",
+        "card_name": "お姉ちゃんに任せなさい！",
+        "rarity": "ｻVi",
+        "type": "ｱフリー",
+        "raw_ability_text": "ｲｱ\nコンテスト\nアイテム\n満開ペアヘアピン"
+    },
+    {
+        "card_id": 70,
+        "character_name": "SSR",
+        "card_name": "ぐぬぬぬぬ…………！",
+        "rarity": "ｶDa",
+        "type": "ｱフリー",
+        "raw_ability_text": "ｲｱ\nコンテスト\nアイテム\n悔しさの象徴"
+    },
+    {
+        "card_id": 71,
+        "character_name": "SSR",
+        "card_name": "次の桜の季節には。",
+        "rarity": "ｱVo",
+        "type": "ｱフリー",
+        "raw_ability_text": "ｱｱ\nスキルカード\n花萌ゆ季節"
+    },
+    {
+        "card_id": 72,
+        "character_name": "SSR",
+        "card_name": "お疲れ様、千奈ちゃん。",
+        "rarity": "ｻVi",
+        "type": "ｱフリー",
+        "raw_ability_text": "ｱｱ\nスキルカード\n陽だまりの生徒会室"
+    },
+    {
+        "card_id": 73,
+        "character_name": "SSR",
+        "card_name": "まるで王子様みたいな",
+        "rarity": "ｻVi",
+        "type": "ｱフリー",
+        "raw_ability_text": "ｲｱ\nコンテスト\nアイテム\n星のリトルプリンス"
+    },
+    {
+        "card_id": 74,
+        "character_name": "SSR",
+        "card_name": "おいしい顔、いただき〜！",
+        "rarity": "ｶDa",
+        "type": "ｱフリー",
+        "raw_ability_text": "ｱｱ\nスキルカード\n心のアルバム"
+    },
+    {
+        "card_id": 75,
+        "character_name": "SSR",
+        "card_name": "可愛いと可愛いで可愛い！",
+        "rarity": "ｱVo",
+        "type": "ｱフリー",
+        "raw_ability_text": "ｱｱ\nスキルカード\nティーパーティ"
+    },
+    {
+        "card_id": 76,
+        "character_name": "SSR",
+        "card_name": "私の目に狂いはない",
+        "rarity": "ｻVi",
+        "type": "ｱフリー",
+        "raw_ability_text": "ｲｱ\nコンテスト\nアイテム\n仲直りのきっかけ"
+    },
+    {
+        "card_id": 77,
+        "character_name": "SSR",
+        "card_name": "また、あんなに無理をして",
+        "rarity": "ｱVo",
+        "type": "ｱフリー",
+        "raw_ability_text": "ｲｱ\nコンテスト\nアイテム\n曇りをぬぐったタオル"
+    },
+    {
+        "card_id": 78,
+        "character_name": "SSR",
+        "card_name": "あら、奇遇ね",
+        "rarity": "ｱVo",
+        "type": "ｱフリー",
+        "raw_ability_text": "ｲｱ\nコンテスト\nアイテム\nスカウト遮り帽"
+    },
+    {
+        "card_id": 79,
+        "character_name": "SSR",
+        "card_name": "まじか。",
+        "rarity": "ｶDa",
+        "type": "ｱフリー",
+        "raw_ability_text": "ｱｱ\nスキルカード\n光のステージ"
+    },
+    {
+        "card_id": 80,
+        "character_name": "SSR",
+        "card_name": "ほら、一緒に持と♪",
+        "rarity": "ｶDa",
+        "type": "ｱフリー",
+        "raw_ability_text": "ｲｱ\nコンテスト\nアイテム\n夢にあふれた大荷物"
+    },
+    {
+        "card_id": 81,
+        "character_name": "SSR",
+        "card_name": "きみは、自慢の生徒です",
+        "rarity": "ﾀAs",
+        "type": "ｱフリー",
+        "raw_ability_text": "ｳｱ\nプロデュース\nアイテム\n信頼の証"
+    },
+    {
+        "card_id": 82,
+        "character_name": "SSR(イベ、証交換)",
+        "card_name": "パーティー楽しみだねっ！",
+        "rarity": "ｶDa",
+        "type": "ｴアノマリー",
+        "raw_ability_text": "ｲｱ\nコンテスト\nアイテム\nおかいものバッグ"
+    },
+    {
+        "card_id": 83,
+        "character_name": "SSR(イベ、証交換)",
+        "card_name": "みいつけた。",
+        "rarity": "ｱVo",
+        "type": "ｳロジック",
+        "raw_ability_text": "ｲｱ\nコンテスト\nアイテム\n迷子のゆくえ"
+    },
+    {
+        "card_id": 84,
+        "character_name": "SSR(イベ、証交換)",
+        "card_name": "オシャレもメイクも♪",
+        "rarity": "ｻVi",
+        "type": "ｲセンス",
+        "raw_ability_text": "ｲｱ\nコンテスト\nアイテム\nぴったしコレクション"
+    },
+    {
+        "card_id": 85,
+        "character_name": "SSR(イベ、証交換)",
+        "card_name": "貸せ、手本を見せてやる！",
+        "rarity": "ｻVi",
+        "type": "ｱフリー",
+        "raw_ability_text": "ｲｱ\nコンテスト\nアイテム\nめちゃかわプリ"
+    },
+    {
+        "card_id": 86,
+        "character_name": "SSR(イベ、証交換)",
+        "card_name": "ぜったいに取るんだ！",
+        "rarity": "ｱVo",
+        "type": "ｱフリー",
+        "raw_ability_text": "ｱｱ\nスキルカード\n執念キャッチャー"
+    },
+    {
+        "card_id": 87,
+        "character_name": "SSR(イベ、証交換)",
+        "card_name": "盛り上げてこー！",
+        "rarity": "ｶDa",
+        "type": "ｱフリー",
+        "raw_ability_text": "ｳｱ\nプロデュース\nアイテム\nわいわいタンバリン"
+    },
+    {
+        "card_id": 88,
+        "character_name": "SSR(イベ、証交換)",
+        "card_name": "お母さんか！",
+        "rarity": "ｶDa",
+        "type": "ｱフリー",
+        "raw_ability_text": "ｲｱ\nコンテスト\nアイテム\n好き嫌い禁止！"
+    },
+    {
+        "card_id": 89,
+        "character_name": "SSR(イベ、証交換)",
+        "card_name": "わたしと美鈴、超仲良し",
+        "rarity": "ｻVi",
+        "type": "ｱフリー",
+        "raw_ability_text": "ｳｱ\nプロデュース\nアイテム\n勝利より大切なもの"
+    },
+    {
+        "card_id": 90,
+        "character_name": "SSR(イベ、証交換)",
+        "card_name": "さあ、もう一戦！",
+        "rarity": "ｱVo",
+        "type": "ｱフリー",
+        "raw_ability_text": "ｱｱ\nスキルカード\n勝負はこれから！"
+    },
+    {
+        "card_id": 91,
+        "character_name": "SSR(イベ、証交換)",
+        "card_name": "プロデュースって大変ね",
+        "rarity": "ｶDa",
+        "type": "ｴアノマリー",
+        "raw_ability_text": "ｲｱ\nコンテスト\nアイテム\nアイドルパワー測定機"
+    },
+    {
+        "card_id": 92,
+        "character_name": "SSR(イベ、証交換)",
+        "card_name": "1人たりとも欠ける事なく",
+        "rarity": "ｱVo",
+        "type": "ｱフリー",
+        "raw_ability_text": "ｲｱ\nコンテスト\nアイテム\nみんなの教科書"
+    },
+    {
+        "card_id": 93,
+        "character_name": "SSR(イベ、証交換)",
+        "card_name": "第2回教室パーティー！",
+        "rarity": "ｻVi",
+        "type": "ｱフリー",
+        "raw_ability_text": "ｱｱ\nスキルカード\n薄れゆく壁"
+    },
+    {
+        "card_id": 94,
+        "character_name": "SSR(コイン)",
+        "card_name": "すっかり仲良しって感じ♪",
+        "rarity": "ｶDa",
+        "type": "ｲセンス",
+        "raw_ability_text": "ｲｱ\nコンテスト\nアイテム\n勝利をその手に"
+    },
+    {
+        "card_id": 95,
+        "character_name": "SSR(コイン)",
+        "card_name": "迷子のおしらせです",
+        "rarity": "ｻVi",
+        "type": "ｳロジック",
+        "raw_ability_text": "ｲｱ\nコンテスト\nアイテム\n迷子のお呼び出し"
+    },
+    {
+        "card_id": 96,
+        "character_name": "SSR(コイン)",
+        "card_name": "みんなの意見を聞かせて♪",
+        "rarity": "ｱVo",
+        "type": "ｴアノマリー",
+        "raw_ability_text": "ｲｱ\nコンテスト\nアイテム\n麻央にぴったし"
+    },
+    {
+        "card_id": 97,
+        "character_name": "SSR(コイン)",
+        "card_name": "さみだれ",
+        "rarity": "ｻVi",
+        "type": "ｴアノマリー",
+        "raw_ability_text": "ｱｱ\nスキルカード\n雨宿りのバス停"
+    },
+    {
+        "card_id": 98,
+        "character_name": "SSR(コイン)",
+        "card_name": "こいつらめんどくさー",
+        "rarity": "ｱVo",
+        "type": "ｲセンス",
+        "raw_ability_text": "ｱｱ\nスキルカード\n喧嘩するほど仲がいい"
+    },
+    {
+        "card_id": 99,
+        "character_name": "SSR(コイン)",
+        "card_name": "わたしたち、やればできる",
+        "rarity": "ｶDa",
+        "type": "ｳロジック",
+        "raw_ability_text": "ｱｱ\nスキルカード\nダメダメクッキング"
+    },
+    {
+        "card_id": 100,
+        "character_name": "SSR(コンテ交換)",
+        "card_name": "仲直りしましょう",
+        "rarity": "ｱVo",
+        "type": "ｱフリー",
+        "raw_ability_text": "ｱｱ\nスキルカード\n月明かりに包まれて"
+    },
+    {
+        "card_id": 101,
+        "character_name": "SSR(コンテ交換)",
+        "card_name": "仕事のつもりで臨みなさい",
+        "rarity": "ｻVi",
+        "type": "ｱフリー",
+        "raw_ability_text": "ｱｱ\nスキルカード\n新生徒会爆誕！"
+    },
+    {
+        "card_id": 102,
+        "character_name": "SR",
+        "card_name": "のんびり美味しいひととき",
+        "rarity": "ｻVi",
+        "type": "ｴアノマリー",
+        "raw_ability_text": "ｲｲ\nコンテスト\nアイテム\nのんびりアフタヌーン"
+    },
+    {
+        "card_id": 103,
+        "character_name": "SR",
+        "card_name": "パクパクもぐもぐ",
+        "rarity": "ｻVi",
+        "type": "ｲロジック",
+        "raw_ability_text": "ｳｲ\nプロデュース\nアイテム\nもぐもぐ定食"
+    },
+    {
+        "card_id": 104,
+        "character_name": "SR",
+        "card_name": "ひっぱり じゅーなん",
+        "rarity": "ｱVo",
+        "type": "ｴアノマリー",
+        "raw_ability_text": "ｳｲ\nプロデュース\nアイテム\n切磋琢磨のタオル"
+    },
+    {
+        "card_id": 105,
+        "character_name": "SR",
+        "card_name": "騎士とおてんば姫",
+        "rarity": "ｻVi",
+        "type": "ｲロジック",
+        "raw_ability_text": "ｲｲ\nコンテスト\nアイテム\n演技のたしなみ"
+    },
+    {
+        "card_id": 106,
+        "character_name": "SR",
+        "card_name": "お近づきの印☆",
+        "rarity": "ｱVo",
+        "type": "ｴアノマリー",
+        "raw_ability_text": "ｳｲ\nプロデュース\nアイテム\nほくほくハンバーガー"
+    },
+    {
+        "card_id": 107,
+        "character_name": "SR",
+        "card_name": "洗濯物のバランスタワー",
+        "rarity": "ｶDa",
+        "type": "ｲセンス",
+        "raw_ability_text": "ｳｲ\nプロデュース\nアイテム\nお洗濯の必需品"
+    },
+    {
+        "card_id": 108,
+        "character_name": "SR",
+        "card_name": "一番星と王子様",
+        "rarity": "ｱVo",
+        "type": "ｳロジック",
+        "raw_ability_text": "ｳｲ\nプロデュース\nアイテム\n幸せの詰め合わせ"
+    },
+    {
+        "card_id": 109,
+        "character_name": "SR",
+        "card_name": "仲良しの証",
+        "rarity": "ｻVi",
+        "type": "ｲセンス",
+        "raw_ability_text": "ｳｲ\nプロデュース\nアイテム\n迷子のゆくえ"
+    },
+    {
+        "card_id": 110,
+        "character_name": "SR",
+        "card_name": "おひさま笑顔、満開ふたつ",
+        "rarity": "ｶDa",
+        "type": "ｴアノマリー",
+        "raw_ability_text": "ｳｲ\nプロデュース\nアイテム\nそっくりワンワン"
+    },
+    {
+        "card_id": 111,
+        "character_name": "SR",
+        "card_name": "ぐつぐつ、いいにおい♪",
+        "rarity": "ｱVo",
+        "type": "ｳロジック",
+        "raw_ability_text": "ｱｲ\nスキルカード\n味見はいかが"
+    },
+    {
+        "card_id": 112,
+        "character_name": "SR",
+        "card_name": "佑芽ソリレース、疾走！",
+        "rarity": "ｻVi",
+        "type": "ｴアノマリー",
+        "raw_ability_text": "ｳｲ\nプロデュース\nアイテム\nゲレンデを駆ける赤"
+    },
+    {
+        "card_id": 113,
+        "character_name": "SR",
+        "card_name": "ピコピコでポーン",
+        "rarity": "ｶDa",
+        "type": "ｴアノマリー",
+        "raw_ability_text": "ｲｲ\nコンテスト\nアイテム\nたたいてかぶって"
+    },
+    {
+        "card_id": 114,
+        "character_name": "SR",
+        "card_name": "バディ？",
+        "rarity": "ｱVo",
+        "type": "ｳロジック",
+        "raw_ability_text": "ｳｲ\nプロデュース\nアイテム\nお直し刺繍セット"
+    },
+    {
+        "card_id": 115,
+        "character_name": "SR",
+        "card_name": "眠れる森の王子様",
+        "rarity": "ｱVo",
+        "type": "ｲセンス",
+        "raw_ability_text": "ｳｲ\nプロデュース\nアイテム\nおひるねブランケット"
+    },
+    {
+        "card_id": 116,
+        "character_name": "SR",
+        "card_name": "ごきげんような挨拶♪",
+        "rarity": "ｻVi",
+        "type": "ｲセンス",
+        "raw_ability_text": "ｳｲ\nプロデュース\nアイテム\nごきげんようなレッスン"
+    },
+    {
+        "card_id": 117,
+        "character_name": "SR",
+        "card_name": "あったか足ツボマッサージ",
+        "rarity": "ｱVo",
+        "type": "ｳロジック",
+        "raw_ability_text": "ｳｲ\nプロデュース\nアイテム\n激痛のちぽかぽか"
+    },
+    {
+        "card_id": 118,
+        "character_name": "SR",
+        "card_name": "はっぴぃはろうぃ〜〜ん！",
+        "rarity": "ｶDa",
+        "type": "ｲセンス",
+        "raw_ability_text": "ｳｲ\nプロデュース\nアイテム\nびっくり仮装グッズ"
+    },
+    {
+        "card_id": 119,
+        "character_name": "SR",
+        "card_name": "腹筋で背筋で体幹キープ！",
+        "rarity": "ｻVi",
+        "type": "ｳロジック",
+        "raw_ability_text": "ｳｲ\nプロデュース\nアイテム\nメリハリストレッチ"
+    },
+    {
+        "card_id": 120,
+        "character_name": "SR",
+        "card_name": "トゲトゲ注意報",
+        "rarity": "ｱVo",
+        "type": "ｴアノマリー",
+        "raw_ability_text": "ｳｲ\nプロデュース\nアイテム\nかごいっぱいの成果"
+    },
+    {
+        "card_id": 121,
+        "character_name": "SR",
+        "card_name": "師弟の修行",
+        "rarity": "ｻVi",
+        "type": "ｳロジック",
+        "raw_ability_text": "ｳｲ\nプロデュース\nアイテム\n落ち葉つかみの型"
+    },
+    {
+        "card_id": 122,
+        "character_name": "SR",
+        "card_name": "ちべたなひととき",
+        "rarity": "ｻVi",
+        "type": "ｲセンス",
+        "raw_ability_text": "ｳｲ\nプロデュース\nアイテム\nふっかつのアイス"
+    },
+    {
+        "card_id": 123,
+        "character_name": "SR",
+        "card_name": "今日は見学なんです",
+        "rarity": "ｶDa",
+        "type": "ｱフリー",
+        "raw_ability_text": "ｲｲ\nコンテスト\nアイテム\nおさぼりタオル"
+    },
+    {
+        "card_id": 124,
+        "character_name": "SR",
+        "card_name": "スパルタ＆スパイス",
+        "rarity": "ｱVo",
+        "type": "ｴアノマリー",
+        "raw_ability_text": "ｳｲ\nプロデュース\nアイテム\nビシッバシッ竹刀"
+    },
+    {
+        "card_id": 125,
+        "character_name": "SR",
+        "card_name": "むず×2ふぁっしょんしょー",
+        "rarity": "ｶDa",
+        "type": "ｲセンス",
+        "raw_ability_text": "ｳｲ\nプロデュース\nアイテム\nお似合いネクタイ"
+    },
+    {
+        "card_id": 126,
+        "character_name": "SR",
+        "card_name": "ばたんきゅー",
+        "rarity": "ｻVi",
+        "type": "ｳロジック",
+        "raw_ability_text": "ｳｲ\nプロデュース\nアイテム\nへとへとできゅー"
+    },
+    {
+        "card_id": 127,
+        "character_name": "SR",
+        "card_name": "あん・どぅ・とろわっ！",
+        "rarity": "ｶDa",
+        "type": "ｴアノマリー",
+        "raw_ability_text": "ｳｲ\nプロデュース\nアイテム\nのびのびバンド"
+    },
+    {
+        "card_id": 128,
+        "character_name": "SR",
+        "card_name": "主菓子、甘い、薄茶、渋み",
+        "rarity": "ｻVi",
+        "type": "ｴアノマリー",
+        "raw_ability_text": "ｳｲ\nプロデュース\nアイテム\nおもてなしの気持ち"
+    },
+    {
+        "card_id": 129,
+        "character_name": "SR",
+        "card_name": "2名様、ご案内〜♪",
+        "rarity": "ｱVo",
+        "type": "ｱフリー",
+        "raw_ability_text": "ｳｲ\nプロデュース\nアイテム\nお残しにんじん"
+    },
+    {
+        "card_id": 130,
+        "character_name": "SR",
+        "card_name": "屈辱の2位",
+        "rarity": "ｱVo",
+        "type": "ｳロジック",
+        "raw_ability_text": "ｳｲ\nプロデュース\nアイテム\n噛み締めたタオル"
+    },
+    {
+        "card_id": 131,
+        "character_name": "SR",
+        "card_name": "奥義、三重とび！",
+        "rarity": "ｻVi",
+        "type": "ｴアノマリー",
+        "raw_ability_text": "ｳｲ\nプロデュース\nアイテム\n絆のなわとび"
+    },
+    {
+        "card_id": 132,
+        "character_name": "SR",
+        "card_name": "ガールズ♡トーク",
+        "rarity": "ｶDa",
+        "type": "ｲセンス",
+        "raw_ability_text": "ｳｲ\nプロデュース\nアイテム\nギャルめいきんぐ！"
+    },
+    {
+        "card_id": 133,
+        "character_name": "SR",
+        "card_name": "虫愛づる王子様",
+        "rarity": "ｻVi",
+        "type": "ｴアノマリー",
+        "raw_ability_text": "ｱｲ\nスキルカード\n小さなお客さん"
+    },
+    {
+        "card_id": 134,
+        "character_name": "SR",
+        "card_name": "ピューとシューの二重奏",
+        "rarity": "ｶDa",
+        "type": "ｳロジック",
+        "raw_ability_text": "ｱｲ\nスキルカード\n草笛ハーモニー"
+    },
+    {
+        "card_id": 135,
+        "character_name": "SR",
+        "card_name": "まごころを込めて",
+        "rarity": "ｱVo",
+        "type": "ｳロジック",
+        "raw_ability_text": "ｱｲ\nスキルカード\nディテールが肝心"
+    },
+    {
+        "card_id": 136,
+        "character_name": "SR",
+        "card_name": "SSCの爆誕",
+        "rarity": "ｻVi",
+        "type": "ｴアノマリー",
+        "raw_ability_text": "ｱｲ\nスキルカード\n愛情レインボー"
+    },
+    {
+        "card_id": 137,
+        "character_name": "SR",
+        "card_name": "目指すはテッペン",
+        "rarity": "ｶDa",
+        "type": "ｱフリー",
+        "raw_ability_text": "ｳｲ\nプロデュース\nアイテム\nトレーナーの優しさ"
+    },
+    {
+        "card_id": 138,
+        "character_name": "SR",
+        "card_name": "まだまだのばしてー",
+        "rarity": "ｻVi",
+        "type": "ｱフリー",
+        "raw_ability_text": "ｳｲ\nプロデュース\nアイテム\n体ほぐしローラー"
+    },
+    {
+        "card_id": 139,
+        "character_name": "SR",
+        "card_name": "基礎＞応用",
+        "rarity": "ｱVo",
+        "type": "ｱフリー",
+        "raw_ability_text": "ｳｲ\nプロデュース\nアイテム\nうるおいのどケア"
+    },
+    {
+        "card_id": 140,
+        "character_name": "SR",
+        "card_name": "カロリー/2でハッピー×2",
+        "rarity": "ｶDa",
+        "type": "ｱフリー",
+        "raw_ability_text": "ｳｲ\nプロデュース\nアイテム\nほっこりはんぶんこ"
+    },
+    {
+        "card_id": 141,
+        "character_name": "SR",
+        "card_name": "きゅる〜んωポーズッ☆",
+        "rarity": "ｶDa",
+        "type": "ｳロジック",
+        "raw_ability_text": "ｳｲ\nプロデュース\nアイテム\nカワイイのつくり方"
+    },
+    {
+        "card_id": 142,
+        "character_name": "SR",
+        "card_name": "ディカプルエックスエル！",
+        "rarity": "ｶDa",
+        "type": "ｲセンス",
+        "raw_ability_text": "ｲｲ\nコンテスト\nアイテム\nイケてるセーター"
+    },
+    {
+        "card_id": 143,
+        "character_name": "SR",
+        "card_name": "サンマ、パタパタ",
+        "rarity": "ｻVi",
+        "type": "ｱフリー",
+        "raw_ability_text": "ｱｲ\nスキルカード\n旬の味わい"
+    },
+    {
+        "card_id": 144,
+        "character_name": "SR",
+        "card_name": "バズっちゃお！",
+        "rarity": "ｶDa",
+        "type": "ｳロジック",
+        "raw_ability_text": "ｱｲ\nスキルカード\nこうかい……？"
+    },
+    {
+        "card_id": 145,
+        "character_name": "SR",
+        "card_name": "トンボをつかまえて",
+        "rarity": "ｶDa",
+        "type": "ｲセンス",
+        "raw_ability_text": "ｲｲ\nコンテスト\nアイテム\n小さい秋見つけた"
+    },
+    {
+        "card_id": 146,
+        "character_name": "SR",
+        "card_name": "SSDのひみつ",
+        "rarity": "ｻVi",
+        "type": "ｳロジック",
+        "raw_ability_text": "ｳｲ\nプロデュース\nアイテム\nぜったいマル秘レシピ"
+    },
+    {
+        "card_id": 147,
+        "character_name": "SR",
+        "card_name": "興味深い飲み物",
+        "rarity": "ｱVo",
+        "type": "ｲセンス",
+        "raw_ability_text": "ｱｲ\nスキルカード\n気になる……"
+    },
+    {
+        "card_id": 148,
+        "character_name": "SR",
+        "card_name": "千奈の恩返し",
+        "rarity": "ｶDa",
+        "type": "ｳロジック",
+        "raw_ability_text": "ｲｲ\nコンテスト\nアイテム\nお嬢様の恩返し"
+    },
+    {
+        "card_id": 149,
+        "character_name": "SR",
+        "card_name": "ブレイクタイムは珈琲で",
+        "rarity": "ｱVo",
+        "type": "ｳロジック",
+        "raw_ability_text": "ｳｲ\nプロデュース\nアイテム\n優しさミルクシュガー"
+    },
+    {
+        "card_id": 150,
+        "character_name": "SR",
+        "card_name": "りっぱなすすき！",
+        "rarity": "ｻVi",
+        "type": "ｳロジック",
+        "raw_ability_text": "ｳｲ\nプロデュース\nアイテム\n大きくてつやつや"
+    },
+    {
+        "card_id": 151,
+        "character_name": "SR",
+        "card_name": "キュッと締めて",
+        "rarity": "ｶDa",
+        "type": "ｲセンス",
+        "raw_ability_text": "ｳｲ\nプロデュース\nアイテム\nきっかけの帯"
+    },
+    {
+        "card_id": 152,
+        "character_name": "SR",
+        "card_name": "ふわふわなお面？",
+        "rarity": "ｶDa",
+        "type": "ｱフリー",
+        "raw_ability_text": "ｳｲ\nプロデュース\nアイテム\nハンターの戦利品"
+    },
+    {
+        "card_id": 153,
+        "character_name": "SR",
+        "card_name": "やさしさ、あったかい",
+        "rarity": "ｻVi",
+        "type": "ｲセンス",
+        "raw_ability_text": "ｱｲ\nスキルカード\n切れた鼻緒が結んだ絆"
+    },
+    {
+        "card_id": 154,
+        "character_name": "SR",
+        "card_name": "第五種接近遭遇",
+        "rarity": "ｱVo",
+        "type": "ｲセンス",
+        "raw_ability_text": "ｳｲ\nプロデュース\nアイテム\nウチュウジンデアル"
+    },
+    {
+        "card_id": 155,
+        "character_name": "SR",
+        "card_name": "海、楽しまなきゃ！",
+        "rarity": "ｱVo",
+        "type": "ｳロジック",
+        "raw_ability_text": "ｳｲ\nプロデュース\nアイテム\n可愛い隠しバスタオル"
+    },
+    {
+        "card_id": 156,
+        "character_name": "SR",
+        "card_name": "かちこちストレッチ",
+        "rarity": "ｻVi",
+        "type": "ｳロジック",
+        "raw_ability_text": "ｳｲ\nプロデュース\nアイテム\n咲季オススメマット"
+    },
+    {
+        "card_id": 157,
+        "character_name": "SR",
+        "card_name": "どりゃぎゃ",
+        "rarity": "ｶDa",
+        "type": "ｲセンス",
+        "raw_ability_text": "ｳｲ\nプロデュース\nアイテム\nダブルボトル"
+    },
+    {
+        "card_id": 158,
+        "character_name": "SR",
+        "card_name": "パシャっとキメポ",
+        "rarity": "ｶDa",
+        "type": "ｲセンス",
+        "raw_ability_text": "ｱｲ\nスキルカード\nキメ顔で自撮り"
+    },
+    {
+        "card_id": 159,
+        "character_name": "SR",
+        "card_name": "イヤホンはんぶんこ",
+        "rarity": "ｱVo",
+        "type": "ｳロジック",
+        "raw_ability_text": "ｱｲ\nスキルカード\nなに聴いてるの？"
+    },
+    {
+        "card_id": 160,
+        "character_name": "SR",
+        "card_name": "体当たりのラブコール",
+        "rarity": "ｻVi",
+        "type": "ｱフリー",
+        "raw_ability_text": "ｱｲ\nスキルカード\nお姉ちゃんだもの！"
+    },
+    {
+        "card_id": 161,
+        "character_name": "SR",
+        "card_name": "今はあえて、背を向けて",
+        "rarity": "ｱVo",
+        "type": "ｱフリー",
+        "raw_ability_text": "ｳｲ\nプロデュース\nアイテム\n美鈴からの贈り物"
+    },
+    {
+        "card_id": 162,
+        "character_name": "SR",
+        "card_name": "のらりくらりしっかり",
+        "rarity": "ｱVo",
+        "type": "ｱフリー",
+        "raw_ability_text": "ｱｲ\nスキルカード\nおアツイ視線"
+    },
+    {
+        "card_id": 163,
+        "character_name": "SR",
+        "card_name": "愛無き暗記は難しい",
+        "rarity": "ｱVo",
+        "type": "ｱフリー",
+        "raw_ability_text": "ｳｲ\nプロデュース\nアイテム\n打倒！墾田永年私財法"
+    },
+    {
+        "card_id": 164,
+        "character_name": "SR",
+        "card_name": "てとりあしとり",
+        "rarity": "ｻVi",
+        "type": "ｱフリー",
+        "raw_ability_text": "ｱｲ\nスキルカード\nご指導ご鞭撻"
+    },
+    {
+        "card_id": 165,
+        "character_name": "SR",
+        "card_name": "ほっぺた、ぷに",
+        "rarity": "ｻVi",
+        "type": "ｱフリー",
+        "raw_ability_text": "ｳｲ\nプロデュース\nアイテム\n手作りのご褒美"
+    },
+    {
+        "card_id": 166,
+        "character_name": "SR",
+        "card_name": "魅惑の大腿四頭筋",
+        "rarity": "ｶDa",
+        "type": "ｱフリー",
+        "raw_ability_text": "ｱｲ\nスキルカード\nストレッチ談議"
+    },
+    {
+        "card_id": 167,
+        "character_name": "SR",
+        "card_name": "ふわふわでワクワク",
+        "rarity": "ｶDa",
+        "type": "ｱフリー",
+        "raw_ability_text": "ｳｲ\nプロデュース\nアイテム\nふわふわでもこもこ"
+    },
+    {
+        "card_id": 168,
+        "character_name": "SR",
+        "card_name": "嬉し恥ずかし夢心地",
+        "rarity": "ｶDa",
+        "type": "ｱフリー",
+        "raw_ability_text": "ｳｲ\nプロデュース\nアイテム\nお姉さま大百科"
+    },
+    {
+        "card_id": 169,
+        "character_name": "SR",
+        "card_name": "実食！例のSSD",
+        "rarity": "ｶDa",
+        "type": "ｱフリー",
+        "raw_ability_text": "ｳｲ\nプロデュース\nアイテム\n例のSSDの秘密"
+    },
+    {
+        "card_id": 170,
+        "character_name": "SR",
+        "card_name": "マイペース、マイライフ",
+        "rarity": "ｱVo",
+        "type": "ｱフリー",
+        "raw_ability_text": "ｳｲ\nプロデュース\nアイテム\n一緒にお昼寝ポプリ"
+    },
+    {
+        "card_id": 171,
+        "character_name": "SR",
+        "card_name": "思惑とガクガク",
+        "rarity": "ｻVi",
+        "type": "ｱフリー",
+        "raw_ability_text": "ｳｲ\nプロデュース\nアイテム\n私が見つけた逸材メモ"
+    },
+    {
+        "card_id": 172,
+        "character_name": "SR",
+        "card_name": "ほっとけないクラスメイト",
+        "rarity": "ｱVo",
+        "type": "ｱフリー",
+        "raw_ability_text": "ｳｲ\nプロデュース\nアイテム\n朝一の助け舟"
+    },
+    {
+        "card_id": 173,
+        "character_name": "SR",
+        "card_name": "いつか、きっと花開く",
+        "rarity": "ｻVi",
+        "type": "ｱフリー",
+        "raw_ability_text": "ｳｲ\nプロデュース\nアイテム\n誓いの花びら"
+    },
+    {
+        "card_id": 174,
+        "character_name": "SR(限定パック購入)",
+        "card_name": "はじめてのお友達",
+        "rarity": "ﾀAs",
+        "type": "ｱフリー",
+        "raw_ability_text": "ｱｲ\nスキルカード\n全力サポート"
+    },
+    {
+        "card_id": 175,
+        "character_name": "R",
+        "card_name": "謹厳実直",
+        "rarity": "ｶDa",
+        "type": "ｱフリー",
+        "raw_ability_text": "ﾝｳ\n--"
+    },
+    {
+        "card_id": 176,
+        "character_name": "R",
+        "card_name": "念入りにストレッチ",
+        "rarity": "ｻVi",
+        "type": "ｱフリー",
+        "raw_ability_text": "ﾝｳ\n--"
+    },
+    {
+        "card_id": 177,
+        "character_name": "R",
+        "card_name": "全力、その後",
+        "rarity": "ｱVo",
+        "type": "ｱフリー",
+        "raw_ability_text": "ﾝｳ\n--"
+    },
+    {
+        "card_id": 178,
+        "character_name": "R",
+        "card_name": "枝毛をくるり",
+        "rarity": "ｶDa",
+        "type": "ｱフリー",
+        "raw_ability_text": "ﾝｳ\n--"
+    },
+    {
+        "card_id": 179,
+        "character_name": "R",
+        "card_name": "王子様のひと呼吸",
+        "rarity": "ｱVo",
+        "type": "ｱフリー",
+        "raw_ability_text": "ﾝｳ\n--"
+    },
+    {
+        "card_id": 180,
+        "character_name": "R",
+        "card_name": "ひたむき居残りレッスン",
+        "rarity": "ｻVi",
+        "type": "ｱフリー",
+        "raw_ability_text": "ﾝｳ\n--"
+    },
+    {
+        "card_id": 181,
+        "character_name": "R",
+        "card_name": "憧れを目指して",
+        "rarity": "ｶDa",
+        "type": "ｱフリー",
+        "raw_ability_text": "ﾝｳ\n--"
+    },
+    {
+        "card_id": 182,
+        "character_name": "R",
+        "card_name": "スイッチON！",
+        "rarity": "ｶDa",
+        "type": "ｱフリー",
+        "raw_ability_text": "ﾝｳ\n--"
+    },
+    {
+        "card_id": 183,
+        "character_name": "R",
+        "card_name": "いめーじとれーにんぐ",
+        "rarity": "ｱVo",
+        "type": "ｱフリー",
+        "raw_ability_text": "ﾝｳ\n--"
+    },
+    {
+        "card_id": 184,
+        "character_name": "R",
+        "card_name": "完全無欠のプランニング",
+        "rarity": "ｻVi",
+        "type": "ｱフリー",
+        "raw_ability_text": "ﾝｳ\n--"
+    },
+    {
+        "card_id": 185,
+        "character_name": "R",
+        "card_name": "わたしのペースで",
+        "rarity": "ｱVo",
+        "type": "ｱフリー",
+        "raw_ability_text": "ﾝｳ\n--"
+    },
+    {
+        "card_id": 186,
+        "character_name": "R",
+        "card_name": "お姉ちゃん直伝メニュー",
+        "rarity": "ｶDa",
+        "type": "ｱフリー",
+        "raw_ability_text": "ﾝｳ\n--"
+    },
+    {
+        "card_id": 187,
+        "character_name": "R",
+        "card_name": "頼れる先輩お姉さん",
+        "rarity": "ｻVi",
+        "type": "ｱフリー",
+        "raw_ability_text": "ﾝｳ\n--"
+    }
+]

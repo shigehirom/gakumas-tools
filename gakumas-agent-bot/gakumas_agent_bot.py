@@ -13,6 +13,7 @@ gakumas_agent_bot.py — 学園アイドルマスター 特化型 Discord 相談
 """
 
 import asyncio
+import io
 import json
 import logging
 import os
@@ -126,6 +127,7 @@ HELP_TEXT = """**🎓 初星学園プロデューサー科 相談室（あさり
 - 📊 **クォータ追跡**: 回答フッターおよび `/quota` で本日のAPI利用状況を確認可能
 
 **【相談室コマンド一覧】**
+`/advisory [1-3] [アイドル名]` : あじふらい氏推奨のPアイテム・スキルカード構成画像（Pixel 10 Pro Fold 最適化）を即座に出力
 `/help` : このヘルプを表示
 `/quota` : 本日の Gemini API 利用状況・クォータ残量グラフを表示
 `/status` : 本日のシステム稼働状態とモデル情報を表示
@@ -137,7 +139,7 @@ HELP_TEXT = """**🎓 初星学園プロデューサー科 相談室（あさり
 ※コンテスト記録（`/record-contest`）やシミュレーション（`/contest`）等のツール機能は **My Gakumas Tools** をご利用ください。
 """
 
-_KNOWN_COMMANDS = frozenset(["/help", "/quota", "/status", "/cancel", "/retry", "/continue", "/new", "/model", "/clear", "/sync"])
+_KNOWN_COMMANDS = frozenset(["/help", "/quota", "/status", "/cancel", "/retry", "/continue", "/new", "/model", "/clear", "/sync", "/advisory"])
 # ────────────────────── スマート自動ルーター ────────────────────────────────
 
 def route_query_to_model(query: str) -> tuple[str, str, str]:
@@ -580,7 +582,85 @@ class GakumasAntigravityBot(discord.Client):
                 await interaction.followup.send(f"⚠️ **[エラー]**: `{e}`", ephemeral=True)
 
         @self.tree.command(name="sync", description="スプレッドシートやWikiとのデータ同期を実行します")
+        async def slash_sync(interaction: discord.Interaction) -> None:
+            await interaction.response.defer(ephemeral=True)
+            try:
+                res = await bot.sync_service.sync_all()
+                await interaction.followup.send(f"✨ **[データ同期完了]**\n{res}", ephemeral=True)
+            except Exception as e:
+                await interaction.followup.send(f"⚠️ **[同期エラー]**: `{e}`", ephemeral=True)
 
+        @self.tree.command(name="advisory", description="あじふらい氏推奨のPアイテム・スキルカード構成画像（Pixel 10 Pro Fold最適化）を出力します")
+        @discord.app_commands.describe(
+            stage="ステージ番号 (1, 2, 3)",
+            idol="アイドル名または衣装名 (例: ことね, 広, 千奈, GO MY WAY!! 等)",
+            season="シーズン番号 (省略時は最新シーズン)"
+        )
+        @discord.app_commands.choices(stage=[
+            discord.app_commands.Choice(name="Stage 1 (センス / Vo特化等)", value=1),
+            discord.app_commands.Choice(name="Stage 2 (ロジック / Vi特化等)", value=2),
+            discord.app_commands.Choice(name="Stage 3 (アノマリー / Vo特化等)", value=3),
+        ])
+        async def slash_advisory(
+            interaction: discord.Interaction,
+            stage: int,
+            idol: str,
+            season: int | None = None
+        ) -> None:
+            await interaction.response.defer()
+            try:
+                from advisory_parser import parse_advisory
+                from advisory_image_builder import AdvisoryImageBuilder
+
+                data = parse_advisory(stage=stage, idol_query=idol, season=season)
+                if not data:
+                    await interaction.followup.send(
+                        f"⚠️ 指定されたステージ（Stage {stage}）またはアイドル（`{idol}`）の推奨構成情報が見つかりませんでした。\n"
+                        f"アイドル名（ことね、広、千奈、手毬、美鈴、燕、リーリヤ等）をご確認ください。"
+                    )
+                    return
+
+                builder = AdvisoryImageBuilder()
+                png_bytes = builder.build(data)
+
+                cur_season = data.get("season", 51)
+                p_idol = data.get("p_idol", {})
+                idol_name = p_idol.get("idol_name", idol)
+                title = p_idol.get("title", "")
+                extra = p_idol.get("extra", "")
+                full_title = f"{idol_name}【{title}】" + (f" ({extra})" if extra else "")
+
+                msg = (
+                    f"👩‍🏫 **プロデューサーくん、お疲れ様！**\n"
+                    f"シーズン{cur_season} Stage {stage} の **{full_title}** 推奨構成画像（Pアイテム2枠 ＆ スキルカード10枠）を用意したわよ！\n"
+                    f"育成やデッキ構築の参考にしてみてね！ふふっ♪"
+                )
+
+                filename = f"advisory_s{cur_season}_stage{stage}_{p_idol.get('idol_key', 'idol')}.png"
+                file = discord.File(io.BytesIO(png_bytes), filename=filename)
+                await interaction.followup.send(content=msg, file=file)
+
+            except Exception as e:
+                log.error(f"[slash_advisory] エラー: {e}", exc_info=True)
+                await interaction.followup.send(f"⚠️ 画像生成中にエラーが発生しました: `{e}`")
+
+        @slash_advisory.autocomplete("idol")
+        async def idol_autocomplete(
+            interaction: discord.Interaction,
+            current: str,
+        ) -> list[discord.app_commands.Choice[str]]:
+            all_idols = [
+                "ことね (藤田ことね)", "広 (篠澤広)", "千奈 (倉本千奈)",
+                "手毬 (月村手毬)", "美鈴 (秦谷美鈴)", "燕 (雨夜燕)",
+                "リーリヤ (葛城リーリヤ)", "清夏 (紫雲清夏)", "星南 (十王星南)",
+                "咲季 (花海咲季)", "佑芽 (花海佑芽)", "麻央 (有村麻央)", "莉波 (姫崎莉波)"
+            ]
+            if not current:
+                return [discord.app_commands.Choice(name=i, value=i.split()[0]) for i in all_idols[:10]]
+            filtered = [i for i in all_idols if current.lower() in i.lower()]
+            return [discord.app_commands.Choice(name=i, value=i.split()[0]) for i in filtered[:10]]
+
+    async def _execute_chat(self, channel: discord.TextChannel, prompt: str) -> None:
         model_name = "gemini-3.6-flash" if self.user_selected_mode == "gemini" else LLM_MODEL
         label = "あさり先生 (Gemini 3.6 Flash)" if self.user_selected_mode == "gemini" else "Qwen 2.5 7B (Local)"
 
@@ -905,18 +985,53 @@ class GakumasAntigravityBot(discord.Client):
                     return
 
                 if content.startswith("/sync"):
-                    self.gemini_service.cancel()
-                    self.ollama_service.cancel()
-                    await message.channel.send("🛑 **[System]** 応答をキャンセルしました。")
+                    try:
+                        res = await self.sync_service.sync_all()
+                        await message.channel.send(f"✨ **[データ同期完了]**\n{res}")
+                    except Exception as e:
+                        await message.channel.send(f"⚠️ **[同期エラー]**: `{e}`")
                     return
 
+                if content.startswith("/model"):
                     parts = content.split()
                     if len(parts) > 1 and parts[1].lower() in AVAILABLE_MODELS:
                         m = parts[1].lower()
                         self.user_selected_mode = m
                         await message.channel.send(f"✨ **[モデル設定]** `{AVAILABLE_MODELS[m]}` に変更しました。")
                     else:
-                        await message.channel.send(f"利用可能: `auto`, `qwen`, `gemma`, `deepseek`, `gemini` (例: `/model auto`)")
+                        await message.channel.send(f"利用可能: `qwen`, `gemini` (例: `/model gemini`)")
+                    return
+
+                if content.startswith("/advisory"):
+                    parts = content.split()
+                    if len(parts) < 3:
+                        await message.channel.send("💡 使い方: `/advisory <ステージ(1-3)> <アイドル名>` (例: `/advisory 3 ことね`)")
+                        return
+                    try:
+                        stg = int(parts[1])
+                    except ValueError:
+                        await message.channel.send("⚠️ ステージ番号は 1, 2, 3 のいずれかを指定してください。")
+                        return
+                    idol_q = parts[2]
+                    
+                    from advisory_parser import parse_advisory
+                    from advisory_image_builder import AdvisoryImageBuilder
+
+                    data = parse_advisory(stage=stg, idol_query=idol_q)
+                    if not data:
+                        await message.channel.send(f"⚠️ Stage {stg} のアイドル `{idol_q}` の推奨構成が見つかりませんでした。")
+                        return
+
+                    builder = AdvisoryImageBuilder()
+                    png_bytes = builder.build(data)
+                    p_idol = data.get("p_idol", {})
+                    full_title = f"{p_idol.get('idol_name', idol_q)}【{p_idol.get('title', '')}】"
+                    msg_text = (
+                        f"👩‍🏫 **プロデューサーくん、お疲れ様！**\n"
+                        f"シーズン{data.get('season', 51)} Stage {stg} の **{full_title}** 推奨構成画像よ！"
+                    )
+                    file = discord.File(io.BytesIO(png_bytes), filename=f"advisory_s{data.get('season', 51)}_stage{stg}_{p_idol.get('idol_key', 'idol')}.png")
+                    await message.channel.send(content=msg_text, file=file)
                     return
 
         # 通常メッセージ

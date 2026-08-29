@@ -1,0 +1,2368 @@
+[
+  {
+    "_id": "「ア」じゃなくて「エ」！",
+    "card_name": "「ア」じゃなくて「エ」！",
+    "lv": 60,
+    "obtained_item": null,
+    "obtained_skill_card": "お泊り猛勉強",
+    "plan_restriction": "logic",
+    "rarity": "SSR",
+    "type": "ビジュアル",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.659Z"
+    }
+  },
+  {
+    "_id": "1人たりとも欠ける事なく",
+    "card_name": "1人たりとも欠ける事なく",
+    "lv": 60,
+    "obtained_item": "みんなの教科書",
+    "obtained_skill_card": null,
+    "plan_restriction": "none",
+    "rarity": "SSR",
+    "type": "ボーカル",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.659Z"
+    }
+  },
+  {
+    "_id": "2名様、ご案内〜♪",
+    "card_name": "2名様、ご案内〜♪",
+    "lv": 50,
+    "obtained_item": "お残しにんじん",
+    "obtained_skill_card": null,
+    "plan_restriction": "none",
+    "rarity": "SR",
+    "type": "ボーカル",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.660Z"
+    }
+  },
+  {
+    "_id": "SSCの爆誕",
+    "card_name": "SSCの爆誕",
+    "lv": 35,
+    "obtained_item": null,
+    "obtained_skill_card": "愛情レインボー",
+    "plan_restriction": "anomaly",
+    "rarity": "SR",
+    "type": "ビジュアル",
+    "uncap": 1,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.661Z"
+    }
+  },
+  {
+    "_id": "SSDのひみつ",
+    "card_name": "SSDのひみつ",
+    "lv": 50,
+    "obtained_item": "ぜったいマル秘レシピ",
+    "obtained_skill_card": null,
+    "plan_restriction": "logic",
+    "rarity": "SR",
+    "type": "ビジュアル",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.661Z"
+    }
+  },
+  {
+    "_id": "あったかいね",
+    "card_name": "あったかいね",
+    "lv": 40,
+    "obtained_item": "ぬくもりふたりぶん",
+    "obtained_skill_card": null,
+    "plan_restriction": "logic",
+    "rarity": "SSR",
+    "type": "ビジュアル",
+    "uncap": 0,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.661Z"
+    }
+  },
+  {
+    "_id": "あったか足ツボマッサージ",
+    "card_name": "あったか足ツボマッサージ",
+    "lv": 30,
+    "obtained_item": "激痛のちぽかぽか",
+    "obtained_skill_card": null,
+    "plan_restriction": "logic",
+    "rarity": "SR",
+    "type": "ボーカル",
+    "uncap": 0,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.662Z"
+    }
+  },
+  {
+    "_id": "あっちも行きたいですわ！",
+    "card_name": "あっちも行きたいですわ！",
+    "lv": 60,
+    "obtained_item": "ほっこりまんぷく",
+    "obtained_skill_card": null,
+    "plan_restriction": "sense",
+    "rarity": "SSR",
+    "type": "ダンス",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.662Z"
+    }
+  },
+  {
+    "_id": "あなたにも作ってあげる！",
+    "card_name": "あなたにも作ってあげる！",
+    "lv": 60,
+    "obtained_item": "得体のしれないモノ",
+    "obtained_skill_card": null,
+    "plan_restriction": "none",
+    "rarity": "SSR",
+    "type": "ビジュアル",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.662Z"
+    }
+  },
+  {
+    "_id": "あら、奇遇ね",
+    "card_name": "あら、奇遇ね",
+    "lv": 60,
+    "obtained_item": "スカウト遮り帽",
+    "obtained_skill_card": null,
+    "plan_restriction": "none",
+    "rarity": "SSR",
+    "type": "ボーカル",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.663Z"
+    }
+  },
+  {
+    "_id": "あん・どぅ・とろわっ！",
+    "card_name": "あん・どぅ・とろわっ！",
+    "lv": 45,
+    "obtained_item": "のびのびバンド",
+    "obtained_skill_card": null,
+    "plan_restriction": "anomaly",
+    "rarity": "SR",
+    "type": "ダンス",
+    "uncap": 3,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.663Z"
+    }
+  },
+  {
+    "_id": "いつか、きっと花開く",
+    "card_name": "いつか、きっと花開く",
+    "lv": 50,
+    "obtained_item": "誓いの花びら",
+    "obtained_skill_card": null,
+    "plan_restriction": "none",
+    "rarity": "SR",
+    "type": "ビジュアル",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.663Z"
+    }
+  },
+  {
+    "_id": "いつも頑張ってるね。",
+    "card_name": "いつも頑張ってるね。",
+    "lv": 60,
+    "obtained_item": "包まれるやさしさ",
+    "obtained_skill_card": null,
+    "plan_restriction": "sense",
+    "rarity": "SSR",
+    "type": "ビジュアル",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.664Z"
+    }
+  },
+  {
+    "_id": "いめーじとれーにんぐ",
+    "card_name": "いめーじとれーにんぐ",
+    "lv": 40,
+    "obtained_item": null,
+    "obtained_skill_card": null,
+    "plan_restriction": "none",
+    "rarity": "R",
+    "type": "ボーカル",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.664Z"
+    }
+  },
+  {
+    "_id": "イヤホンはんぶんこ",
+    "card_name": "イヤホンはんぶんこ",
+    "lv": 50,
+    "obtained_item": null,
+    "obtained_skill_card": "なに聴いてるの？",
+    "plan_restriction": "logic",
+    "rarity": "SR",
+    "type": "ボーカル",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.664Z"
+    }
+  },
+  {
+    "_id": "おい、来てやったぞ！",
+    "card_name": "おい、来てやったぞ！",
+    "lv": 45,
+    "obtained_item": "ピークタイムフラッグ",
+    "obtained_skill_card": null,
+    "plan_restriction": "sense",
+    "rarity": "SSR",
+    "type": "ダンス",
+    "uncap": 1,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.664Z"
+    }
+  },
+  {
+    "_id": "おいしい顔、いただき〜！",
+    "card_name": "おいしい顔、いただき〜！",
+    "lv": 60,
+    "obtained_item": null,
+    "obtained_skill_card": "心のアルバム",
+    "plan_restriction": "none",
+    "rarity": "SSR",
+    "type": "ダンス",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.664Z"
+    }
+  },
+  {
+    "_id": "オシャレもメイクも♪",
+    "card_name": "オシャレもメイクも♪",
+    "lv": 60,
+    "obtained_item": "ぴったしコレクション",
+    "obtained_skill_card": null,
+    "plan_restriction": "sense",
+    "rarity": "SSR",
+    "type": "ビジュアル",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.665Z"
+    }
+  },
+  {
+    "_id": "おっと、危ないよ",
+    "card_name": "おっと、危ないよ",
+    "lv": 40,
+    "obtained_item": "体力作りの教材？",
+    "obtained_skill_card": null,
+    "plan_restriction": "logic",
+    "rarity": "SSR",
+    "type": "ボーカル",
+    "uncap": 0,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.665Z"
+    }
+  },
+  {
+    "_id": "おひさま笑顔、満開ふたつ",
+    "card_name": "おひさま笑顔、満開ふたつ",
+    "lv": 21,
+    "obtained_item": "そっくりワンワン",
+    "obtained_skill_card": null,
+    "plan_restriction": "anomaly",
+    "rarity": "SR",
+    "type": "ダンス",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.665Z"
+    }
+  },
+  {
+    "_id": "お近づきの印☆",
+    "card_name": "お近づきの印☆",
+    "lv": 50,
+    "obtained_item": "ほくほくハンバーガー",
+    "obtained_skill_card": null,
+    "plan_restriction": "anomaly",
+    "rarity": "SR",
+    "type": "ボーカル",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.665Z"
+    }
+  },
+  {
+    "_id": "お姉ちゃんに任せなさい！",
+    "card_name": "お姉ちゃんに任せなさい！",
+    "lv": 60,
+    "obtained_item": "満開ペアヘアピン",
+    "obtained_skill_card": null,
+    "plan_restriction": "none",
+    "rarity": "SSR",
+    "type": "ビジュアル",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.665Z"
+    }
+  },
+  {
+    "_id": "お姉ちゃん直伝メニュー",
+    "card_name": "お姉ちゃん直伝メニュー",
+    "lv": 40,
+    "obtained_item": null,
+    "obtained_skill_card": null,
+    "plan_restriction": "none",
+    "rarity": "R",
+    "type": "ダンス",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.666Z"
+    }
+  },
+  {
+    "_id": "お疲れ様、千奈ちゃん。",
+    "card_name": "お疲れ様、千奈ちゃん。",
+    "lv": 60,
+    "obtained_item": null,
+    "obtained_skill_card": "陽だまりの生徒会室",
+    "plan_restriction": "none",
+    "rarity": "SSR",
+    "type": "ビジュアル",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.666Z"
+    }
+  },
+  {
+    "_id": "お母さんか！",
+    "card_name": "お母さんか！",
+    "lv": 60,
+    "obtained_item": "好き嫌い禁止！",
+    "obtained_skill_card": null,
+    "plan_restriction": "none",
+    "rarity": "SSR",
+    "type": "ダンス",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.666Z"
+    }
+  },
+  {
+    "_id": "ガールズ&#9825;トーク",
+    "card_name": "ガールズ&#9825;トーク",
+    "lv": 21,
+    "obtained_item": "ギャルめいきんぐ！",
+    "obtained_skill_card": null,
+    "plan_restriction": "sense",
+    "rarity": "SR",
+    "type": "ダンス",
+    "uncap": 2,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.666Z"
+    }
+  },
+  {
+    "_id": "かかってらっしゃい！",
+    "card_name": "かかってらっしゃい！",
+    "lv": 40,
+    "obtained_item": null,
+    "obtained_skill_card": "お姉ちゃん、参戦！",
+    "plan_restriction": "logic",
+    "rarity": "SSR",
+    "type": "ビジュアル",
+    "uncap": 0,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.666Z"
+    }
+  },
+  {
+    "_id": "かちこちストレッチ",
+    "card_name": "かちこちストレッチ",
+    "lv": 50,
+    "obtained_item": "咲季オススメマット",
+    "obtained_skill_card": null,
+    "plan_restriction": "logic",
+    "rarity": "SR",
+    "type": "ビジュアル",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.667Z"
+    }
+  },
+  {
+    "_id": "カロリー/2でハッピー×2",
+    "card_name": "カロリー/2でハッピー×2",
+    "lv": 50,
+    "obtained_item": null,
+    "obtained_skill_card": null,
+    "plan_restriction": "none",
+    "rarity": "SR",
+    "type": "ダンス",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.667Z"
+    }
+  },
+  {
+    "_id": "きみは、自慢の生徒です",
+    "card_name": "きみは、自慢の生徒です",
+    "lv": 60,
+    "obtained_item": "信頼の証",
+    "obtained_skill_card": null,
+    "plan_restriction": "none",
+    "rarity": "SSR",
+    "type": "アシスト",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.667Z"
+    }
+  },
+  {
+    "_id": "キュッと締めて",
+    "card_name": "キュッと締めて",
+    "lv": 50,
+    "obtained_item": "きっかけの帯",
+    "obtained_skill_card": null,
+    "plan_restriction": "sense",
+    "rarity": "SR",
+    "type": "ダンス",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.667Z"
+    }
+  },
+  {
+    "_id": "きゅる〜んωポーズッ☆",
+    "card_name": "きゅる〜んωポーズッ☆",
+    "lv": 36,
+    "obtained_item": "カワイイのつくり方",
+    "obtained_skill_card": null,
+    "plan_restriction": "logic",
+    "rarity": "SR",
+    "type": "ダンス",
+    "uncap": 2,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.667Z"
+    }
+  },
+  {
+    "_id": "キラキラして綺麗〜っ！",
+    "card_name": "キラキラして綺麗〜っ！",
+    "lv": 40,
+    "obtained_item": null,
+    "obtained_skill_card": "光の夜",
+    "plan_restriction": "sense",
+    "rarity": "SSR",
+    "type": "ダンス",
+    "uncap": 0,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.668Z"
+    }
+  },
+  {
+    "_id": "クールダウンが大切よ！",
+    "card_name": "クールダウンが大切よ！",
+    "lv": 40,
+    "obtained_item": null,
+    "obtained_skill_card": "ほぐれるひととき",
+    "plan_restriction": "sense",
+    "rarity": "SSR",
+    "type": "ビジュアル",
+    "uncap": 0,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.668Z"
+    }
+  },
+  {
+    "_id": "ぐつぐつ、いいにおい♪",
+    "card_name": "ぐつぐつ、いいにおい♪",
+    "lv": 45,
+    "obtained_item": null,
+    "obtained_skill_card": "味見はいかが",
+    "plan_restriction": "logic",
+    "rarity": "SR",
+    "type": "ボーカル",
+    "uncap": 3,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.668Z"
+    }
+  },
+  {
+    "_id": "ぐぬぬぬぬ…………！",
+    "card_name": "ぐぬぬぬぬ…………！",
+    "lv": 60,
+    "obtained_item": "悔しさの象徴",
+    "obtained_skill_card": null,
+    "plan_restriction": "none",
+    "rarity": "SSR",
+    "type": "ダンス",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.668Z"
+    }
+  },
+  {
+    "_id": "こいつらめんどくさー",
+    "card_name": "こいつらめんどくさー",
+    "lv": 60,
+    "obtained_item": null,
+    "obtained_skill_card": "喧嘩するほど仲がいい",
+    "plan_restriction": "sense",
+    "rarity": "SSR",
+    "type": "ボーカル",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.668Z"
+    }
+  },
+  {
+    "_id": "ごきげんような挨拶♪",
+    "card_name": "ごきげんような挨拶♪",
+    "lv": 50,
+    "obtained_item": "ごきげんようレッスン",
+    "obtained_skill_card": null,
+    "plan_restriction": "sense",
+    "rarity": "SR",
+    "type": "ビジュアル",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.668Z"
+    }
+  },
+  {
+    "_id": "ここから始まるんだね！",
+    "card_name": "ここから始まるんだね！",
+    "lv": 50,
+    "obtained_item": "夢へのスタートライン",
+    "obtained_skill_card": null,
+    "plan_restriction": "sense",
+    "rarity": "SSR",
+    "type": "ダンス",
+    "uncap": 2,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.669Z"
+    }
+  },
+  {
+    "_id": "これが私達の、3年間",
+    "card_name": "これが私達の、3年間",
+    "lv": 50,
+    "obtained_item": "すごすぎるバトン",
+    "obtained_skill_card": null,
+    "plan_restriction": "none",
+    "rarity": "SSR",
+    "type": "ダンス",
+    "uncap": 2,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.669Z"
+    }
+  },
+  {
+    "_id": "これは――お城ッ！！",
+    "card_name": "これは――お城ッ！！",
+    "lv": 40,
+    "obtained_item": "お礼のティーセット",
+    "obtained_skill_card": null,
+    "plan_restriction": "sense",
+    "rarity": "SSR",
+    "type": "ボーカル",
+    "uncap": 0,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.669Z"
+    }
+  },
+  {
+    "_id": "さあ、もう一戦！",
+    "card_name": "さあ、もう一戦！",
+    "lv": 60,
+    "obtained_item": null,
+    "obtained_skill_card": "勝負はこれから！",
+    "plan_restriction": "none",
+    "rarity": "SSR",
+    "type": "ボーカル",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.669Z"
+    }
+  },
+  {
+    "_id": "さみだれ",
+    "card_name": "さみだれ",
+    "lv": 60,
+    "obtained_item": null,
+    "obtained_skill_card": "雨宿りのバス停",
+    "plan_restriction": "anomaly",
+    "rarity": "SSR",
+    "type": "ビジュアル",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.669Z"
+    }
+  },
+  {
+    "_id": "サンマ、パタパタ",
+    "card_name": "サンマ、パタパタ",
+    "lv": 50,
+    "obtained_item": null,
+    "obtained_skill_card": "旬の味わい",
+    "plan_restriction": "none",
+    "rarity": "SR",
+    "type": "ビジュアル",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.669Z"
+    }
+  },
+  {
+    "_id": "スイッチON！",
+    "card_name": "スイッチON！",
+    "lv": 40,
+    "obtained_item": null,
+    "obtained_skill_card": null,
+    "plan_restriction": "none",
+    "rarity": "R",
+    "type": "ダンス",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.670Z"
+    }
+  },
+  {
+    "_id": "すっかり秋色ですわね！",
+    "card_name": "すっかり秋色ですわね！",
+    "lv": 40,
+    "obtained_item": "つやつやでふさふさ",
+    "obtained_skill_card": null,
+    "plan_restriction": "sense",
+    "rarity": "SSR",
+    "type": "ボーカル",
+    "uncap": 0,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.670Z"
+    }
+  },
+  {
+    "_id": "すっかり仲良しって感じ♪",
+    "card_name": "すっかり仲良しって感じ♪",
+    "lv": 60,
+    "obtained_item": "勝利をその手に",
+    "obtained_skill_card": null,
+    "plan_restriction": "sense",
+    "rarity": "SSR",
+    "type": "ダンス",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.670Z"
+    }
+  },
+  {
+    "_id": "スパルタ＆スパイス",
+    "card_name": "スパルタ＆スパイス",
+    "lv": 50,
+    "obtained_item": "ビシッバシッ竹刀",
+    "obtained_skill_card": null,
+    "plan_restriction": "anomaly",
+    "rarity": "SR",
+    "type": "ボーカル",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.670Z"
+    }
+  },
+  {
+    "_id": "ぜったいに取るんだ！",
+    "card_name": "ぜったいに取るんだ！",
+    "lv": 60,
+    "obtained_item": null,
+    "obtained_skill_card": "執念キャッチャー",
+    "plan_restriction": "none",
+    "rarity": "SSR",
+    "type": "ボーカル",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.670Z"
+    }
+  },
+  {
+    "_id": "ぜったい追いついてやる！",
+    "card_name": "ぜったい追いついてやる！",
+    "lv": 60,
+    "obtained_item": null,
+    "obtained_skill_card": "紅葉ランニング",
+    "plan_restriction": "none",
+    "rarity": "SSR",
+    "type": "ビジュアル",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.671Z"
+    }
+  },
+  {
+    "_id": "そろそろ焼けたかな？",
+    "card_name": "そろそろ焼けたかな？",
+    "lv": 55,
+    "obtained_item": null,
+    "obtained_skill_card": "ほかほか焼き芋",
+    "plan_restriction": "logic",
+    "rarity": "SSR",
+    "type": "ダンス",
+    "uncap": 3,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.671Z"
+    }
+  },
+  {
+    "_id": "ちべたなひととき",
+    "card_name": "ちべたなひととき",
+    "lv": 50,
+    "obtained_item": "ふっかつのアイス",
+    "obtained_skill_card": null,
+    "plan_restriction": "sense",
+    "rarity": "SR",
+    "type": "ビジュアル",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.672Z"
+    }
+  },
+  {
+    "_id": "ちょっと詳しいんです！",
+    "card_name": "ちょっと詳しいんです！",
+    "lv": 50,
+    "obtained_item": "月刊アニメトーク♪",
+    "obtained_skill_card": null,
+    "plan_restriction": "logic",
+    "rarity": "SSR",
+    "type": "ビジュアル",
+    "uncap": 2,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.672Z"
+    }
+  },
+  {
+    "_id": "ディカプルエックスエル！",
+    "card_name": "ディカプルエックスエル！",
+    "lv": 35,
+    "obtained_item": "イケてるセーター",
+    "obtained_skill_card": null,
+    "plan_restriction": "sense",
+    "rarity": "SR",
+    "type": "ダンス",
+    "uncap": 1,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.672Z"
+    }
+  },
+  {
+    "_id": "てとりあしとり",
+    "card_name": "てとりあしとり",
+    "lv": 50,
+    "obtained_item": null,
+    "obtained_skill_card": "ご指導ご鞭撻",
+    "plan_restriction": "none",
+    "rarity": "SR",
+    "type": "ビジュアル",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.672Z"
+    }
+  },
+  {
+    "_id": "どりゃぎゃ",
+    "card_name": "どりゃぎゃ",
+    "lv": 50,
+    "obtained_item": "ダブルボトル",
+    "obtained_skill_card": null,
+    "plan_restriction": "sense",
+    "rarity": "SR",
+    "type": "ダンス",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.672Z"
+    }
+  },
+  {
+    "_id": "どんな関係なんですか？",
+    "card_name": "どんな関係なんですか？",
+    "lv": 45,
+    "obtained_item": "手作りサブスク弁当",
+    "obtained_skill_card": null,
+    "plan_restriction": "logic",
+    "rarity": "SSR",
+    "type": "ボーカル",
+    "uncap": 1,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.672Z"
+    }
+  },
+  {
+    "_id": "トンボをつかまえて",
+    "card_name": "トンボをつかまえて",
+    "lv": 50,
+    "obtained_item": "小さい秋見つけた",
+    "obtained_skill_card": null,
+    "plan_restriction": "sense",
+    "rarity": "SR",
+    "type": "ダンス",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.673Z"
+    }
+  },
+  {
+    "_id": "なぜこんなところにッ！？",
+    "card_name": "なぜこんなところにッ！？",
+    "lv": 45,
+    "obtained_item": "完全制覇でポン",
+    "obtained_skill_card": null,
+    "plan_restriction": "anomaly",
+    "rarity": "SSR",
+    "type": "ダンス",
+    "uncap": 1,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.673Z"
+    }
+  },
+  {
+    "_id": "のらりくらりしっかり",
+    "card_name": "のらりくらりしっかり",
+    "lv": 50,
+    "obtained_item": null,
+    "obtained_skill_card": "おアツイ視線",
+    "plan_restriction": "none",
+    "rarity": "SR",
+    "type": "ボーカル",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.673Z"
+    }
+  },
+  {
+    "_id": "のんびり美味しいひととき",
+    "card_name": "のんびり美味しいひととき",
+    "lv": 50,
+    "obtained_item": "のんびりアフタヌーン",
+    "obtained_skill_card": null,
+    "plan_restriction": "anomaly",
+    "rarity": "SR",
+    "type": "ビジュアル",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.673Z"
+    }
+  },
+  {
+    "_id": "パーティー楽しみだねっ！",
+    "card_name": "パーティー楽しみだねっ！",
+    "lv": 60,
+    "obtained_item": "おかいものバッグ",
+    "obtained_skill_card": null,
+    "plan_restriction": "anomaly",
+    "rarity": "SSR",
+    "type": "ダンス",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.673Z"
+    }
+  },
+  {
+    "_id": "はいっ、みんなも一緒に♪",
+    "card_name": "はいっ、みんなも一緒に♪",
+    "lv": 60,
+    "obtained_item": "ぜったいいっぱい！",
+    "obtained_skill_card": null,
+    "plan_restriction": "anomaly",
+    "rarity": "SSR",
+    "type": "ボーカル",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.673Z"
+    }
+  },
+  {
+    "_id": "パクパクもぐもぐ",
+    "card_name": "パクパクもぐもぐ",
+    "lv": 50,
+    "obtained_item": "もぐもぐ定食",
+    "obtained_skill_card": null,
+    "plan_restriction": "logic",
+    "rarity": "SR",
+    "type": "ビジュアル",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.673Z"
+    }
+  },
+  {
+    "_id": "はじめてのお友達",
+    "card_name": "はじめてのお友達",
+    "lv": 50,
+    "obtained_item": null,
+    "obtained_skill_card": "全力サポート",
+    "plan_restriction": "none",
+    "rarity": "SR",
+    "type": "アシスト",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.674Z"
+    }
+  },
+  {
+    "_id": "パシャっとキメポ",
+    "card_name": "パシャっとキメポ",
+    "lv": 50,
+    "obtained_item": null,
+    "obtained_skill_card": "キメ顔で自撮り",
+    "plan_restriction": "sense",
+    "rarity": "SR",
+    "type": "ダンス",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.674Z"
+    }
+  },
+  {
+    "_id": "バズっちゃお！",
+    "card_name": "バズっちゃお！",
+    "lv": 50,
+    "obtained_item": null,
+    "obtained_skill_card": "こうかい……？",
+    "plan_restriction": "logic",
+    "rarity": "SR",
+    "type": "ダンス",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.674Z"
+    }
+  },
+  {
+    "_id": "ばたんきゅー",
+    "card_name": "ばたんきゅー",
+    "lv": 50,
+    "obtained_item": "へとへとできゅー",
+    "obtained_skill_card": null,
+    "plan_restriction": "logic",
+    "rarity": "SR",
+    "type": "ビジュアル",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.674Z"
+    }
+  },
+  {
+    "_id": "はっぴぃはろうぃ〜〜ん！",
+    "card_name": "はっぴぃはろうぃ〜〜ん！",
+    "lv": 50,
+    "obtained_item": "びっくり仮装グッズ",
+    "obtained_skill_card": null,
+    "plan_restriction": "sense",
+    "rarity": "SR",
+    "type": "ダンス",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.674Z"
+    }
+  },
+  {
+    "_id": "バディ？",
+    "card_name": "バディ？",
+    "lv": 50,
+    "obtained_item": "お直し刺繍セット",
+    "obtained_skill_card": null,
+    "plan_restriction": "logic",
+    "rarity": "SR",
+    "type": "ボーカル",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.674Z"
+    }
+  },
+  {
+    "_id": "バレンタイン&#9825;会議中ーっ！",
+    "card_name": "バレンタイン&#9825;会議中ーっ！",
+    "lv": 45,
+    "obtained_item": null,
+    "obtained_skill_card": "バレンタイン大作戦！",
+    "plan_restriction": "anomaly",
+    "rarity": "SSR",
+    "type": "ビジュアル",
+    "uncap": 1,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.675Z"
+    }
+  },
+  {
+    "_id": "ピコピコでポーン",
+    "card_name": "ピコピコでポーン",
+    "lv": 50,
+    "obtained_item": "たたいてかぶって",
+    "obtained_skill_card": null,
+    "plan_restriction": "anomaly",
+    "rarity": "SR",
+    "type": "ダンス",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.675Z"
+    }
+  },
+  {
+    "_id": "ひたむき居残りレッスン",
+    "card_name": "ひたむき居残りレッスン",
+    "lv": 40,
+    "obtained_item": null,
+    "obtained_skill_card": null,
+    "plan_restriction": "none",
+    "rarity": "R",
+    "type": "ビジュアル",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.675Z"
+    }
+  },
+  {
+    "_id": "ひっぱり じゅーなん",
+    "card_name": "ひっぱり じゅーなん",
+    "lv": 50,
+    "obtained_item": "切磋琢磨のタオル",
+    "obtained_skill_card": null,
+    "plan_restriction": "anomaly",
+    "rarity": "SR",
+    "type": "ボーカル",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.675Z"
+    }
+  },
+  {
+    "_id": "ひとりごとです",
+    "card_name": "ひとりごとです",
+    "lv": 60,
+    "obtained_item": "思い出カタメコイメ",
+    "obtained_skill_card": null,
+    "plan_restriction": "anomaly",
+    "rarity": "SSR",
+    "type": "ビジュアル",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.675Z"
+    }
+  },
+  {
+    "_id": "ひとりで立てますか？",
+    "card_name": "ひとりで立てますか？",
+    "lv": 55,
+    "obtained_item": "ひとりだちシューズ",
+    "obtained_skill_card": null,
+    "plan_restriction": "none",
+    "rarity": "SSR",
+    "type": "ダンス",
+    "uncap": 3,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.675Z"
+    }
+  },
+  {
+    "_id": "ピューとシューの二重奏",
+    "card_name": "ピューとシューの二重奏",
+    "lv": 40,
+    "obtained_item": null,
+    "obtained_skill_card": "草笛ハーモニー",
+    "plan_restriction": "logic",
+    "rarity": "SR",
+    "type": "ダンス",
+    "uncap": 2,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.676Z"
+    }
+  },
+  {
+    "_id": "ブレイクタイムは珈琲で",
+    "card_name": "ブレイクタイムは珈琲で",
+    "lv": 50,
+    "obtained_item": "優しさミルクシュガー",
+    "obtained_skill_card": null,
+    "plan_restriction": "logic",
+    "rarity": "SR",
+    "type": "ボーカル",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.676Z"
+    }
+  },
+  {
+    "_id": "プロデュースって大変ね",
+    "card_name": "プロデュースって大変ね",
+    "lv": 60,
+    "obtained_item": "アイドルパワー測定機",
+    "obtained_skill_card": null,
+    "plan_restriction": "anomaly",
+    "rarity": "SSR",
+    "type": "ダンス",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.676Z"
+    }
+  },
+  {
+    "_id": "ふわふわでワクワク",
+    "card_name": "ふわふわでワクワク",
+    "lv": 50,
+    "obtained_item": "ふわふわでもこもこ",
+    "obtained_skill_card": null,
+    "plan_restriction": "none",
+    "rarity": "SR",
+    "type": "ダンス",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.676Z"
+    }
+  },
+  {
+    "_id": "ふわふわなお面？",
+    "card_name": "ふわふわなお面？",
+    "lv": 50,
+    "obtained_item": "ハンターの戦利品",
+    "obtained_skill_card": null,
+    "plan_restriction": "none",
+    "rarity": "SR",
+    "type": "ダンス",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.676Z"
+    }
+  },
+  {
+    "_id": "ほっとけないクラスメイト",
+    "card_name": "ほっとけないクラスメイト",
+    "lv": 50,
+    "obtained_item": "朝一の助け舟",
+    "obtained_skill_card": null,
+    "plan_restriction": "none",
+    "rarity": "SR",
+    "type": "ボーカル",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.677Z"
+    }
+  },
+  {
+    "_id": "ほっぺた、ぷに",
+    "card_name": "ほっぺた、ぷに",
+    "lv": 50,
+    "obtained_item": "手作りのご褒美",
+    "obtained_skill_card": null,
+    "plan_restriction": "none",
+    "rarity": "SR",
+    "type": "ビジュアル",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.677Z"
+    }
+  },
+  {
+    "_id": "ほら、一緒に持と♪",
+    "card_name": "ほら、一緒に持と♪",
+    "lv": 60,
+    "obtained_item": "夢にあふれた大荷物",
+    "obtained_skill_card": null,
+    "plan_restriction": "none",
+    "rarity": "SSR",
+    "type": "ダンス",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.677Z"
+    }
+  },
+  {
+    "_id": "マイペース、マイライフ",
+    "card_name": "マイペース、マイライフ",
+    "lv": 50,
+    "obtained_item": "一緒にお昼寝ポプリ",
+    "obtained_skill_card": null,
+    "plan_restriction": "none",
+    "rarity": "SR",
+    "type": "ボーカル",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.677Z"
+    }
+  },
+  {
+    "_id": "まごころを込めて",
+    "card_name": "まごころを込めて",
+    "lv": 50,
+    "obtained_item": null,
+    "obtained_skill_card": "ディテールが肝心",
+    "plan_restriction": "logic",
+    "rarity": "SR",
+    "type": "ボーカル",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.677Z"
+    }
+  },
+  {
+    "_id": "まじか。",
+    "card_name": "まじか。",
+    "lv": 60,
+    "obtained_item": null,
+    "obtained_skill_card": "光のステージ",
+    "plan_restriction": "none",
+    "rarity": "SSR",
+    "type": "ダンス",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.677Z"
+    }
+  },
+  {
+    "_id": "また、あんなに無理をして",
+    "card_name": "また、あんなに無理をして",
+    "lv": 60,
+    "obtained_item": "曇りをぬぐったタオル",
+    "obtained_skill_card": null,
+    "plan_restriction": "none",
+    "rarity": "SSR",
+    "type": "ボーカル",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.678Z"
+    }
+  },
+  {
+    "_id": "まだまだのばしてー",
+    "card_name": "まだまだのばしてー",
+    "lv": 50,
+    "obtained_item": "体ほぐしローラー",
+    "obtained_skill_card": null,
+    "plan_restriction": "none",
+    "rarity": "SR",
+    "type": "ビジュアル",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.678Z"
+    }
+  },
+  {
+    "_id": "まだ上がりませんように！",
+    "card_name": "まだ上がりませんように！",
+    "lv": 60,
+    "obtained_item": null,
+    "obtained_skill_card": "みずたまりスキップ",
+    "plan_restriction": "none",
+    "rarity": "SSR",
+    "type": "ボーカル",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.678Z"
+    }
+  },
+  {
+    "_id": "まるで王子様みたいな",
+    "card_name": "まるで王子様みたいな",
+    "lv": 60,
+    "obtained_item": "星のリトルプリンス",
+    "obtained_skill_card": null,
+    "plan_restriction": "none",
+    "rarity": "SSR",
+    "type": "ビジュアル",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.678Z"
+    }
+  },
+  {
+    "_id": "みいつけた。",
+    "card_name": "みいつけた。",
+    "lv": 60,
+    "obtained_item": "迷子のゆくえ",
+    "obtained_skill_card": null,
+    "plan_restriction": "logic",
+    "rarity": "SSR",
+    "type": "ボーカル",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.678Z"
+    }
+  },
+  {
+    "_id": "みんなの意見を聞かせて♪",
+    "card_name": "みんなの意見を聞かせて♪",
+    "lv": 60,
+    "obtained_item": "麻央にぴったし",
+    "obtained_skill_card": null,
+    "plan_restriction": "anomaly",
+    "rarity": "SSR",
+    "type": "ボーカル",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.678Z"
+    }
+  },
+  {
+    "_id": "むず×2ふぁっしょんしょー",
+    "card_name": "むず×2ふぁっしょんしょー",
+    "lv": 50,
+    "obtained_item": "お似合いネクタイ",
+    "obtained_skill_card": null,
+    "plan_restriction": "sense",
+    "rarity": "SR",
+    "type": "ダンス",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.679Z"
+    }
+  },
+  {
+    "_id": "メリクリ、おねーちゃん♪",
+    "card_name": "メリクリ、おねーちゃん♪",
+    "lv": 40,
+    "obtained_item": null,
+    "obtained_skill_card": "いたずらサンタさん",
+    "plan_restriction": "anomaly",
+    "rarity": "SSR",
+    "type": "ダンス",
+    "uncap": 0,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.679Z"
+    }
+  },
+  {
+    "_id": "もうっ！　冷たいよ！",
+    "card_name": "もうっ！　冷たいよ！",
+    "lv": 60,
+    "obtained_item": "負けず嫌いの勲章",
+    "obtained_skill_card": null,
+    "plan_restriction": "logic",
+    "rarity": "SSR",
+    "type": "ダンス",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.679Z"
+    }
+  },
+  {
+    "_id": "もう一度、最初から！",
+    "card_name": "もう一度、最初から！",
+    "lv": 45,
+    "obtained_item": null,
+    "obtained_skill_card": "練習再開！",
+    "plan_restriction": "sense",
+    "rarity": "SSR",
+    "type": "ボーカル",
+    "uncap": 1,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.679Z"
+    }
+  },
+  {
+    "_id": "やさしさ、あったかい",
+    "card_name": "やさしさ、あったかい",
+    "lv": 45,
+    "obtained_item": null,
+    "obtained_skill_card": "切れた鼻緒が結んだ絆",
+    "plan_restriction": "sense",
+    "rarity": "SR",
+    "type": "ビジュアル",
+    "uncap": 3,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.679Z"
+    }
+  },
+  {
+    "_id": "やっと見つけたぞ！",
+    "card_name": "やっと見つけたぞ！",
+    "lv": 50,
+    "obtained_item": "寝心地は良好",
+    "obtained_skill_card": null,
+    "plan_restriction": "logic",
+    "rarity": "SSR",
+    "type": "ダンス",
+    "uncap": 2,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.680Z"
+    }
+  },
+  {
+    "_id": "ゆっくりと過ごしましょう",
+    "card_name": "ゆっくりと過ごしましょう",
+    "lv": 55,
+    "obtained_item": null,
+    "obtained_skill_card": "その本、おもしろい？",
+    "plan_restriction": "logic",
+    "rarity": "SSR",
+    "type": "ビジュアル",
+    "uncap": 3,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.680Z"
+    }
+  },
+  {
+    "_id": "りっぱなすすき！",
+    "card_name": "りっぱなすすき！",
+    "lv": 50,
+    "obtained_item": "大きくてつやつや",
+    "obtained_skill_card": null,
+    "plan_restriction": "logic",
+    "rarity": "SR",
+    "type": "ビジュアル",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.680Z"
+    }
+  },
+  {
+    "_id": "レディ・セット、ゴー！",
+    "card_name": "レディ・セット、ゴー！",
+    "lv": 50,
+    "obtained_item": null,
+    "obtained_skill_card": "奥義、受け流し！",
+    "plan_restriction": "sense",
+    "rarity": "SSR",
+    "type": "ボーカル",
+    "uncap": 2,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.681Z"
+    }
+  },
+  {
+    "_id": "わたしたち、やればできる",
+    "card_name": "わたしたち、やればできる",
+    "lv": 60,
+    "obtained_item": null,
+    "obtained_skill_card": "ダメダメクッキング",
+    "plan_restriction": "logic",
+    "rarity": "SSR",
+    "type": "ダンス",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.681Z"
+    }
+  },
+  {
+    "_id": "わたしと美鈴、超仲良し",
+    "card_name": "わたしと美鈴、超仲良し",
+    "lv": 60,
+    "obtained_item": "勝利より大切なもの",
+    "obtained_skill_card": null,
+    "plan_restriction": "none",
+    "rarity": "SSR",
+    "type": "ビジュアル",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.681Z"
+    }
+  },
+  {
+    "_id": "わたしのペースで",
+    "card_name": "わたしのペースで",
+    "lv": 40,
+    "obtained_item": null,
+    "obtained_skill_card": null,
+    "plan_restriction": "none",
+    "rarity": "R",
+    "type": "ボーカル",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.681Z"
+    }
+  },
+  {
+    "_id": "愛無き暗記は難しい",
+    "card_name": "愛無き暗記は難しい",
+    "lv": 50,
+    "obtained_item": "打倒！墾田永年私財法",
+    "obtained_skill_card": null,
+    "plan_restriction": "none",
+    "rarity": "SR",
+    "type": "ボーカル",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.681Z"
+    }
+  },
+  {
+    "_id": "一時休戦です",
+    "card_name": "一時休戦です",
+    "lv": 45,
+    "obtained_item": null,
+    "obtained_skill_card": "はじける水しぶき",
+    "plan_restriction": "sense",
+    "rarity": "SSR",
+    "type": "ボーカル",
+    "uncap": 1,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.681Z"
+    }
+  },
+  {
+    "_id": "一番星と王子様",
+    "card_name": "一番星と王子様",
+    "lv": 50,
+    "obtained_item": "幸せの詰め合わせ",
+    "obtained_skill_card": null,
+    "plan_restriction": "logic",
+    "rarity": "SR",
+    "type": "ボーカル",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.682Z"
+    }
+  },
+  {
+    "_id": "奥義、三重とび！",
+    "card_name": "奥義、三重とび！",
+    "lv": 30,
+    "obtained_item": "絆のなわとび",
+    "obtained_skill_card": null,
+    "plan_restriction": "anomaly",
+    "rarity": "SR",
+    "type": "ビジュアル",
+    "uncap": 0,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.683Z"
+    }
+  },
+  {
+    "_id": "王子様のひと呼吸",
+    "card_name": "王子様のひと呼吸",
+    "lv": 40,
+    "obtained_item": null,
+    "obtained_skill_card": null,
+    "plan_restriction": "none",
+    "rarity": "R",
+    "type": "ボーカル",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.683Z"
+    }
+  },
+  {
+    "_id": "何やってるんだろう、",
+    "card_name": "何やってるんだろう、",
+    "lv": 60,
+    "obtained_item": "天川ラーメン巡り",
+    "obtained_skill_card": null,
+    "plan_restriction": "none",
+    "rarity": "SSR",
+    "type": "ボーカル",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.683Z"
+    }
+  },
+  {
+    "_id": "可愛いと可愛いで可愛い！",
+    "card_name": "可愛いと可愛いで可愛い！",
+    "lv": 60,
+    "obtained_item": null,
+    "obtained_skill_card": "ティーパーティ",
+    "plan_restriction": "none",
+    "rarity": "SSR",
+    "type": "ボーカル",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.683Z"
+    }
+  },
+  {
+    "_id": "夏を楽しみましょう！",
+    "card_name": "夏を楽しみましょう！",
+    "lv": 60,
+    "obtained_item": "オーバーパワーボール",
+    "obtained_skill_card": null,
+    "plan_restriction": "sense",
+    "rarity": "SSR",
+    "type": "ボーカル",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.684Z"
+    }
+  },
+  {
+    "_id": "夏を満喫するわよ！",
+    "card_name": "夏を満喫するわよ！",
+    "lv": 50,
+    "obtained_item": "873シューター",
+    "obtained_skill_card": null,
+    "plan_restriction": "logic",
+    "rarity": "SSR",
+    "type": "ダンス",
+    "uncap": 2,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.684Z"
+    }
+  },
+  {
+    "_id": "花火、やりませんか……？",
+    "card_name": "花火、やりませんか……？",
+    "lv": 45,
+    "obtained_item": null,
+    "obtained_skill_card": "交わる感情",
+    "plan_restriction": "sense",
+    "rarity": "SSR",
+    "type": "ビジュアル",
+    "uncap": 1,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.685Z"
+    }
+  },
+  {
+    "_id": "会長、準備は万端です",
+    "card_name": "会長、準備は万端です",
+    "lv": 60,
+    "obtained_item": "会長の完璧な計画",
+    "obtained_skill_card": null,
+    "plan_restriction": "logic",
+    "rarity": "SSR",
+    "type": "ビジュアル",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.685Z"
+    }
+  },
+  {
+    "_id": "海、楽しまなきゃ！",
+    "card_name": "海、楽しまなきゃ！",
+    "lv": 50,
+    "obtained_item": "可愛い隠しバスタオル",
+    "obtained_skill_card": null,
+    "plan_restriction": "logic",
+    "rarity": "SR",
+    "type": "ボーカル",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.685Z"
+    }
+  },
+  {
+    "_id": "完全無欠のプランニング",
+    "card_name": "完全無欠のプランニング",
+    "lv": 40,
+    "obtained_item": null,
+    "obtained_skill_card": null,
+    "plan_restriction": "none",
+    "rarity": "R",
+    "type": "ビジュアル",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.686Z"
+    }
+  },
+  {
+    "_id": "基礎＞応用",
+    "card_name": "基礎＞応用",
+    "lv": 50,
+    "obtained_item": "うるおいのどケア",
+    "obtained_skill_card": null,
+    "plan_restriction": "none",
+    "rarity": "SR",
+    "type": "ボーカル",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.686Z"
+    }
+  },
+  {
+    "_id": "嬉し恥ずかし夢心地",
+    "card_name": "嬉し恥ずかし夢心地",
+    "lv": 50,
+    "obtained_item": "お姉さま大百科",
+    "obtained_skill_card": null,
+    "plan_restriction": "none",
+    "rarity": "SR",
+    "type": "ダンス",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.687Z"
+    }
+  },
+  {
+    "_id": "騎士とおてんば姫",
+    "card_name": "騎士とおてんば姫",
+    "lv": 30,
+    "obtained_item": "演技のたしなみ",
+    "obtained_skill_card": null,
+    "plan_restriction": "logic",
+    "rarity": "SR",
+    "type": "ビジュアル",
+    "uncap": 3,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.687Z"
+    }
+  },
+  {
+    "_id": "興味深い飲み物",
+    "card_name": "興味深い飲み物",
+    "lv": 45,
+    "obtained_item": null,
+    "obtained_skill_card": "気になる……",
+    "plan_restriction": "sense",
+    "rarity": "SR",
+    "type": "ボーカル",
+    "uncap": 3,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.687Z"
+    }
+  },
+  {
+    "_id": "謹厳実直",
+    "card_name": "謹厳実直",
+    "lv": 40,
+    "obtained_item": null,
+    "obtained_skill_card": null,
+    "plan_restriction": "none",
+    "rarity": "R",
+    "type": "ダンス",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.688Z"
+    }
+  },
+  {
+    "_id": "屈辱の2位",
+    "card_name": "屈辱の2位",
+    "lv": 50,
+    "obtained_item": "嚙み締めたタオル",
+    "obtained_skill_card": null,
+    "plan_restriction": "logic",
+    "rarity": "SR",
+    "type": "ボーカル",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.688Z"
+    }
+  },
+  {
+    "_id": "今はあえて、背を向けて",
+    "card_name": "今はあえて、背を向けて",
+    "lv": 50,
+    "obtained_item": "美鈴からの贈り物",
+    "obtained_skill_card": null,
+    "plan_restriction": "none",
+    "rarity": "SR",
+    "type": "ボーカル",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.688Z"
+    }
+  },
+  {
+    "_id": "今日は見学なんです",
+    "card_name": "今日は見学なんです",
+    "lv": 50,
+    "obtained_item": "おさぼりタオル",
+    "obtained_skill_card": null,
+    "plan_restriction": "none",
+    "rarity": "SR",
+    "type": "ダンス",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.688Z"
+    }
+  },
+  {
+    "_id": "仕事のつもりで臨みなさい",
+    "card_name": "仕事のつもりで臨みなさい",
+    "lv": 60,
+    "obtained_item": null,
+    "obtained_skill_card": "新生徒会爆誕！",
+    "plan_restriction": "none",
+    "rarity": "SSR",
+    "type": "ビジュアル",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.689Z"
+    }
+  },
+  {
+    "_id": "思惑とガクガク",
+    "card_name": "思惑とガクガク",
+    "lv": 50,
+    "obtained_item": "私が見つけた逸材メモ",
+    "obtained_skill_card": null,
+    "plan_restriction": "none",
+    "rarity": "SR",
+    "type": "ビジュアル",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.689Z"
+    }
+  },
+  {
+    "_id": "枝毛をくるり",
+    "card_name": "枝毛をくるり",
+    "lv": 40,
+    "obtained_item": null,
+    "obtained_skill_card": null,
+    "plan_restriction": "none",
+    "rarity": "R",
+    "type": "ダンス",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.689Z"
+    }
+  },
+  {
+    "_id": "私の目に狂いはない",
+    "card_name": "私の目に狂いはない",
+    "lv": 60,
+    "obtained_item": "仲直りのきっかけ",
+    "obtained_skill_card": null,
+    "plan_restriction": "none",
+    "rarity": "SSR",
+    "type": "ビジュアル",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.689Z"
+    }
+  },
+  {
+    "_id": "似合うんじゃない？",
+    "card_name": "似合うんじゃない？",
+    "lv": 40,
+    "obtained_item": "いじっぱりバルーン",
+    "obtained_skill_card": null,
+    "plan_restriction": "logic",
+    "rarity": "SSR",
+    "type": "ダンス",
+    "uncap": 0,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.689Z"
+    }
+  },
+  {
+    "_id": "次の桜の季節には。",
+    "card_name": "次の桜の季節には。",
+    "lv": 60,
+    "obtained_item": null,
+    "obtained_skill_card": "花萌ゆ季節",
+    "plan_restriction": "none",
+    "rarity": "SSR",
+    "type": "ボーカル",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.690Z"
+    }
+  },
+  {
+    "_id": "自分と向き合う時間だ",
+    "card_name": "自分と向き合う時間だ",
+    "lv": 40,
+    "obtained_item": "無我の境地",
+    "obtained_skill_card": null,
+    "plan_restriction": "sense",
+    "rarity": "SSR",
+    "type": "ダンス",
+    "uncap": 0,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.690Z"
+    }
+  },
+  {
+    "_id": "実食！例のSSD",
+    "card_name": "実食！例のSSD",
+    "lv": 50,
+    "obtained_item": "例のSSDの秘密",
+    "obtained_skill_card": null,
+    "plan_restriction": "none",
+    "rarity": "SR",
+    "type": "ダンス",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.690Z"
+    }
+  },
+  {
+    "_id": "主菓子、甘い、薄茶、渋み",
+    "card_name": "主菓子、甘い、薄茶、渋み",
+    "lv": 50,
+    "obtained_item": "おもてなしの気持ち",
+    "obtained_skill_card": null,
+    "plan_restriction": "anomaly",
+    "rarity": "SR",
+    "type": "ビジュアル",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.690Z"
+    }
+  },
+  {
+    "_id": "手毬のリサイタル、だね",
+    "card_name": "手毬のリサイタル、だね",
+    "lv": 45,
+    "obtained_item": null,
+    "obtained_skill_card": "寒空リサイタル",
+    "plan_restriction": "anomaly",
+    "rarity": "SSR",
+    "type": "ボーカル",
+    "uncap": 1,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.690Z"
+    }
+  },
+  {
+    "_id": "上かッ！！",
+    "card_name": "上かッ！！",
+    "lv": 50,
+    "obtained_item": null,
+    "obtained_skill_card": "頭上に注意！",
+    "plan_restriction": "logic",
+    "rarity": "SSR",
+    "type": "ダンス",
+    "uncap": 2,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.691Z"
+    }
+  },
+  {
+    "_id": "食欲の秋なんです",
+    "card_name": "食欲の秋なんです",
+    "lv": 60,
+    "obtained_item": "ごちそうさまでした",
+    "obtained_skill_card": null,
+    "plan_restriction": "none",
+    "rarity": "SSR",
+    "type": "アシスト",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.691Z"
+    }
+  },
+  {
+    "_id": "新たな挑戦の成功ですわ！",
+    "card_name": "新たな挑戦の成功ですわ！",
+    "lv": 60,
+    "obtained_item": "とうちょーのきろく",
+    "obtained_skill_card": null,
+    "plan_restriction": "none",
+    "rarity": "SSR",
+    "type": "ビジュアル",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.691Z"
+    }
+  },
+  {
+    "_id": "推し活なひととき、だね！",
+    "card_name": "推し活なひととき、だね！",
+    "lv": 45,
+    "obtained_item": "おとものミミズク",
+    "obtained_skill_card": null,
+    "plan_restriction": "logic",
+    "rarity": "SSR",
+    "type": "ビジュアル",
+    "uncap": 1,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.691Z"
+    }
+  },
+  {
+    "_id": "晴れたね",
+    "card_name": "晴れたね",
+    "lv": 60,
+    "obtained_item": "虹かけるクロス",
+    "obtained_skill_card": null,
+    "plan_restriction": "none",
+    "rarity": "SSR",
+    "type": "ダンス",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.692Z"
+    }
+  },
+  {
+    "_id": "盛り上げてこー！",
+    "card_name": "盛り上げてこー！",
+    "lv": 60,
+    "obtained_item": "わいわいタンバリン",
+    "obtained_skill_card": null,
+    "plan_restriction": "none",
+    "rarity": "SSR",
+    "type": "ダンス",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.692Z"
+    }
+  },
+  {
+    "_id": "絶対にお渡ししますわっ！",
+    "card_name": "絶対にお渡ししますわっ！",
+    "lv": 40,
+    "obtained_item": "お姉さまビッグラブ",
+    "obtained_skill_card": null,
+    "plan_restriction": "logic",
+    "rarity": "SSR",
+    "type": "ボーカル",
+    "uncap": 0,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.692Z"
+    }
+  },
+  {
+    "_id": "千奈の恩返し",
+    "card_name": "千奈の恩返し",
+    "lv": 40,
+    "obtained_item": "お嬢様の恩返し",
+    "obtained_skill_card": null,
+    "plan_restriction": "logic",
+    "rarity": "SR",
+    "type": "ダンス",
+    "uncap": 2,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.692Z"
+    }
+  },
+  {
+    "_id": "洗濯物のバランスタワー",
+    "card_name": "洗濯物のバランスタワー",
+    "lv": 30,
+    "obtained_item": "お洗濯の必需品",
+    "obtained_skill_card": null,
+    "plan_restriction": "sense",
+    "rarity": "SR",
+    "type": "ダンス",
+    "uncap": 0,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.693Z"
+    }
+  },
+  {
+    "_id": "全力、その後",
+    "card_name": "全力、その後",
+    "lv": 40,
+    "obtained_item": null,
+    "obtained_skill_card": null,
+    "plan_restriction": "none",
+    "rarity": "R",
+    "type": "ボーカル",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.693Z"
+    }
+  },
+  {
+    "_id": "相変わらず不器用ね",
+    "card_name": "相変わらず不器用ね",
+    "lv": 60,
+    "obtained_item": "幼馴染の意地",
+    "obtained_skill_card": null,
+    "plan_restriction": "logic",
+    "rarity": "SSR",
+    "type": "ボーカル",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.693Z"
+    }
+  },
+  {
+    "_id": "体当たりのラブコール",
+    "card_name": "体当たりのラブコール",
+    "lv": 50,
+    "obtained_item": null,
+    "obtained_skill_card": "お姉ちゃんだもの！",
+    "plan_restriction": "none",
+    "rarity": "SR",
+    "type": "ビジュアル",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.693Z"
+    }
+  },
+  {
+    "_id": "待ちなさーい！",
+    "card_name": "待ちなさーい！",
+    "lv": 60,
+    "obtained_item": "はいぼくせんげん",
+    "obtained_skill_card": null,
+    "plan_restriction": "anomaly",
+    "rarity": "SSR",
+    "type": "ダンス",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.693Z"
+    }
+  },
+  {
+    "_id": "貸せ、手本を見せてやる！",
+    "card_name": "貸せ、手本を見せてやる！",
+    "lv": 60,
+    "obtained_item": "めちゃかわプリ",
+    "obtained_skill_card": null,
+    "plan_restriction": "none",
+    "rarity": "SSR",
+    "type": "ビジュアル",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.693Z"
+    }
+  },
+  {
+    "_id": "大運動会、開催っ！",
+    "card_name": "大運動会、開催っ！",
+    "lv": 60,
+    "obtained_item": null,
+    "obtained_skill_card": "勝利をつかめ！",
+    "plan_restriction": "none",
+    "rarity": "SSR",
+    "type": "ボーカル",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.694Z"
+    }
+  },
+  {
+    "_id": "第2回教室パーティー！",
+    "card_name": "第2回教室パーティー！",
+    "lv": 60,
+    "obtained_item": null,
+    "obtained_skill_card": "薄れゆく壁",
+    "plan_restriction": "none",
+    "rarity": "SSR",
+    "type": "ビジュアル",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.694Z"
+    }
+  },
+  {
+    "_id": "第五種接近遭遇",
+    "card_name": "第五種接近遭遇",
+    "lv": 50,
+    "obtained_item": "ウチュウジンデアル",
+    "obtained_skill_card": null,
+    "plan_restriction": "sense",
+    "rarity": "SR",
+    "type": "ボーカル",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.694Z"
+    }
+  },
+  {
+    "_id": "仲直りしましょう",
+    "card_name": "仲直りしましょう",
+    "lv": 60,
+    "obtained_item": null,
+    "obtained_skill_card": "月明りに包まれて",
+    "plan_restriction": "none",
+    "rarity": "SSR",
+    "type": "ボーカル",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.694Z"
+    }
+  },
+  {
+    "_id": "仲良しの証",
+    "card_name": "仲良しの証",
+    "lv": 20,
+    "obtained_item": "はじめてのけんか？",
+    "obtained_skill_card": null,
+    "plan_restriction": "sense",
+    "rarity": "SR",
+    "type": "ビジュアル",
+    "uncap": 3,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.695Z"
+    }
+  },
+  {
+    "_id": "虫愛づる王子様",
+    "card_name": "虫愛づる王子様",
+    "lv": 40,
+    "obtained_item": null,
+    "obtained_skill_card": "小さなお客さん",
+    "plan_restriction": "anomaly",
+    "rarity": "SR",
+    "type": "ビジュアル",
+    "uncap": 2,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.695Z"
+    }
+  },
+  {
+    "_id": "長旅おつかれさま！",
+    "card_name": "長旅おつかれさま！",
+    "lv": 40,
+    "obtained_item": "夢を叶えるために",
+    "obtained_skill_card": null,
+    "plan_restriction": "sense",
+    "rarity": "SSR",
+    "type": "ビジュアル",
+    "uncap": 0,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.695Z"
+    }
+  },
+  {
+    "_id": "堂々とサボってる！？",
+    "card_name": "堂々とサボってる！？",
+    "lv": 55,
+    "obtained_item": null,
+    "obtained_skill_card": "あこがれ不良ムーブ",
+    "plan_restriction": "logic",
+    "rarity": "SSR",
+    "type": "ボーカル",
+    "uncap": 3,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.695Z"
+    }
+  },
+  {
+    "_id": "憧れを目指して",
+    "card_name": "憧れを目指して",
+    "lv": 40,
+    "obtained_item": null,
+    "obtained_skill_card": null,
+    "plan_restriction": "none",
+    "rarity": "R",
+    "type": "ダンス",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.695Z"
+    }
+  },
+  {
+    "_id": "二人ならあっという間だね",
+    "card_name": "二人ならあっという間だね",
+    "lv": 50,
+    "obtained_item": "とろけた時間",
+    "obtained_skill_card": null,
+    "plan_restriction": "none",
+    "rarity": "SSR",
+    "type": "ボーカル",
+    "uncap": 2,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.696Z"
+    }
+  },
+  {
+    "_id": "念入りにストレッチ",
+    "card_name": "念入りにストレッチ",
+    "lv": 40,
+    "obtained_item": null,
+    "obtained_skill_card": null,
+    "plan_restriction": "none",
+    "rarity": "R",
+    "type": "ビジュアル",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.696Z"
+    }
+  },
+  {
+    "_id": "腹筋で背筋で体幹キープ！",
+    "card_name": "腹筋で背筋で体幹キープ！",
+    "lv": 45,
+    "obtained_item": "メリハリストレッチ",
+    "obtained_skill_card": null,
+    "plan_restriction": "logic",
+    "rarity": "SR",
+    "type": "ビジュアル",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.696Z"
+    }
+  },
+  {
+    "_id": "放っておけない気になる子",
+    "card_name": "放っておけない気になる子",
+    "lv": 40,
+    "obtained_item": "面白くて心配な子",
+    "obtained_skill_card": null,
+    "plan_restriction": "anomaly",
+    "rarity": "SSR",
+    "type": "ボーカル",
+    "uncap": 0,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.696Z"
+    }
+  },
+  {
+    "_id": "魅惑の大腿四頭筋",
+    "card_name": "魅惑の大腿四頭筋",
+    "lv": 50,
+    "obtained_item": null,
+    "obtained_skill_card": "ストレッチ談議",
+    "plan_restriction": "none",
+    "rarity": "SR",
+    "type": "ダンス",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.696Z"
+    }
+  },
+  {
+    "_id": "眠れる森の王子様",
+    "card_name": "眠れる森の王子様",
+    "lv": 50,
+    "obtained_item": "おひるねブランケット",
+    "obtained_skill_card": null,
+    "plan_restriction": "sense",
+    "rarity": "SR",
+    "type": "ボーカル",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.696Z"
+    }
+  },
+  {
+    "_id": "迷子のおしらせです",
+    "card_name": "迷子のおしらせです",
+    "lv": 60,
+    "obtained_item": "迷子のお呼び出し",
+    "obtained_skill_card": null,
+    "plan_restriction": "logic",
+    "rarity": "SSR",
+    "type": "ビジュアル",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.697Z"
+    }
+  },
+  {
+    "_id": "目指すはテッペン",
+    "card_name": "目指すはテッペン",
+    "lv": 50,
+    "obtained_item": "トレーナーの優しさ",
+    "obtained_skill_card": null,
+    "plan_restriction": "none",
+    "rarity": "SR",
+    "type": "ダンス",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.697Z"
+    }
+  },
+  {
+    "_id": "佑芽ソリレース、疾走！",
+    "card_name": "佑芽ソリレース、疾走！",
+    "lv": 50,
+    "obtained_item": "ゲレンデを翔ける赤",
+    "obtained_skill_card": null,
+    "plan_restriction": "anomaly",
+    "rarity": "SR",
+    "type": "ビジュアル",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.697Z"
+    }
+  },
+  {
+    "_id": "頼れる先輩お姉さん",
+    "card_name": "頼れる先輩お姉さん",
+    "lv": 40,
+    "obtained_item": null,
+    "obtained_skill_card": null,
+    "plan_restriction": "none",
+    "rarity": "R",
+    "type": "ビジュアル",
+    "uncap": 4,
+    "updatedAt": {
+      "$date": "2026-05-24T12:36:13.697Z"
+    }
+  }
+]

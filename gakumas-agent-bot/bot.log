@@ -1,0 +1,9 @@
+nohup: ignoring input
+2026-08-23 17:24:36 [WARNING] PyNaCl is not installed, voice will NOT be supported
+2026-08-23 17:24:36 [WARNING] davey is not installed, voice will NOT be supported
+2026-08-23 17:24:36 [INFO] [ImageResolver] Loaded: 14 idols, 150 pIdols, 858 skillCards, 465 pItems, 200 supportCardWikiIds
+2026-08-23 17:24:40 [INFO] ===================================
+2026-08-23 17:24:40 [INFO] [学マス Bot ログイン] あさり先生#4049 (モード: gemini)
+2026-08-23 17:24:40 [INFO] ===================================
+2026-08-23 17:24:40 [INFO] [スラッシュコマンド] ギルド 'Shigehiroのサーバー' に 7 コマンドを同期
+2026-08-23 17:24:40 [INFO] [Botニックネーム] ギルド 'Shigehiroのサーバー' でニックネームを 'あさり先生' に設定しました
