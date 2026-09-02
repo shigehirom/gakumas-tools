@@ -297,6 +297,9 @@
     "openShort": "计算体力",
     "selectPIdol": "请先在编组中添加 P 偶像的卡牌或道具",
     "defaultsHelp": "默认值为常见的满养成状态，只需修改不同的项目。",
+    "memory": "回忆卡 {number}",
+    "contribution": "计入 {percent}%：{stamina}",
+    "missingPIdol": "请添加此回忆卡的 P 偶像卡牌以计算体力。",
     "trainingRank": "特训阶段",
     "awakeningRank": "才能开花阶段",
     "affectionLevel": "亲爱度",
@@ -328,15 +331,23 @@
   "MemorySave": {
     "save": "保存",
     "saveAsNew": "作为新回忆卡保存",
-    "signInToSave": "登入 Discord 以同步保存"
+    "signInToSave": "登入 Discord 以同步保存",
+    "saveFailed": "保存失败"
   },
   "MemoriesNudge": {
     "create": "创建回忆卡",
     "import": "从截图导入回忆卡"
   },
   "MemoriesHeader": {
+    "confirmDelete": "删除 {num} 个回忆卡？",
     "selected": "{num} 个回忆卡被选中",
     "delete": "删除"
+  },
+  "Memories": {
+    "loadError": "回忆卡加载失败",
+    "uploadError": "回忆卡保存失败",
+    "deleteError": "回忆卡删除失败",
+    "retry": "重试"
   },
   "MemoryImporterModal": {
     "importMemories": "从截图中导入回忆卡",
