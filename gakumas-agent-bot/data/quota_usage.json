@@ -14,10 +14,24 @@
     "last_updated": "2026-08-23T17:31:27.067724"
   },
   "2026-08-24": {
-    "requests": 3,
-    "prompt_tokens": 76228,
-    "candidate_tokens": 1588,
-    "total_tokens": 77816,
-    "last_updated": "2026-08-24T21:38:51.944435"
+    "requests": 1,
+    "prompt_tokens": 41648,
+    "candidate_tokens": 119,
+    "total_tokens": 41767,
+    "last_updated": "2026-08-24T19:06:58.885630"
+  },
+  "2026-08-30": {
+    "requests": 2,
+    "prompt_tokens": 69651,
+    "candidate_tokens": 2339,
+    "total_tokens": 71990,
+    "last_updated": "2026-08-30T11:26:54.383917"
+  },
+  "2026-09-01": {
+    "requests": 2,
+    "prompt_tokens": 115299,
+    "candidate_tokens": 2739,
+    "total_tokens": 118038,
+    "last_updated": "2026-09-01T00:43:47.816142"
   }
 }

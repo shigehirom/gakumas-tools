@@ -18,6 +18,10 @@ USAGE_FILE = Path("/root/gakumas-workspace/gakumas-agent-bot/data/quota_usage.js
 DAILY_RPD_LIMIT = 1500  # Gemini 3.6 Flash Free Tier 1日あたり目安リクエスト数
 
 
+BOT_VERSION = "2026.09.01-v1"
+
+
+
 class QuotaTracker:
     def __init__(self, usage_file: Path = USAGE_FILE, rpd_limit: int = DAILY_RPD_LIMIT):
         self.usage_file = usage_file
@@ -102,8 +106,9 @@ class QuotaTracker:
 
         return (
             f"\n\n`👩‍🏫 あさり先生 ({model_label}){tc_str} ｜ "
-            f"📊 本日: {reqs}/{limit}回 (残 {remaining_pct:.1f}%){tok_str}{time_str}`"
+            f"📊 本日: {reqs}/{limit}回 (残 {remaining_pct:.1f}%){tok_str}{time_str} ｜ v{BOT_VERSION}`"
         )
+
 
 
 # グローバルシングルトン

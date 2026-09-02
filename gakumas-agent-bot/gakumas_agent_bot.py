@@ -35,8 +35,9 @@ from google.antigravity.hooks import policy
 from google.antigravity.types import ChatResponse, SessionContinuationMode
 
 from agent_engine import AgentEngine
-from quota_tracker import quota_tracker
+from quota_tracker import quota_tracker, BOT_VERSION
 from contest_parser import parse_contest_images
+
 from dsl_translator import DslTranslator
 from gakumas_data_searcher import GakumasDataSearcher
 from gakumas_tools import GakumasToolExecutor
@@ -84,9 +85,13 @@ def _load_env() -> None:
 
 _load_env()
 
-# ────────────────────────────── 設定 ────────────────────────────────────────
+DISCORD_TOKEN      = (
+    os.environ.get("ASARI_BOT_TOKEN")
+    or os.environ.get("DISCORD_AGENT_BOT_TOKEN")
+    or os.environ.get("DISCORD_BOT_TOKEN")
+    or os.environ.get("DISCORD_TOKEN", "")
+)
 
-DISCORD_TOKEN      = os.environ.get("DISCORD_BOT_TOKEN") or os.environ.get("DISCORD_TOKEN", "")
 ALLOWED_CHANNEL_ID = int(os.environ.get("ALLOWED_CHANNEL_ID", "0"))
 GEMINI_API_KEY     = os.environ.get("GEMINI_API_KEY", "")
 LLM_BASE_URL       = os.environ.get("LLM_BASE_URL", os.environ.get("OLLAMA_HOST", "http://192.168.100.4:30080/v1"))
@@ -475,14 +480,23 @@ class GakumasAntigravityBot(discord.Client):
 
             if ALLOWED_CHANNEL_ID != 0:
                 channel = self.get_channel(ALLOWED_CHANNEL_ID)
-                if channel and isinstance(channel, discord.TextChannel):
+                if channel is None:
+                    try:
+                        channel = await self.fetch_channel(ALLOWED_CHANNEL_ID)
+                    except Exception as fe:
+                        log.warning("[Discord] チャンネル fetch 失敗 (ID: %s): %s", ALLOWED_CHANNEL_ID, fe)
+
+                if channel and isinstance(channel, (discord.TextChannel, discord.Thread)):
                     try:
                         await channel.send(
-                            f"👩‍🏫 **プロデューサーくん、お疲れ様！初星学園 講師の根緒亜紗里よ。**\n"
+                            f"👩‍🏫 **プロデューサーくん、お疲れ様！初星学園 講師の根緒亜紗里よ。** *(v{BOT_VERSION})*\n"
                             f"アイドルの育成やスキルカードの編成、コンテストの分析など、気になることがあれば何でも気軽に聞いてちょうだいね！"
                         )
+                        log.info("[Discord] 起動通知メッセージを送信しました (Channel: %s, ver: %s)", ALLOWED_CHANNEL_ID, BOT_VERSION)
                     except Exception as e:
-                        log.error("[Discord] 起動通知失敗: %s", e)
+                        log.error("[Discord] 起動通知送信失敗: %s", e)
+                else:
+                    log.warning("[Discord] 対象チャンネルが見つかりませんでした (ID: %s, channel=%s)", ALLOWED_CHANNEL_ID, channel)
 
     def _register_slash_commands(self) -> None:
         bot = self
@@ -548,19 +562,20 @@ class GakumasAntigravityBot(discord.Client):
             hist_count = len(bot._agent_engine.history)
             await interaction.response.send_message(
                 f"**📊 学マス Bot 稼働状態**\n"
+                f"- バージョン: **`v{BOT_VERSION}`**\n"
                 f"- 現在のモード: **{mode_desc}** (エージェント方式)\n"
                 f"- 稼働状態: 🟢 {busy_label}\n"
                 f"- マスタデータ: スキルカード `{sc_count}` 件 / Pアイテム `{pi_count}` 件\n"
                 f"- 会話履歴: `{hist_count}` 件（/new でリセット）"
             )
 
+
         @self.tree.command(name="cancel", description="処理中の回答を中断します")
         async def slash_cancel(interaction: discord.Interaction) -> None:
             bot.gemini_service.cancel()
-            bot.ollama_service.cancel()
-            await interaction.response.send_message("🛑 **[System]** 応答をキャンセルしました。")
+            bot._is_busy = False
 
-        @self.tree.command(name="new", description="新しい会話セッションを開始します（履歴リセット）")
+
         async def slash_new(interaction: discord.Interaction) -> None:
             bot._agent_engine.reset()
             await interaction.response.send_message("✨ **[System]** 会話セッションをリセットしました。")
@@ -788,132 +803,25 @@ class GakumasAntigravityBot(discord.Client):
 
 
 
-    async def _execute_bot_commentary(self, message: discord.Message) -> None:
-        """
-        My Gakumas Tools 等の Bot の発言を検知し、
-        出力されたスキルカード、Pアイテム、編成、戦術についてあさり先生が蘊蓄・解説・アドバイスを行う
-        """
-        raw_text_parts = []
-        if message.content:
-            raw_text_parts.append(message.content)
-        for emb in message.embeds:
-            if emb.title:
-                raw_text_parts.append(f"【タイトル】{emb.title}")
-            if emb.description:
-                raw_text_parts.append(emb.description)
-            for f in emb.fields:
-                raw_text_parts.append(f"{f.name}: {f.value}")
 
-        bot_output_text = "\n".join(raw_text_parts).strip()
-        if not bot_output_text or len(bot_output_text) < 10:
-            return
-
-        bot_name = message.author.display_name or message.author.name
-        log.info("[Bot発言検知・蘊蓄解説開始] %s ➔ %s...", bot_name, bot_output_text[:60])
-
-        commentary_prompt = (
-            f"初星学園の分析ツール「{bot_name}」が以下のシミュレーション結果や編成・カードデータを出力しました。\n"
-            f"━━━━━━━━━━━━━━━━━━━━\n"
-            f"{bot_output_text}\n"
-            f"━━━━━━━━━━━━━━━━━━━━\n"
-            f"初星学園プロデューサー科担任講師の根緒亜紗里（あさり先生）として、この出力結果を確認し、ここに出てくるスキルカード、Pアイテム、Pアイドル、あるいは戦術・数値について、プロデューサーくんに向けて指導教師・お姉さん目線で役立つ「ワンポイント蘊蓄（うんちく）・解説・アドバイス」を温かく語りかけてください。\n\n"
-            f"【解説のポイント】\n"
-            f"- 「ふふっ、この編成（結果）ね！」「このカードの組み合わせは面白いわね」のように自然な語りかけから始めてください。\n"
-            f"- 出力に含まれる特徴的なスキルカードやPアイテム、Pアイドルに注目し、「実はこの『カード名』は〜〜」「このPアイテムの〜〜効果が〜〜」「〜〜を意識するとさらに伸びるかも！」といったプロデューサー科講師ならではの専門的かつ実践的な蘊蓄・解説をわかりやすく教えてあげてください。\n"
-            f"- 一人称は「私」、二人称は「プロデューサーくん」を厳守してください。\n"
-            f"- カード名は 『カード名』、アイドル名は アイドル名【二つ名】 の形式で表記してください（画像表示に連動します）。\n"
-            f"- 読みやすいマークダウン箇条書きを活用し、自然な日本語で回答してください。"
-        )
-
-        self._is_busy = True
-        channel = message.channel
-        async with channel.typing():
-            try:
-                full_text = await self._agent_engine.run(
-                    user_message=commentary_prompt,
-                    model="gemini-3.6-flash",
-                )
-                if not full_text.strip():
-                    return
-
-                # 画像検索
-                found_images = self._image_resolver.find_images_in_text(full_text, max_images=6)
-
-                # テキスト分割
-                chunks: list[str] = []
-                current_text = full_text.strip()
-                while len(current_text) > 1800:
-                    split_idx = current_text.rfind("\n", 0, 1800)
-                    if split_idx == -1 or split_idx < 900:
-                        split_idx = 1800
-                    chunks.append(current_text[:split_idx].strip())
-                    current_text = current_text[split_idx:].strip()
-                if current_text:
-                    chunks.append(current_text)
-
-                footer = f"\n\n`👩‍🏫 あさり先生のワンポイント解説`"
-
-                discord_files = []
-                caption_lines = []
-                num_emojis = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣"]
-
-                for idx, (lbl, img_path) in enumerate(found_images, 1):
-                    if img_path.exists():
-                        emoji = num_emojis[idx - 1] if idx <= len(num_emojis) else f"[{idx}]"
-                        safe_name = re.sub(r'[\\/*?:"<>|]', "", f"{idx:02d}_{lbl}.png")
-                        discord_files.append(discord.File(str(img_path), filename=safe_name))
-                        caption_lines.append(f"{emoji} **{lbl}**")
-
-                img_caption = ""
-                if caption_lines:
-                    img_caption = "\n\n🖼️ **【添付画像の対応一覧】**\n" + "\n".join(caption_lines)
-
-                for i, chunk in enumerate(chunks):
-                    if i == 0:
-                        if len(chunks) == 1:
-                            reply_text = chunk + img_caption + footer
-                            if len(reply_text) <= 2000:
-                                await message.reply(reply_text, files=discord_files, mention_author=False)
-                            else:
-                                await message.reply(chunk, mention_author=False)
-                                if img_caption:
-                                    await channel.send(img_caption.strip())
-                                await channel.send(footer.strip(), files=discord_files)
-                        else:
-                            await message.reply(chunk, mention_author=False)
-                    elif i == len(chunks) - 1:
-                        chunk_with_footer = chunk + img_caption + footer
-                        if len(chunk_with_footer) <= 2000:
-                            await channel.send(chunk_with_footer, files=discord_files)
-                        else:
-                            await channel.send(chunk)
-                            if img_caption:
-                                await channel.send(img_caption.strip())
-                            await channel.send(footer.strip(), files=discord_files)
-                    else:
-                        await channel.send(chunk)
-
-                log.info("[Bot蘊蓄解説完了] %d 文字（%d 画像添付）", len(full_text), len(found_images))
-            except Exception as e:
-                log.error("[_execute_bot_commentary] 例外: %s", e, exc_info=True)
-            finally:
-                self._is_busy = False
 
     async def on_message(self, message: discord.Message) -> None:
         # 1. 自身の発言は完全に無視
         if message.author == self.user:
             return
-        # 2. チャンネル制限
+
+        # 2. 他の Bot や Webhook（Captain Hook, My Gakumas Tools 等）の発言は完全に無視
+        if message.author.bot or message.webhook_id is not None:
+            log.debug("[Bot/Webhook無視] 送信者: %s (bot=%s, webhook=%s)", message.author, message.author.bot, message.webhook_id)
+            return
+
+        # 3. チャンネル制限
         if ALLOWED_CHANNEL_ID != 0 and message.channel.id != ALLOWED_CHANNEL_ID:
             return
 
-        # 3. 他の Bot（My Gakumas Tools など）の発言を検知して蘊蓄解説
-        if message.author.bot:
-            if not self._is_busy:
-                asyncio.create_task(self._execute_bot_commentary(message))
-            return
-
         content = message.content.strip()
+        log.info("[ユーザー発言検知] 送信者: %s ➔ %s", message.author, content[:60])
+
 
         if content.startswith("/"):
             first_token = content.split()[0].lower()
@@ -1034,16 +942,51 @@ class GakumasAntigravityBot(discord.Client):
                     await message.channel.send(content=msg_text, file=file)
                     return
 
-        # 通常メッセージ
-        if self._is_busy or self.gemini_service.is_busy:
-            await message.reply("⏳ 前の回答を処理中です。少々お待ちください。", mention_author=False)
+                # /new — 会話セッションリセット（テキストコマンド版）
+                if first_token == "/new":
+                    self._agent_engine.reset()
+                    self._is_busy = False
+                    await message.channel.send("✨ **[System]** 会話セッションをリセットしました。新しい話題を始めましょう！")
+                    return
+
+                # /cancel — 処理中断（テキストコマンド版）
+                if first_token == "/cancel":
+                    self.gemini_service.cancel()
+                    self._is_busy = False
+                    await message.channel.send("🛑 **[System]** 応答をキャンセルしました。")
+                    return
+
+        # ─── 「あさり先生」呼びかけによる自動セッションリセット ───────────────
+        RESET_TRIGGERS = ["あさり先生", "アサリ先生", "asari"]
+        content_lower = content.lower()
+        is_new_session_trigger = any(content.startswith(t) or content_lower.startswith(t) for t in RESET_TRIGGERS)
+        if is_new_session_trigger:
+            self._agent_engine.reset()
+            self._is_busy = False
+            log.info("[セッション自動リセット] 「あさり先生」呼びかけ検知 → 履歴クリア")
+            stripped = content
+            for t in RESET_TRIGGERS:
+                if stripped.startswith(t):
+                    stripped = stripped[len(t):].lstrip("、,，。 　").strip()
+                    break
+            if not stripped:
+                await message.channel.send("✨ 会話をリセットしたわ！何か聞きたいことはある？")
+                return
+            content = stripped
+
+        # ─── 通常メッセージの処理（重複・多重実行ガード） ─────────────────────
+        if self._is_busy:
+            log.warning("[メッセージスキップ] 既に回答を生成中のため重複を抑制: %s", content[:40])
             return
 
+        self._is_busy = True
         self._last_user_message = content
         if isinstance(message.channel, discord.TextChannel):
             asyncio.create_task(self._execute_chat(message.channel, content))
 
-# ────────────────────────────── エントリポイント ─────────────────────────────
+
+
+
 
 intents = discord.Intents.default()
 intents.message_content = True

@@ -1,5 +1,6 @@
 #!/bin/bash
 set -e
+trap 'stty sane 2>/dev/null || true' EXIT INT TERM
 
 TARGET="shigehiro@192.168.100.4"
 TARGET_DIR="/mnt/NVMe/gakumas-tools/"
@@ -8,8 +9,13 @@ echo "Deploying to TrueNAS ($TARGET)..."
 
 # 0. TrueNAS 側で記録された最新の対戦履歴（match_history_*.csv）を保護・同期
 echo "Fetching latest match history from TrueNAS..."
-rsync -avz --inplace --no-owner --no-group --no-perms --include='match_history_*.csv' --exclude='*' $TARGET:${TARGET_DIR}agent-instructions/ ../shared/agent-instructions/
-rsync -avz --inplace --no-owner --no-group --no-perms --include='match_history_*.csv' --exclude='*' $TARGET:${TARGET_DIR}agent-instructions/ ./agent-instructions/
+rsync -avz --inplace --no-owner --no-group --no-perms --include='match_history_*.csv' --exclude='*' $TARGET:${TARGET_DIR}agent-instructions/ ../shared/agent-instructions/ 2>/dev/null || true
+rsync -avz --inplace --no-owner --no-group --no-perms --include='match_history_*.csv' --exclude='*' $TARGET:${TARGET_DIR}agent-instructions/ ./agent-instructions/ 2>/dev/null || true
+
+# 0.5. MongoDB から最新の全対戦データを CSV へ自動同期・完全復元
+echo "Syncing all match records from MongoDB to CSV..."
+node packages/cli/scripts/sync-mongo-to-csv.mjs 2>/dev/null || true
+
 
 
 # 1. 共有アセット・Botコード・ナレッジ・設定の同期準備
@@ -41,11 +47,20 @@ rsync -avz --delete \
   ./ $TARGET:$TARGET_DIR
 
 echo "Building and restarting Docker Compose containers on TrueNAS..."
-# TrueNAS に SSH 接続し、Web UI、My Gakumas Tools、あさり先生 を同時にビルド・起動
 ssh -t $TARGET "cd $TARGET_DIR && \
-  echo '==> Building and starting Web UI & Discord Bots...' && \
-  sudo docker compose down 2>/dev/null || true && \
-  sudo docker compose build && \
-  sudo docker compose up -d"
+  echo '==> Cleaning up stale host/container bot processes...' && \
+  sudo pkill -9 -f 'gakumas_agent_bot.py' 2>/dev/null || true; \
+  sudo pkill -9 -f 'ts-node' 2>/dev/null || true; \
+  sudo pkill -9 -f 'gakumas-discord-bot' 2>/dev/null || true; \
+  echo '==> Building Discord Bots...' && \
+  sudo docker compose build --no-cache asari-agent gakumas-bot && \
+  echo '==> Starting Discord Bots...' && \
+  sudo docker compose up -d --force-recreate gakumas-bot asari-agent && \
+  echo '==> Container Status:' && \
+  sudo docker compose ps"
 
+stty sane 2>/dev/null || true
 echo "Deployment complete! TrueNAS Web UI & Discord Bots are now live and synchronized."
+
+
+

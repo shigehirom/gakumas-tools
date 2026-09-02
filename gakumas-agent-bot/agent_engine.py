@@ -101,9 +101,10 @@ class AgentEngine:
         self.last_tool_call_count = 0
         self.last_tokens = 0
 
-        # 1. google-genai SDK 経由で Gemini 実行（3.7-flash -> 3.1-flash-lite -> 3-flash-preview -> 3.5-flash 自動フォールバック）
+        # 1. google-genai SDK 経由で Gemini 実行（3.6-flash -> 3.5-flash -> flash-latest -> 3.7-flash 自動フォールバック）
         if self._gemini_client and ("gemini" in model.lower() or model == "auto"):
-            gemini_models = ["gemini-3.7-flash", "gemini-3.1-flash-lite", "gemini-3-flash-preview", "gemini-flash-latest", "gemini-3.5-flash", "gemini-3.6-flash"]
+            gemini_models = ["gemini-3.6-flash", "gemini-3.5-flash", "gemini-flash-latest", "gemini-3.7-flash", "gemini-3.1-flash-lite"]
+
             for g_model in gemini_models:
                 try:
                     ans = await self._run_gemini(user_message, model=g_model, on_status=on_status)
@@ -298,7 +299,10 @@ class AgentEngine:
         on_status: Callable[[str], Awaitable[None]] | None = None,
     ) -> str:
         tool_call_count = 0
-        messages = [{"role": "system", "content": get_system_prompt()}] + self.history
+        # ローカル推論 (llama.cpp 16k context) の溢れ防止のため、履歴を直近6件に制限
+        recent_history = self.history[-6:] if len(self.history) > 6 else self.history
+        messages = [{"role": "system", "content": get_system_prompt()}] + recent_history
+
 
         for iteration in range(self.MAX_ITER):
             has_recent_tool = bool(messages and messages[-1].get("role") == "tool")

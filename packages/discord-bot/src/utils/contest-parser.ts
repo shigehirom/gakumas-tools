@@ -133,9 +133,10 @@ Respond strictly with valid JSON matching this schema:
 `;
 
     const models = [
-        'gemini-3.6-flash',
         'gemini-3.5-flash',
-        'gemini-flash-latest'
+        'gemini-flash-latest',
+        'gemini-3.6-flash',
+        'gemini-3.7-flash'
     ];
 
     let lastError: Error | null = null;
@@ -144,7 +145,7 @@ Respond strictly with valid JSON matching this schema:
         for (let attempt = 1; attempt <= 2; attempt++) {
             try {
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 30000);
+                const timeoutId = setTimeout(() => controller.abort(), 20000);
 
                 const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
                 const res = await fetch(url, {
@@ -169,19 +170,20 @@ Respond strictly with valid JSON matching this schema:
 
                 if (!res.ok) {
                     const errText = await res.text();
-                    // 404 (model not found): 即座に次のモデルへ
-                    if (res.status === 404) {
-                        console.warn(`[contest-parser] Model ${model} not available (404), skipping...`);
+                    // 404 または 429 (クォータ超過): リトライせず即座に次のモデルへフォールバック
+                    if (res.status === 404 || res.status === 429) {
+                        console.warn(`[contest-parser] Model ${model} returned ${res.status} (${errText.slice(0, 80)}), skipping to next model immediately...`);
                         break;
                     }
-                    // 503 or 429: 少し待ってリトライ
-                    if (res.status === 503 || res.status === 429) {
-                        console.warn(`[contest-parser] ${model} attempt ${attempt} got ${res.status}, waiting before retry...`);
+                    // 503: 一時的高負荷のため1回だけ短時間待ってリトライ
+                    if (res.status === 503) {
+                        console.warn(`[contest-parser] ${model} attempt ${attempt} got 503, waiting before retry...`);
                         await new Promise(r => setTimeout(r, 1000 * attempt));
                         continue;
                     }
                     throw new Error(`Gemini API status ${res.status} (${model}): ${errText}`);
                 }
+
 
                 const data = await res.json() as any;
                 const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;

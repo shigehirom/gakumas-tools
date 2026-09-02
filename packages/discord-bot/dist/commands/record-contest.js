@@ -17,12 +17,80 @@ exports.recordContestCommand = {
         .addAttachmentOption(option => option.setName('image3')
         .setDescription('3枚目: 獲得Pt・報酬画面')
         .setRequired(true))
+        .addStringOption(option => option.setName('date')
+        .setDescription('登録対象の日付 (ドロップダウン選択または入力。省略時は当日)')
+        .setRequired(false)
+        .setAutocomplete(true))
         .addIntegerOption(option => option.setName('season')
         .setDescription('シーズン番号 (省略時は最新シーズン)')
-        .setRequired(false))
-        .addStringOption(option => option.setName('date')
-        .setDescription('登録対象の日付 (例: 2026/08/26, 26/08/26, 8/26。省略時は当日)')
         .setRequired(false)),
+    async autocomplete(interaction) {
+        try {
+            const focused = interaction.options.getFocused(true);
+            if (focused.name !== 'date')
+                return;
+            const focusedRaw = focused.value.trim();
+            // JST 基準の今日の日付
+            const now = new Date();
+            const jstFormatter = new Intl.DateTimeFormat('ja-JP', {
+                timeZone: 'Asia/Tokyo',
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit'
+            });
+            const parts = jstFormatter.formatToParts(now);
+            const y = parseInt(parts.find(p => p.type === 'year').value);
+            const m = parseInt(parts.find(p => p.type === 'month').value) - 1;
+            const d = parseInt(parts.find(p => p.type === 'day').value);
+            const dayNames = ['日', '月', '火', '水', '木', '金', '土'];
+            const choices = [];
+            // シーズン51初日 (2026-08-25) まで、または直近14日分の候補を生成
+            for (let i = 0; i < 14; i++) {
+                const target = new Date(y, m, d - i, 12, 0, 0);
+                const tYear = target.getFullYear();
+                const tMonthNum = target.getMonth() + 1;
+                const tDayNum = target.getDate();
+                const tMonth = String(tMonthNum).padStart(2, '0');
+                const tDay = String(tDayNum).padStart(2, '0');
+                const val = `${tYear}/${tMonth}/${tDay}`;
+                const valShortYear = `${String(tYear).slice(-2)}/${tMonth}/${tDay}`;
+                const valNoZero = `${tMonthNum}/${tDayNum}`;
+                const dayOfWeek = dayNames[target.getDay()];
+                let relLabel = '';
+                if (i === 0) {
+                    relLabel = ' (今日)';
+                }
+                else if (i === 1) {
+                    relLabel = ' (昨日)';
+                }
+                else {
+                    relLabel = ` (${i}日前)`;
+                }
+                const displayName = `${val}(${dayOfWeek})${relLabel}`;
+                choices.push({
+                    name: displayName,
+                    value: val,
+                    searchKeywords: [
+                        displayName.toLowerCase(),
+                        val,
+                        valShortYear,
+                        valNoZero,
+                        `${tYear}-${tMonth}-${tDay}`,
+                        relLabel.toLowerCase()
+                    ]
+                });
+            }
+            let filtered = choices;
+            if (focusedRaw) {
+                const q = focusedRaw.toLowerCase();
+                filtered = choices.filter(c => c.searchKeywords.some(kw => kw.includes(q)));
+            }
+            await interaction.respond(filtered.slice(0, 25).map(c => ({ name: c.name, value: c.value })));
+        }
+        catch (err) {
+            console.error('[record-contest autocomplete error]', err);
+        }
+    },
     async execute(interaction) {
         await interaction.deferReply();
         const attachment1 = interaction.options.getAttachment('image1', true);
@@ -89,9 +157,10 @@ exports.recordContestCommand = {
                 date: targetDate,
                 userId: interaction.user.id
             });
+            const formattedDate = `${targetDate.getFullYear()}/${String(targetDate.getMonth() + 1).padStart(2, '0')}/${String(targetDate.getDate()).padStart(2, '0')}`;
             const isWin = analysis.overallResult === 'WIN';
             const embed = new discord_js_1.EmbedBuilder()
-                .setTitle(`📊 本日のコンテスト結果 (${analysis.matchIndex}/5)`)
+                .setTitle(`📊 ${formattedDate} のコンテスト結果 (${analysis.matchIndex}/5)`)
                 .setColor(isWin ? 0x22c55e : 0xef4444)
                 .setDescription(`**対戦相手**: **${analysis.opponent.name}** (枠/グレード: ${analysis.opponent.grade})\n` +
                 `**勝敗結果**: ${isWin ? '🏆 **WIN**' : '❌ **LOSE**'} (+${analysis.earnedPt}Pt)\n\n` +

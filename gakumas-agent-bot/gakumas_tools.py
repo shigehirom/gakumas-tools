@@ -819,8 +819,15 @@ class GakumasToolExecutor:
 
         limit_count = min(len(results), min(max_results, 8))
         lines = [
-            f"【スキルカード検索結果（{len(results)} 件中 {limit_count} 件表示）】",
+            f"【スキルカード検索結果（{len(results)} 件中 {limit_count} 件表示）】"
+        ]
+        if fallback_notice:
+            lines.append(fallback_notice)
+
+        for c, custom_labels, fhand in results[:limit_count]:
+            c_plan   = (c.get("plan") or "").lower()
             c_type   = (c.get("type") or "").lower()
+            type_lbl = TYPE_LABEL.get(c_type, c_type)
             emoji    = PLAN_EMOJI.get(c_plan, "")
             c_acts_item   = c.get("actions", "")
             c_effs_item   = c.get("effects", "")
@@ -1119,9 +1126,14 @@ class GakumasToolExecutor:
         card_name: str = "",
         max_results: int = 20,
         **kwargs: Any,
+    ) -> str:
+        if self._db is None:
+            return "※ MongoDB に接続できませんでした。"
+
         docs = list(self._db["memories"].find({}))
         if not docs:
             return "※ 所持メモリーの登録データがありません。"
+
 
         from master_data import GakumasMaster
         master = GakumasMaster()
