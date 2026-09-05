@@ -48,16 +48,14 @@ rsync -avz --delete \
 
 echo "Building and restarting Docker Compose containers on TrueNAS..."
 ssh -t $TARGET "cd $TARGET_DIR && \
-  echo '==> Cleaning up stale host/container bot processes...' && \
-  sudo pkill -9 -f 'gakumas_agent_bot.py' 2>/dev/null || true; \
-  sudo pkill -9 -f 'ts-node' 2>/dev/null || true; \
-  sudo pkill -9 -f 'gakumas-discord-bot' 2>/dev/null || true; \
-  echo '==> Building Discord Bots...' && \
+  echo '==> Building Web UI & Discord Bots...' && \
   sudo docker compose build --no-cache asari-agent gakumas-bot && \
-  echo '==> Starting Discord Bots...' && \
-  sudo docker compose up -d --force-recreate gakumas-bot asari-agent && \
+  sudo docker compose build gakumas-tools && \
+  echo '==> Starting Services...' && \
+  sudo docker compose up -d --force-recreate && \
   echo '==> Container Status:' && \
   sudo docker compose ps"
+
 
 stty sane 2>/dev/null || true
 echo "Deployment complete! TrueNAS Web UI & Discord Bots are now live and synchronized."
