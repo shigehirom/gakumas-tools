@@ -7,6 +7,7 @@ import os from 'os';
 import { MongoClient } from "mongodb";
 import crypto from "crypto";
 import { recommendSynthesis } from "./optimize-synthesis.mjs";
+import { getLatestSupportBonus } from "./utils/supportBonus.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -219,8 +220,31 @@ async function run() {
         }
     }
 
-    let supportBonusRaw = parseFloat(options.supportBonus || process.env.SUPPORT_BONUS || "0.04");
-    let supportBonus = supportBonusRaw >= 1.0 ? supportBonusRaw / 100 : supportBonusRaw;
+    let supportBonusRaw = options.supportBonus ? parseFloat(options.supportBonus) : null;
+    let supportBonus = null;
+    if (supportBonusRaw !== null && !isNaN(supportBonusRaw)) {
+        supportBonus = supportBonusRaw >= 1.0 ? supportBonusRaw / 100 : supportBonusRaw;
+    } else {
+        const mongoUri = source.startsWith("mongodb://") ? source : process.env.MONGODB_URI;
+        if (mongoUri) {
+            let tempClient = null;
+            try {
+                tempClient = new MongoClient(mongoUri);
+                await tempClient.connect();
+                const db = tempClient.db(process.env.MONGODB_DB || "gakumas-tools");
+                supportBonus = await getLatestSupportBonus(db);
+            } catch (e) {
+                console.error("Warning: Failed to fetch latest support bonus from DB, fallback to 0.04:", e.message);
+                supportBonus = 0.04;
+            } finally {
+                if (tempClient) {
+                    await tempClient.close().catch(() => {});
+                }
+            }
+        } else {
+            supportBonus = 0.04;
+        }
+    }
     // Normalize to 4 decimal places to match GUI behavior
     supportBonus = parseFloat(supportBonus.toFixed(4));
 

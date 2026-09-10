@@ -170,11 +170,18 @@ exports.recordContestCommand = {
                 `・**ステージ3**: 自 \`${analysis.stages.stage3.myScore.toLocaleString()}\` vs 敵 \`${analysis.stages.stage3.enemyScore.toLocaleString()}\` (${analysis.stages.stage3.result})\n\n` +
                 `**その他データ**:\n` +
                 `・ファン数: \`+${analysis.extra.fans.toLocaleString()}\` | コイン: \`+${analysis.extra.coins.toLocaleString()}\`\n` +
-                `・現在Pt: \`${analysis.extra.currentPt.toLocaleString()}Pt\` (${analysis.extra.currentRank}位)`)
-                .setFooter({
-                text: `✅ match_history_${season}.csv の ${analysis.matchIndex}戦目を更新しました (${csvResult.filePath})`
-            })
-                .setTimestamp();
+                `・現在Pt: \`${analysis.extra.currentPt.toLocaleString()}Pt\` (${analysis.extra.currentRank}位)`);
+            let footerText = `✅ MongoDB に ${analysis.matchIndex}戦目を保存しました`;
+            if (csvResult.sheetsSuccess) {
+                footerText += ' ＆ Googleスプレッドシートに反映完了';
+            }
+            else if (csvResult.sheetsError) {
+                footerText += ` ⚠️ スプレッドシート同期失敗: ${csvResult.sheetsError.slice(0, 80)}`;
+            }
+            embed.setFooter({
+                text: footerText
+            });
+            embed.setTimestamp();
             await interaction.editReply({
                 content: null,
                 embeds: [embed]

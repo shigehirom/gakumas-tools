@@ -1,5 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import { spawn } from 'child_process';
 import { MongoClient } from 'mongodb';
 import { config } from '../config';
 import { ContestAnalysisResult } from './contest-parser';
@@ -16,6 +17,8 @@ export interface UpdateResult {
     updatedLine: string;
     lineIndex: number;
     mongoId?: string; // MongoDB ObjectId string if saved to DB
+    sheetsSuccess?: boolean;
+    sheetsError?: string;
 }
 
 /** match_history_*.csv を検索するディレクトリ候補（優先順） */
@@ -207,10 +210,73 @@ export async function updateMatchHistoryCsv(
     // MongoDB への保存（失敗してもCSV保存の結果には影響させない）
     const mongoId = await saveContestMatchToMongo(analysis, options);
 
+    // Google スプレッドシート（Contest タブ）への即時同期
+    const sheetsResult = await syncContestMatchesToSheets();
+
     return {
         filePath: csvPath,
         updatedLine: newRow,
         lineIndex: targetLineIndex + 1,
-        ...(mongoId ? { mongoId } : {})
+        ...(mongoId ? { mongoId } : {}),
+        sheetsSuccess: sheetsResult.success,
+        ...(sheetsResult.error ? { sheetsError: sheetsResult.error } : {})
     };
+}
+
+/**
+ * MongoDB の最新対戦記録を Google スプレッドシート（Contest シート）へ同期する
+ */
+export async function syncContestMatchesToSheets(): Promise<{ success: boolean; error?: string; output?: string }> {
+    return runSyncScript(['--execute']);
+}
+
+/**
+ * Google スプレッドシートと MongoDB の対戦記録を双方向同期する
+ * (スプレッドシートの手入力データを MongoDB に取り込み ➔ MongoDB の最新確定データをスプレッドシートに書き出し)
+ */
+export async function syncContestMatchesBidirectional(): Promise<{ success: boolean; error?: string; output?: string }> {
+    return runSyncScript(['--mode', 'bidirectional', '--execute']);
+}
+
+function runSyncScript(args: string[]): Promise<{ success: boolean; error?: string; output?: string }> {
+    return new Promise((resolve) => {
+        const candidates = [
+            path.resolve(__dirname, '../../../../packages/cli/scripts/sync-contest-matches.mjs'),
+            path.resolve(__dirname, '../../../cli/scripts/sync-contest-matches.mjs'),
+            '/app/packages/cli/scripts/sync-contest-matches.mjs',
+            '/root/gakumas-workspace/gakumas-tools/packages/cli/scripts/sync-contest-matches.mjs',
+        ];
+        const scriptPath = candidates.find(p => fs.existsSync(p));
+        if (!scriptPath) {
+            console.warn('[SheetsSync] sync-contest-matches.mjs not found in candidates:', candidates);
+            return resolve({ success: false, error: 'sync-contest-matches.mjs not found' });
+        }
+
+        console.log(`[SheetsSync] Running: node ${scriptPath} ${args.join(' ')}`);
+        const child = spawn('node', [scriptPath, ...args], {
+            env: { ...process.env },
+            timeout: 30000,
+        });
+
+        let stdout = '';
+        let stderr = '';
+        child.stdout.on('data', d => { stdout += d.toString(); });
+        child.stderr.on('data', d => { stderr += d.toString(); });
+
+        child.on('close', (code) => {
+            if (code === 0) {
+                console.log(`[SheetsSync] Sync success: ${stdout.trim().split('\n').pop()}`);
+                resolve({ success: true, output: stdout });
+            } else {
+                const errMsg = stderr.trim() || stdout.trim() || `Exit code ${code}`;
+                console.error(`[SheetsSync] Sync failed (code ${code}):`, errMsg);
+                resolve({ success: false, error: errMsg });
+            }
+        });
+
+        child.on('error', (err) => {
+            console.error('[SheetsSync] Process error:', err);
+            resolve({ success: false, error: err.message });
+        });
+    });
 }

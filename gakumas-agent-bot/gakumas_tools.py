@@ -271,6 +271,22 @@ TOOLS_SCHEMA: list[dict] = [
     {
         "type": "function",
         "function": {
+            "name": "get_support_bonus",
+            "description": (
+                "現在ユーザーが所持しているサポートカード群から算出される最新のサポートボーナス値（%および倍率補正）と、"
+                "所持枚数・レベル別内訳、コンテストでの効果、ボーナス底上げのアドバイスを取得する。"
+                "「サポートボーナス」「サポカボーナス」「ボーナスの値」「サポートボーナスは確認できる？」などの質問には必ずこのツールを実行する。"
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {},
+                "required": [],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
             "name": "get_owned_memories",
             "description": (
                 "ユーザーの所持メモリー一覧および枚数をMongoDBから取得する。"
@@ -486,6 +502,7 @@ class GakumasToolExecutor:
             "get_contest_stats":        self.get_contest_stats,
             "get_support_card_details": self.get_support_card_details,
             "get_optimized_deck":       self.get_optimized_deck,
+            "get_support_bonus":        self.get_support_bonus,
         }
         fn = dispatch.get(tool_name)
         if fn is None:
@@ -1109,10 +1126,111 @@ class GakumasToolExecutor:
             return f"※ 条件に一致する所持サポートカードは見つかりませんでした（条件: {search_kw or target_skill or '指定なし'}）。"
 
         limit_count = min(len(matched), min(max_results, 10))
-        lines = [f"【所持サポートカード一覧（{len(matched)} 件中 {limit_count} 件表示）】\n"]
+
+        def _bonus_for_lv(lv: Any) -> float:
+            try:
+                l = int(lv)
+            except (ValueError, TypeError):
+                l = 1
+            if l >= 60: return 0.10
+            if l >= 50: return 0.08
+            if l >= 40: return 0.06
+            if l >= 30: return 0.04
+            if l >= 20: return 0.02
+            if l >= 10: return 0.01
+            return 0.00
+
+        total_bonus_pct = sum(_bonus_for_lv(d.get("lv", 1)) for d in unique_docs.values())
+        lines = [f"【所持サポートカード一覧（{len(matched)} 件中 {limit_count} 件表示 / 現在の総合サポートボーナス: +{total_bonus_pct:.2f}%）】\n"]
         lines.extend(matched[:limit_count])
         if len(matched) > limit_count:
             lines.append(f"\n※他 {len(matched) - limit_count} 件（上位のみ抜粋）")
+        return "\n".join(lines)
+
+    # ── ツール: get_support_bonus ───────────────────────────────────────────
+
+    def get_support_bonus(self, **kwargs: Any) -> str:
+        if self._db is None:
+            return "※ MongoDB に接続できませんでした。"
+
+        docs = list(self._db["owned_support_cards"].find({}))
+        if not docs:
+            return "※ 所持サポートカードの登録データがありません（デフォルト値: +4.00%）。"
+
+        # 重複排除（同じカード名ならレベル・上限解放が高い方を優先）
+        unique_docs: dict[str, dict] = {}
+        for doc in docs:
+            name = doc.get("card_name", "")
+            if not name:
+                continue
+            if name not in unique_docs:
+                unique_docs[name] = doc
+            else:
+                existing = unique_docs[name]
+                if (int(doc.get("lv", 1)), int(doc.get("uncap", 0))) > (int(existing.get("lv", 1)), int(existing.get("uncap", 0))):
+                    unique_docs[name] = doc
+
+        def _bonus_for_lv(lv: Any) -> float:
+            try:
+                l = int(lv)
+            except (ValueError, TypeError):
+                l = 1
+            if l >= 60: return 0.10
+            if l >= 50: return 0.08
+            if l >= 40: return 0.06
+            if l >= 30: return 0.04
+            if l >= 20: return 0.02
+            if l >= 10: return 0.01
+            return 0.00
+
+        total_bonus_pct = 0.0
+        rarity_counts = {"SSR": 0, "SR": 0, "R": 0}
+        lv_counts = {60: 0, 50: 0, 40: 0, 30: 0, 20: 0, 10: 0, 1: 0}
+
+        for doc in unique_docs.values():
+            lv = int(doc.get("lv", 1))
+            total_bonus_pct += _bonus_for_lv(lv)
+
+            rarity = doc.get("rarity", "R")
+            rarity_counts[rarity] = rarity_counts.get(rarity, 0) + 1
+
+            if lv >= 60:
+                lv_counts[60] += 1
+            elif lv >= 50:
+                lv_counts[50] += 1
+            elif lv >= 40:
+                lv_counts[40] += 1
+            elif lv >= 30:
+                lv_counts[30] += 1
+            elif lv >= 20:
+                lv_counts[20] += 1
+            elif lv >= 10:
+                lv_counts[10] += 1
+            else:
+                lv_counts[1] += 1
+
+        multiplier = 1.0 + (total_bonus_pct / 100.0)
+        norm_factor = round(total_bonus_pct / 100.0, 4)
+
+        lines = [
+            f"### 📊 現在のサポートボーナス状況",
+            f"- **総合サポートボーナス**: **+{total_bonus_pct:.2f}%**（倍率補正: **×{multiplier:.4f}** / 内部係数: `{norm_factor}`）",
+            f"- **所持サポートカード総数**: **{len(unique_docs)} 枚**（SSR: {rarity_counts.get('SSR', 0)}枚, SR: {rarity_counts.get('SR', 0)}枚, R: {rarity_counts.get('R', 0)}枚）",
+            f"- **レベル帯別の所持内訳**:",
+            f"  - **Lv.60（最大ボーナス +0.10% 達成）**: **{lv_counts[60]} 枚**",
+            f"  - Lv.50〜59（ボーナス +0.08%）: {lv_counts[50]} 枚",
+            f"  - Lv.40〜49（ボーナス +0.06%）: {lv_counts[40]} 枚",
+            f"  - Lv.30〜39（ボーナス +0.04%）: {lv_counts[30]} 枚",
+            f"  - Lv.20〜29（ボーナス +0.02%）: {lv_counts[20]} 枚",
+            f"  - Lv.10〜19（ボーナス +0.01%）: {lv_counts[10]} 枚",
+            f"  - Lv.1〜9（ボーナスなし）: {lv_counts[1]} 枚",
+            f"",
+            f"**【サポートボーナスのゲーム仕様・影響】**",
+            f"- サポートボーナスは、所持しているサポートカードのレベルに応じて加算される累積・永続ボーナスです（プロデュースやコンテストで未編成の所持カードも含め、所持する全サポートカードのレベルが反映されます）。",
+            f"- コンテストの全ステージにおいて、最終スコア計算時に倍率補正（`× {multiplier:.4f}`）として乗算適用されます。",
+            f"- シミュレータ（`gakumas-tools`）やコンテスト最適化探索時にもこの最新値（+{total_bonus_pct:.2f}%）が適用されています。",
+            f"- 未育成（Lv.60未満）の所持カードを上限解放・強化することで、1枚あたり最大 +0.10% ずつボーナスを底上げ可能です。"
+        ]
         return "\n".join(lines)
 
     # ── ツール: get_owned_memories ───────────────────────────────────────────

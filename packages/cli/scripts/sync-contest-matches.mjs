@@ -8,9 +8,15 @@
  *   --execute: 実際に書き込む（省略時はドライラン）
  */
 
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { MongoClient } from 'mongodb';
 import { google } from 'googleapis';
 import { getAuthClient, loadEnvLocal } from './utils/sheetsAuth.mjs';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 loadEnvLocal();
 
@@ -109,9 +115,79 @@ async function mongoToSheet(sheets, client) {
     const docs = await col.find({}).sort({ season: 1, date: 1, matchIndex: 1 }).toArray();
     console.log(`Found ${docs.length} documents in contest_matches.`);
 
-    const values = [SHEET_HEADERS, ...docs.map(docToRow)];
+    // ドキュメントをマップ化: key = `${season}_${date}_${matchIndex}`
+    const docsMap = new Map();
+    const seasonsInDb = new Set();
+    const datesBySeason = new Map();
 
-    console.log(`Total rows to write: ${values.length - 1} (+ header)`);
+    for (const doc of docs) {
+        const s = doc.season ?? 51;
+        const d = doc.date ?? '';
+        const m = doc.matchIndex ?? 1;
+        seasonsInDb.add(s);
+        if (!datesBySeason.has(s)) datesBySeason.set(s, new Set());
+        if (d) datesBySeason.get(s).add(d);
+        docsMap.set(`${s}_${d}_${m}`, doc);
+    }
+
+    // 各シーズンについて、CSV が存在する場合は CSV の日付順序を採用
+    const rows = [];
+    const seasonList = Array.from(seasonsInDb).sort((a, b) => a - b);
+    if (seasonList.length === 0) seasonList.push(51);
+
+    for (const season of seasonList) {
+        const csvCandidates = [
+            path.resolve(__dirname, '../../../agent-instructions', `match_history_${season}.csv`),
+            path.resolve(__dirname, '../../../../shared/agent-instructions', `match_history_${season}.csv`),
+        ];
+        let orderedDates = [];
+
+        for (const cp of csvCandidates) {
+            if (fs.existsSync(cp)) {
+                try {
+                    const content = fs.readFileSync(cp, 'utf-8');
+                    const lines = content.split(/\r?\n/).slice(1);
+                    const seen = new Set();
+                    for (const l of lines) {
+                        const parts = l.split(',');
+                        const d = parts[0]?.trim();
+                        if (d && !seen.has(d)) {
+                            seen.add(d);
+                            orderedDates.push(d);
+                        }
+                    }
+                    if (orderedDates.length > 0) break;
+                } catch {}
+            }
+        }
+
+        // CSV が無ければ DB の日付一覧を採用
+        if (orderedDates.length === 0) {
+            const dbDates = Array.from(datesBySeason.get(season) || []).sort();
+            orderedDates = dbDates;
+        }
+
+        // 各日付について、必ず match_index 1〜5 の 5 行を生成
+        for (const date of orderedDates) {
+            for (let matchIndex = 1; matchIndex <= 5; matchIndex++) {
+                const docKey = `${season}_${date}_${matchIndex}`;
+                if (docsMap.has(docKey)) {
+                    rows.push(docToRow(docsMap.get(docKey)));
+                } else {
+                    // データ未登録または登録漏れのプレースホルダー行
+                    rows.push([
+                        String(season),
+                        date,
+                        String(matchIndex),
+                        '', '', '', '', '', '', '', '', '', ''
+                    ]);
+                }
+            }
+        }
+    }
+
+    const values = [SHEET_HEADERS, ...rows];
+    console.log(`Total rows to write: ${values.length - 1} (+ header) across ${rows.length / 5} dates.`);
     if (!execute) {
         console.log('[DRY RUN] No changes written. Pass --execute to apply.');
         return;
@@ -128,7 +204,7 @@ async function mongoToSheet(sheets, client) {
         valueInputOption: 'USER_ENTERED',
         requestBody: { values },
     });
-    console.log(`[+] Contest sheet updated: ${docs.length} rows written.`);
+    console.log(`[+] Contest sheet updated: ${rows.length} rows written.`);
 }
 
 // ───────────────────────────────────────────────────────────────
@@ -158,6 +234,16 @@ async function sheetToMongo(sheets, client) {
     for (const row of dataRows) {
         const doc = rowToDoc(row, headers);
         if (!doc.season || !doc.date || !doc.matchIndex) continue;
+
+        // プレースホルダー（空行）は MongoDB を上書きしないようスキップ
+        const hasData = doc.opponent?.name ||
+            (doc.stages?.stage1?.myScore ?? 0) > 0 ||
+            (doc.stages?.stage2?.myScore ?? 0) > 0 ||
+            (doc.stages?.stage3?.myScore ?? 0) > 0 ||
+            doc.overallResult;
+
+        if (!hasData) continue;
+
         await col.updateOne(
             { season: doc.season, date: doc.date, matchIndex: doc.matchIndex },
             { $set: { ...doc, updatedAt: new Date() } },
@@ -191,6 +277,12 @@ async function main() {
         if (mode === 'sheet-to-mongo') {
             console.log(`Mode: sheet-to-mongo (${execute ? 'EXECUTE' : 'DRY RUN'})`);
             await sheetToMongo(sheets, client);
+        } else if (mode === 'bidirectional') {
+            console.log(`Mode: bidirectional (${execute ? 'EXECUTE' : 'DRY RUN'})`);
+            console.log('--- Step 1: Syncing Sheet -> MongoDB (Importing manual edits) ---');
+            await sheetToMongo(sheets, client);
+            console.log('--- Step 2: Syncing MongoDB -> Sheet (Writing complete formatted records) ---');
+            await mongoToSheet(sheets, client);
         } else {
             console.log(`Mode: mongo-to-sheet (${execute ? 'EXECUTE' : 'DRY RUN'})`);
             await mongoToSheet(sheets, client);

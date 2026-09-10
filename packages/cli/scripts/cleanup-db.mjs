@@ -1,5 +1,6 @@
 import { MongoClient } from "mongodb";
 import readline from "readline";
+import { getLatestSupportBonus } from "./utils/supportBonus.mjs";
 
 async function askQuestion(query) {
     const rl = readline.createInterface({
@@ -22,47 +23,13 @@ async function run() {
         process.exit(1);
     }
 
-    // Get current SUPPORT_BONUS from process.env (which may have been loaded from .env.local)
-    let bonusFromEnv = parseFloat(process.env.SUPPORT_BONUS || "0");
-
-    // Also check .env.local directly to ensure we get the "higher" value if both exist
-    let bonusFromFile = 0;
-    try {
-        const fs = await import('fs');
-        const path = await import('path');
-        const possiblePaths = [
-            path.resolve(process.cwd(), '.env.local'),
-            path.resolve(process.cwd(), '../../.env.local'),
-            path.resolve(process.cwd(), 'gakumas-tools/.env.local')
-        ];
-        for (const p of possiblePaths) {
-            if (fs.existsSync(p)) {
-                const content = fs.readFileSync(p, 'utf-8');
-                const lines = content.split('\n');
-                for (const line of lines) {
-                    const match = line.match(/^SUPPORT_BONUS=(.*)$/);
-                    if (match) {
-                        bonusFromFile = parseFloat(match[1].trim().replace(/^["'](.*)["']$/, '$1'));
-                        break;
-                    }
-                }
-                break;
-            }
-        }
-    } catch (e) {
-        // Ignore errors reading file
-    }
-
-    const supportBonusRaw = Math.max(bonusFromEnv, bonusFromFile, 0.04);
-    const targetBonus = supportBonusRaw >= 1.0 ? supportBonusRaw / 100 : supportBonusRaw;
-    const normalizedTarget = parseFloat(targetBonus.toFixed(4));
-
-    console.error(`基準サポートボーナス: ${(normalizedTarget * 100).toFixed(2)}% (環境変数: ${bonusFromEnv}, ファイル: ${bonusFromFile} の最大値)`);
-
     const client = new MongoClient(mongodbUri);
     try {
         await client.connect();
         const db = client.db(dbName);
+
+        const normalizedTarget = await getLatestSupportBonus(db);
+        console.error(`基準サポートボーナス: ${(normalizedTarget * 100).toFixed(2)}% (MongoDBから動的取得)`);
         
         const targets = [
             { name: "loadouts", collection: db.collection("loadouts") },

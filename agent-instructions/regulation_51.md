@@ -19,7 +19,7 @@ p_item:
 criteria: (Vo, Da, Vi) = (20, 35, 45)
 plan: logic
 turn: 12
-buf/debug: 1ターン目、アイドル固有のスキルカードのコスト値減少-5・体力消費コスト値減少-5
+buf/debuf: 1ターン目、アイドル固有のスキルカードのコスト値減少-5・体力消費コスト値減少-5
 p_item:
     name: 初星ライト（紫）
     effect:
@@ -32,7 +32,7 @@ p_item:
 criteria: (Vo, Da, Vi) = (45, 35, 20)
 plan: anomaly
 turn: 12
-buf/debug: none
+buf/debuf: none
 p_item:
     name: 初星フラッグ（青）
     effect:

@@ -16,6 +16,16 @@ const PIDOLS_JSON_PATH = path.join(JSON_DIR, 'p_idols.json');
 const SKILLCARDS_JSON_PATH = path.join(JSON_DIR, 'skill_cards.json');
 const IDOLS_JSON_PATH = path.join(JSON_DIR, 'idols.json');
 
+const EFFECT_TO_JA = {
+  goodConditionTurns: '好調',
+  concentration: '集中',
+  goodImpressionTurns: '好印象',
+  motivation: 'やる気',
+  strength: '強気',
+  fullPower: '全力',
+  preservation: '温存'
+};
+
 if (!MONGODB_URI) {
   console.error("Error: MONGODB_URI is not set in .env.local");
   process.exit(1);
@@ -100,12 +110,54 @@ async function main() {
     process.exit(1);
   }
 
+  const idIdx = idxMap['ID'];
+  const nameIdx = idxMap['アイドル名'] ?? idxMap['idol_name'];
+  const titleIdx = idxMap['楽曲名'] ?? idxMap['カード名'] ?? idxMap['曲名'] ?? idxMap['衣装名'] ?? idxMap['title'];
+  const rarityIdx = idxMap['レアリティ'] ?? idxMap['rarity'];
+  const planIdx = idxMap['plan'] ?? idxMap['プラン'];
+  const effectIdx = idxMap['recommended_effect'] ?? idxMap['得意効果'] ?? idxMap['recommendedEffect'] ?? idxMap['タイプ'];
+  const ownedIdx = idxMap['is_owned'];
+  const awakenIdx = idxMap['awaken_level'];
+  const talentIdx = idxMap['talent_level'];
+
   // Check for missing P-idols from master
   const existingIds = new Set();
+  const emptyTitleRows = [];
+
   for (let i = 1; i < rows.length; i++) {
-    if (rows[i] && rows[i][idxMap['ID']]) {
-      existingIds.add(parseInt(rows[i][idxMap['ID']], 10));
+    const row = rows[i];
+    if (row && row[idIdx]) {
+      const pid = parseInt(row[idIdx], 10);
+      existingIds.add(pid);
+      if (titleIdx !== undefined && (!row[titleIdx] || row[titleIdx].trim() === '')) {
+        const p = pIdolsDict[pid.toString()];
+        if (p && p.title) {
+          const colLetter = String.fromCharCode(65 + titleIdx);
+          emptyTitleRows.push({
+            range: `P-Idols!${colLetter}${i + 1}`,
+            values: [[p.title]],
+            id: pid,
+            title: p.title
+          });
+        }
+      }
     }
+  }
+
+  // Auto-repair missing titles if any
+  if (emptyTitleRows.length > 0) {
+    console.log(`Found ${emptyTitleRows.length} P-Idols with missing titles. Repairing in Google Sheets...`);
+    for (const item of emptyTitleRows) {
+      console.log(`  + ID ${item.id}: Setting title -> 【${item.title}】 at ${item.range}`);
+    }
+    await sheets.spreadsheets.values.batchUpdate({
+      spreadsheetId: SHEET_ID,
+      requestBody: {
+        valueInputOption: 'USER_ENTERED',
+        data: emptyTitleRows.map(r => ({ range: r.range, values: r.values }))
+      }
+    });
+    console.log(`[+] Successfully repaired ${emptyTitleRows.length} titles in Google Sheets!\n`);
   }
 
   const allPIdolList = Object.values(pIdolsDict);
@@ -125,20 +177,15 @@ async function main() {
       console.log(`  + ID: ${p.id} | [${p.rarity}] ${idol_name} 【${p.title}】 (${p.plan})`);
 
       const newRow = new Array(headers.length).fill('');
-      if (idxMap['ID'] !== undefined) newRow[idxMap['ID']] = String(p.id);
-      if (idxMap['アイドル名'] !== undefined) newRow[idxMap['アイドル名']] = idol_name;
-      else if (idxMap['idol_name'] !== undefined) newRow[idxMap['idol_name']] = idol_name;
-      if (idxMap['カード名'] !== undefined) newRow[idxMap['カード名']] = p.title;
-      else if (idxMap['title'] !== undefined) newRow[idxMap['title']] = p.title;
-      if (idxMap['レアリティ'] !== undefined) newRow[idxMap['レアリティ']] = p.rarity;
-      else if (idxMap['rarity'] !== undefined) newRow[idxMap['rarity']] = p.rarity;
-      if (idxMap['プラン'] !== undefined) newRow[idxMap['プラン']] = p.plan;
-      else if (idxMap['plan'] !== undefined) newRow[idxMap['plan']] = p.plan;
-      if (idxMap['得意効果'] !== undefined) newRow[idxMap['得意効果']] = p.recommendedEffect || '';
-      else if (idxMap['recommendedEffect'] !== undefined) newRow[idxMap['recommendedEffect']] = p.recommendedEffect || '';
-      if (idxMap['is_owned'] !== undefined) newRow[idxMap['is_owned']] = 'FALSE';
-      if (idxMap['awaken_level'] !== undefined) newRow[idxMap['awaken_level']] = '0';
-      if (idxMap['talent_level'] !== undefined) newRow[idxMap['talent_level']] = '1';
+      if (idIdx !== undefined) newRow[idIdx] = String(p.id);
+      if (nameIdx !== undefined) newRow[nameIdx] = idol_name;
+      if (titleIdx !== undefined) newRow[titleIdx] = p.title;
+      if (rarityIdx !== undefined) newRow[rarityIdx] = p.rarity;
+      if (planIdx !== undefined) newRow[planIdx] = p.plan;
+      if (effectIdx !== undefined) newRow[effectIdx] = EFFECT_TO_JA[p.recommendedEffect] || p.recommendedEffect || '';
+      if (ownedIdx !== undefined) newRow[ownedIdx] = 'FALSE';
+      if (awakenIdx !== undefined) newRow[awakenIdx] = '0';
+      if (talentIdx !== undefined) newRow[talentIdx] = '1';
 
       newRows.push(newRow);
     }
@@ -201,6 +248,7 @@ async function main() {
         title: pIdolRef.title,
         plan: pIdolRef.plan,
         recommendedEffect: pIdolRef.recommendedEffect,
+        recommended_effect: EFFECT_TO_JA[pIdolRef.recommendedEffect] || pIdolRef.recommendedEffect || '',
         rarity,
         awaken_level,
         talent_level,

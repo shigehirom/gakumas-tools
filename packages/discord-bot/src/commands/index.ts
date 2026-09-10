@@ -6,6 +6,7 @@ import { syncCommand } from './sync';
 import { advisoryCommand } from './advisory';
 import { compareMemoryCommand } from './compare-memory';
 import { recordContestCommand } from './record-contest';
+import { syncContestCommand } from './sync-contest';
 
 export const commands = [
     contestCommand,
@@ -15,7 +16,8 @@ export const commands = [
     syncCommand,
     advisoryCommand,
     compareMemoryCommand,
-    recordContestCommand
+    recordContestCommand,
+    syncContestCommand
 ];
 
 export const commandMap = new Map(commands.map(cmd => [cmd.data.name, cmd]));

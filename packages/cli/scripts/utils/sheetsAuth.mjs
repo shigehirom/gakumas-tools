@@ -70,11 +70,34 @@ export async function getAuthClient() {
   try {
     if (fs.existsSync(TOKEN_PATH)) {
       const token = fs.readFileSync(TOKEN_PATH, 'utf-8');
-      oAuth2Client.setCredentials(JSON.parse(token));
+      const credentials = JSON.parse(token);
+      oAuth2Client.setCredentials(credentials);
+
+      oAuth2Client.on('tokens', (newTokens) => {
+        try {
+          const merged = { ...credentials, ...newTokens };
+          for (const dir of tokenDirs) {
+            const p = path.join(dir, 'sheets_tokens.json');
+            try {
+              if (fs.existsSync(path.dirname(p))) {
+                fs.writeFileSync(p, JSON.stringify(merged, null, 2), 'utf-8');
+                console.log(`[OAuth] Token refreshed and saved to ${p}`);
+              }
+            } catch (_) {}
+          }
+        } catch (saveErr) {
+          console.warn(`[OAuth] Failed to save refreshed token: ${saveErr.message}`);
+        }
+      });
+
       return oAuth2Client;
     }
   } catch (e) {
-    console.warn('Error reading stored token, requesting new one...');
+    console.warn('Error reading stored token, requesting new one...', e.message);
+  }
+
+  if (!process.stdin.isTTY) {
+    throw new Error(`OAuth token expired or missing at ${TOKEN_PATH}. Please run reauth-sheets.mjs in interactive terminal.`);
   }
 
   const authUrl = oAuth2Client.generateAuthUrl({

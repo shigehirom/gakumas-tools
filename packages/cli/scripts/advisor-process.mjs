@@ -6,6 +6,7 @@ import os from 'os';
 import path from "path";
 import fs from 'fs';
 import { fileURLToPath } from 'url';
+import { getLatestSupportBonus } from "./utils/supportBonus.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -297,8 +298,32 @@ async function run() {
         options.plan = contestStage.plan;
     }
 
-    const supportBonusRaw = parseFloat(options.supportBonus || process.env.SUPPORT_BONUS || "0.04");
-    const supportBonus = supportBonusRaw >= 1.0 ? supportBonusRaw / 100 : supportBonusRaw;
+    let supportBonusRaw = options.supportBonus ? parseFloat(options.supportBonus) : null;
+    let supportBonus = null;
+    if (supportBonusRaw !== null && !isNaN(supportBonusRaw)) {
+        supportBonus = supportBonusRaw >= 1.0 ? supportBonusRaw / 100 : supportBonusRaw;
+    } else {
+        const mongoUri = uri || process.env.MONGODB_URI;
+        if (mongoUri) {
+            let tempClient = null;
+            try {
+                tempClient = new MongoClient(mongoUri);
+                await tempClient.connect();
+                const db = tempClient.db(process.env.MONGODB_DB || "gakumas-tools");
+                supportBonus = await getLatestSupportBonus(db);
+            } catch (e) {
+                console.error("[Advisor] Warning: Failed to fetch latest support bonus from DB, fallback to 0.04:", e.message);
+                supportBonus = 0.04;
+            } finally {
+                if (tempClient) {
+                    await tempClient.close().catch(() => {});
+                }
+            }
+        } else {
+            supportBonus = 0.04;
+        }
+    }
+    supportBonus = parseFloat(supportBonus.toFixed(4));
 
     console.error(`[Advisor] Loading memories for idol: ${options.idolName || 'all'}...`);
     const memories = await loadMemoriesFromDB(uri, options);

@@ -40,5 +40,26 @@
     "candidate_tokens": 642,
     "total_tokens": 14410,
     "last_updated": "2026-09-02T18:13:27.668506"
+  },
+  "2026-09-03": {
+    "requests": 5,
+    "prompt_tokens": 92022,
+    "candidate_tokens": 1878,
+    "total_tokens": 93900,
+    "last_updated": "2026-09-03T18:23:23.277440"
+  },
+  "2026-09-07": {
+    "requests": 1,
+    "prompt_tokens": 17107,
+    "candidate_tokens": 413,
+    "total_tokens": 17520,
+    "last_updated": "2026-09-07T11:17:00.305344"
+  },
+  "2026-09-08": {
+    "requests": 12,
+    "prompt_tokens": 278035,
+    "candidate_tokens": 4439,
+    "total_tokens": 282474,
+    "last_updated": "2026-09-08T17:51:15.480566"
   }
 }

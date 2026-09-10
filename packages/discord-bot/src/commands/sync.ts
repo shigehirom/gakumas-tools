@@ -32,10 +32,10 @@ export const syncCommand = {
         let ctOutput = '';
         let ctError = '';
 
-        const runNodeScript = (scriptName: string): Promise<{ stdout: string; stderr: string; code: number }> => {
+        const runNodeScript = (scriptName: string, extraArgs: string[] = []): Promise<{ stdout: string; stderr: string; code: number }> => {
             return new Promise((resolve) => {
                 const scriptPath = path.join(cliScriptsDir, scriptName);
-                const child = spawn('node', [scriptPath], {
+                const child = spawn('node', [scriptPath, ...extraArgs], {
                     cwd: rootDir,
                     env: { ...process.env }
                 });
@@ -70,9 +70,9 @@ export const syncCommand = {
                 piError = res.stderr;
             }
 
-            // 3. コンテスト対戦記録同期（MongoDB → Contest シート）
+            // 3. コンテスト対戦記録同期（双方向: スプレッドシート ⇔ MongoDB）
             if (target === 'contest') {
-                const res = await runNodeScript('sync-contest-matches.mjs');
+                const res = await runNodeScript('sync-contest-matches.mjs', ['--mode', 'bidirectional', '--execute']);
                 ctOutput = res.stdout;
                 ctError = res.stderr;
             }
@@ -95,14 +95,21 @@ export const syncCommand = {
                     const insMatch = scOutput.match(/Inserted[^:]*:\s*(\d+)/i) || scOutput.match(/新規[^:]*:\s*(\d+)/i);
                     const updMatch = scOutput.match(/Updated[^:]*:\s*(\d+)/i) || scOutput.match(/更新[^:]*:\s*(\d+)/i);
                     const delMatch = scOutput.match(/Deleted[^:]*:\s*(\d+)/i) || scOutput.match(/削除[^:]*:\s*(\d+)/i);
+                    const bonusMatch = scOutput.match(/SupportBonus:\s*([0-9.]+%[^\n]*)/i);
                     
                     const ins = insMatch ? insMatch[1] : '0';
                     const upd = updMatch ? updMatch[1] : '0';
                     const del = delMatch ? delMatch[1] : '0';
+                    const bonusStr = bonusMatch ? bonusMatch[1] : '';
+
+                    let valueStr = `・新規追加: \`${ins}\` 件\n・レベル/凸更新: \`${upd}\` 件\n・除外: \`${del}\` 件`;
+                    if (bonusStr) {
+                        valueStr += `\n・最新サポートボーナス: **${bonusStr}**`;
+                    }
 
                     embed.addFields({
                         name: '🃏 サポートカード (Support-Cards ➔ MongoDB)',
-                        value: `・新規追加: \`${ins}\` 件\n・更新: \`${upd}\` 件\n・除外: \`${del}\` 件`,
+                        value: valueStr,
                         inline: false
                     });
                 }

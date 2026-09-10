@@ -3,6 +3,7 @@ import path from 'path';
 import { MongoClient } from 'mongodb';
 import { google } from 'googleapis';
 import { getAuthClient, loadEnvLocal } from './utils/sheetsAuth.mjs';
+import { getBonusForLevel } from './utils/supportBonus.mjs';
 
 loadEnvLocal();
 
@@ -148,6 +149,11 @@ async function main() {
     const db = client.db(MONGODB_DB);
     const collection = db.collection('owned_support_cards');
 
+    // Get existing cards from DB to track additions and updates
+    const existingCards = await collection.find({}).toArray();
+    const existingMap = new Map();
+    existingCards.forEach(c => existingMap.set(c._id, c));
+
     if (force) {
       console.log("--force flag provided. Dropping existing collection...");
       try {
@@ -160,20 +166,47 @@ async function main() {
       }
     }
 
+    let insertedCount = 0;
+    let updatedCount = 0;
     let successCount = 0;
+    let totalBonusPct = 0;
+
     for (const card of ownedCards) {
       try {
+        const existing = existingMap.get(card._id);
+        if (!existing) {
+          insertedCount++;
+        } else if (existing.lv !== card.lv || existing.uncap !== card.uncap) {
+          updatedCount++;
+        }
+
         await collection.updateOne(
           { _id: card._id },
           { $set: card },
           { upsert: true }
         );
         successCount++;
+        totalBonusPct += getBonusForLevel(card.lv);
       } catch (err) {
         console.error(`Failed to upsert card: ${card.card_name}`, err.message);
       }
     }
 
+    // Remove cards that are no longer owned
+    const ownedIds = ownedCards.map(c => c._id);
+    const deleteResult = await collection.deleteMany({ _id: { $nin: ownedIds } });
+    if (deleteResult.deletedCount > 0) {
+      console.log(`Removed ${deleteResult.deletedCount} unowned/stale cards from DB.`);
+    }
+
+    const finalBonusPct = totalBonusPct.toFixed(2);
+    const multiplier = (1 + totalBonusPct / 100).toFixed(6);
+
+    console.log(`\n[SyncSummary]`);
+    console.log(`Inserted: ${insertedCount}`);
+    console.log(`Updated: ${updatedCount}`);
+    console.log(`TotalOwned: ${ownedCards.length}`);
+    console.log(`SupportBonus: ${finalBonusPct}% (×${multiplier})`);
     console.log(`Successfully synchronized ${successCount}/${ownedCards.length} cards.`);
   } catch (err) {
     console.error("Database connection or operation failed:", err);

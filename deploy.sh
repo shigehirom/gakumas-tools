@@ -16,6 +16,11 @@ rsync -avz --inplace --no-owner --no-group --no-perms --include='match_history_*
 echo "Syncing all match records from MongoDB to CSV..."
 node packages/cli/scripts/sync-mongo-to-csv.mjs 2>/dev/null || true
 
+# 0.6. Google スプレッドシート（Contest）と MongoDB の双方向同期
+echo "Syncing Contest records with Google Sheets..."
+node packages/cli/scripts/sync-contest-matches.mjs --mode bidirectional --execute 2>/dev/null || true
+
+
 
 
 # 1. 共有アセット・Botコード・ナレッジ・設定の同期準備
@@ -51,14 +56,10 @@ ssh -t $TARGET "cd $TARGET_DIR && \
   echo '==> Building Web UI & Discord Bots...' && \
   sudo docker compose build --no-cache asari-agent gakumas-bot && \
   sudo docker compose build gakumas-tools && \
-  echo '==> Starting Services...' && \
-  sudo docker compose up -d --force-recreate && \
+  echo '==> Starting Discord Bots...' && \
+  sudo docker compose up -d --force-recreate gakumas-bot asari-agent && \
   echo '==> Container Status:' && \
   sudo docker compose ps"
 
-
 stty sane 2>/dev/null || true
 echo "Deployment complete! TrueNAS Web UI & Discord Bots are now live and synchronized."
-
-
-

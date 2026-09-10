@@ -212,10 +212,17 @@ export const recordContestCommand = {
                     `・ファン数: \`+${analysis.extra.fans.toLocaleString()}\` | コイン: \`+${analysis.extra.coins.toLocaleString()}\`\n` +
                     `・現在Pt: \`${analysis.extra.currentPt.toLocaleString()}Pt\` (${analysis.extra.currentRank}位)`
                 )
-                .setFooter({
-                    text: `✅ match_history_${season}.csv の ${analysis.matchIndex}戦目を更新しました (${csvResult.filePath})`
-                })
-                .setTimestamp();
+            let footerText = `✅ MongoDB に ${analysis.matchIndex}戦目を保存しました`;
+            if (csvResult.sheetsSuccess) {
+                footerText += ' ＆ Googleスプレッドシートに反映完了';
+            } else if (csvResult.sheetsError) {
+                footerText += ` ⚠️ スプレッドシート同期失敗: ${csvResult.sheetsError.slice(0, 80)}`;
+            }
+
+            embed.setFooter({
+                text: footerText
+            });
+            embed.setTimestamp();
 
             await interaction.editReply({
                 content: null,

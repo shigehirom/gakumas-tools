@@ -2,22 +2,57 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { MongoClient } from 'mongodb';
-import dotenv from 'dotenv';
+import { createRequire } from 'module';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const require = createRequire(import.meta.url);
 
-const envPaths = [
+// 手動で .env.local をロード（dotenv パッケージ不要）
+const envCandidates = [
     path.resolve(__dirname, '../../../.env.local'),
     path.resolve(__dirname, '../../.env.local'),
-    path.resolve(process.cwd(), '.env.local')
+    path.resolve(process.cwd(), '.env.local'),
+    '/root/gakumas-workspace/gakumas-tools/.env.local',
+    '/app/.env.local'
 ];
-for (const ep of envPaths) {
+for (const ep of envCandidates) {
     if (fs.existsSync(ep)) {
-        dotenv.config({ path: ep });
+        const content = fs.readFileSync(ep, 'utf8');
+        content.split('\n').forEach(line => {
+            const match = line.match(/^([^=]+)=(.*)$/);
+            if (match) {
+                let key = match[1].trim();
+                let value = match[2].trim();
+                if (value.startsWith('"') && value.endsWith('"')) {
+                    value = value.slice(1, -1);
+                }
+                process.env[key] = value;
+            }
+        });
         break;
     }
+}
+
+// mongodb パッケージを探索してロード
+let MongoClient;
+const mongoPaths = [
+    'mongodb',
+    path.resolve(__dirname, '../../discord-bot/node_modules/mongodb'),
+    '/root/gakumas-workspace/gakumas-tools/packages/discord-bot/node_modules/mongodb',
+    '/app/packages/discord-bot/node_modules/mongodb'
+];
+for (const mp of mongoPaths) {
+    try {
+        const mod = require(mp);
+        MongoClient = mod.MongoClient;
+        if (MongoClient) break;
+    } catch {}
+}
+
+if (!MongoClient) {
+    console.warn('[sync-mongo-to-csv] mongodb module not found, skipping sync.');
+    process.exit(0);
 }
 
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://192.168.100.4:27017';
@@ -97,5 +132,5 @@ async function syncMongoToCsv() {
 }
 
 syncMongoToCsv().catch(err => {
-    console.error('[sync-mongo-to-csv error]', err);
+    console.error('[sync-mongo-to-csv error]', err.message);
 });

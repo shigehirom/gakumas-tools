@@ -74,8 +74,6 @@ export function registerContestCommand(cli: any) {
 
             if (options.supportBonus) {
                 args.push('--supportBonus', options.supportBonus);
-            } else if (process.env.SUPPORT_BONUS) {
-                args.push('--supportBonus', process.env.SUPPORT_BONUS);
             }
 
             if (options.allResults) args.push('--allResults');

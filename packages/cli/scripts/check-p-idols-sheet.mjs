@@ -31,13 +31,36 @@ async function checkPIdols() {
   console.log("Headers:", headers);
   
   const existingIds = new Set();
+  const planCounts = {};
+  const effectCounts = {};
+  let ownedCount = 0;
+
+  const idxMap = {};
+  headers.forEach((h, i) => idxMap[h] = i);
+
   for (let i = 1; i < rows.length; i++) {
-    const id = rows[i][0];
+    const row = rows[i];
+    const id = row[idxMap['ID']];
     if (id) existingIds.add(parseInt(id, 10));
+
+    const plan = row[idxMap['plan']] || '(empty)';
+    planCounts[plan] = (planCounts[plan] || 0) + 1;
+
+    const effect = row[idxMap['recommended_effect']] || '(empty)';
+    effectCounts[effect] = (effectCounts[effect] || 0) + 1;
+
+    if (row[idxMap['is_owned']] === 'TRUE' || row[idxMap['is_owned']] === 'true') {
+      ownedCount++;
+    }
   }
   
-  console.log(`Found ${existingIds.size} existing P-Idols in spreadsheet.`);
-  
+  console.log(`\nFound ${existingIds.size} existing P-Idols in spreadsheet (${ownedCount} owned).`);
+  console.log("Plan distribution:", planCounts);
+  console.log("Recommended effect distribution:", effectCounts);
+
+  console.log("\nSample row 1:", rows[1]);
+  console.log("Sample row 154 (last):", rows[rows.length - 1]);
+
   const pIdolsData = JSON.parse(fs.readFileSync(PIDOLS_JSON_PATH, 'utf8'));
   const idolsData = JSON.parse(fs.readFileSync(IDOLS_JSON_PATH, 'utf8'));
   const idolsMap = {};
