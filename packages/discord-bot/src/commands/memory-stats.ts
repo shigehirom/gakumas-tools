@@ -10,6 +10,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import * as os from 'os';
 import { MasterData } from '../utils/master-data';
+import { getIdolColor } from '../utils/idol-colors';
 import { config } from '../config';
 
 const IDOL_DEFINITIONS = [
@@ -182,6 +183,7 @@ export const memoryStatsCommand = {
             if (!selectedIdolKey) {
                 // --- 全アイドルのメモリー状況 ---
                 const rows: Array<{
+                    id: number;
                     name: string;
                     sense: number;
                     logic: number;
@@ -209,6 +211,7 @@ export const memoryStatsCommand = {
 
                     const subtotal = sense + logic + anomaly;
                     rows.push({
+                        id: idolDef.id,
                         name: idolDef.name,
                         sense,
                         logic,
@@ -313,7 +316,9 @@ export const memoryStatsCommand = {
                     return {
                         plan: PLAN_NAMES[p.plan] || p.plan,
                         effect: EFFECT_NAMES[p.recommendedEffect] || p.recommendedEffect || '-',
-                        title: p.title,
+                        rarity: p.rarity,
+                        rawTitle: p.title,
+                        title: `[${p.rarity}] ${p.title}`,
                         count
                     };
                 });
@@ -325,12 +330,15 @@ export const memoryStatsCommand = {
 
                 const title = `${targetDef.name} メモリー所持状況`;
                 const subtitle = `所持枚数: ${subtotal}枚`;
+                const idolColor = getIdolColor(targetDef.id);
 
                 // 画像生成
                 const imagePath = await generateStatsImage({
                     mode: 'individual',
                     title,
                     subtitle,
+                    idolKey: targetDef.key,
+                    idolId: targetDef.id,
                     rows: items,
                     total: subtotal
                 });
@@ -339,7 +347,7 @@ export const memoryStatsCommand = {
                     const filename = `memory_stats_${selectedIdolKey}.png`;
                     const attachment = new AttachmentBuilder(imagePath, { name: filename });
                     const embed = new EmbedBuilder()
-                        .setColor(0xFEE75C)
+                        .setColor(idolColor?.decimal || 0xD4A017)
                         .setTitle(`📊 ${title}`)
                         .setImage(`attachment://${filename}`)
                         .setFooter({ text: subtitle })

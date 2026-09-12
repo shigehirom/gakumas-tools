@@ -41,6 +41,7 @@ const path = __importStar(require("path"));
 const fs = __importStar(require("fs"));
 const os = __importStar(require("os"));
 const master_data_1 = require("../utils/master-data");
+const idol_colors_1 = require("../utils/idol-colors");
 const config_1 = require("../config");
 const IDOL_DEFINITIONS = [
     { key: 'saki', id: 1, name: '花海 咲季' },
@@ -214,6 +215,7 @@ exports.memoryStatsCommand = {
                     }
                     const subtotal = sense + logic + anomaly;
                     rows.push({
+                        id: idolDef.id,
                         name: idolDef.name,
                         sense,
                         logic,
@@ -310,7 +312,9 @@ exports.memoryStatsCommand = {
                     return {
                         plan: PLAN_NAMES[p.plan] || p.plan,
                         effect: EFFECT_NAMES[p.recommendedEffect] || p.recommendedEffect || '-',
-                        title: p.title,
+                        rarity: p.rarity,
+                        rawTitle: p.title,
+                        title: `[${p.rarity}] ${p.title}`,
                         count
                     };
                 });
@@ -320,11 +324,14 @@ exports.memoryStatsCommand = {
                 }
                 const title = `${targetDef.name} メモリー所持状況`;
                 const subtitle = `所持枚数: ${subtotal}枚`;
+                const idolColor = (0, idol_colors_1.getIdolColor)(targetDef.id);
                 // 画像生成
                 const imagePath = await generateStatsImage({
                     mode: 'individual',
                     title,
                     subtitle,
+                    idolKey: targetDef.key,
+                    idolId: targetDef.id,
                     rows: items,
                     total: subtotal
                 });
@@ -332,7 +339,7 @@ exports.memoryStatsCommand = {
                     const filename = `memory_stats_${selectedIdolKey}.png`;
                     const attachment = new discord_js_1.AttachmentBuilder(imagePath, { name: filename });
                     const embed = new discord_js_1.EmbedBuilder()
-                        .setColor(0xFEE75C)
+                        .setColor(idolColor?.decimal || 0xD4A017)
                         .setTitle(`📊 ${title}`)
                         .setImage(`attachment://${filename}`)
                         .setFooter({ text: subtitle })
