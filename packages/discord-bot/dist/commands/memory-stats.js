@@ -48,6 +48,31 @@ const EFFECT_ORDER = {
     preservation: 6,
     fullPower: 7,
 };
+function getStringWidth(str) {
+    let width = 0;
+    for (const char of str) {
+        const code = char.codePointAt(0) || 0;
+        // CJK, Hiragana, Katakana, Fullwidth punctuation
+        if ((code >= 0x3000 && code <= 0x9FFF) ||
+            (code >= 0xF900 && code <= 0xFAFF) ||
+            (code >= 0xFF01 && code <= 0xFF60) ||
+            (code >= 0xFFE0 && code <= 0xFFE6)) {
+            width += 2;
+        }
+        else {
+            width += 1;
+        }
+    }
+    return width;
+}
+function padRight(str, targetWidth) {
+    const currentWidth = getStringWidth(str);
+    return str + ' '.repeat(Math.max(0, targetWidth - currentWidth));
+}
+function padLeft(str, targetWidth) {
+    const currentWidth = getStringWidth(str);
+    return ' '.repeat(Math.max(0, targetWidth - currentWidth)) + str;
+}
 exports.memoryStatsCommand = {
     data: new discord_js_1.SlashCommandBuilder()
         .setName('memory-stats')
@@ -117,18 +142,26 @@ exports.memoryStatsCommand = {
                     totalAnomaly += anomaly;
                     grandTotal += subtotal;
                 }
-                // Markdown 表形式を作成
-                let markdownTable = '| アイドル名 | センス | ロジック | アノマリー | 計 |\n';
-                markdownTable += '| :-- | --: | --: | --: | --: |\n';
+                // コードブロックで等幅・桁揃えした表を作成
+                const colNameW = 14;
+                const colSenseW = 6;
+                const colLogicW = 8;
+                const colAnomW = 10;
+                const colSubW = 5;
+                const sep = `${'-'.repeat(colNameW)} ${'-'.repeat(colSenseW)} ${'-'.repeat(colLogicW)} ${'-'.repeat(colAnomW)} ${'-'.repeat(colSubW)}`;
+                let tableText = '```\n';
+                tableText += `${padRight('アイドル名', colNameW)} ${padLeft('センス', colSenseW)} ${padLeft('ロジック', colLogicW)} ${padLeft('アノマリー', colAnomW)} ${padLeft('計', colSubW)}\n`;
+                tableText += `${sep}\n`;
                 for (const r of rows) {
-                    markdownTable += `| ${r.name} | ${r.sense} | ${r.logic} | ${r.anomaly} | ${r.subtotal} |\n`;
+                    tableText += `${padRight(r.name, colNameW)} ${padLeft(r.sense.toString(), colSenseW)} ${padLeft(r.logic.toString(), colLogicW)} ${padLeft(r.anomaly.toString(), colAnomW)} ${padLeft(r.subtotal.toString(), colSubW)}\n`;
                 }
-                // 合計行
-                markdownTable += `| **合計** | **${totalSense}** | **${totalLogic}** | **${totalAnomaly}** | **${grandTotal}** |\n`;
+                tableText += `${sep}\n`;
+                tableText += `${padRight('合計', colNameW)} ${padLeft(totalSense.toString(), colSenseW)} ${padLeft(totalLogic.toString(), colLogicW)} ${padLeft(totalAnomaly.toString(), colAnomW)} ${padLeft(grandTotal.toString(), colSubW)}\n`;
+                tableText += '```';
                 const embed = new discord_js_1.EmbedBuilder()
                     .setColor(0x5865F2)
                     .setTitle('📊 全アイドル メモリー所持状況')
-                    .setDescription(markdownTable)
+                    .setDescription(tableText)
                     .setFooter({ text: `総登録枚数: ${grandTotal}枚` })
                     .setTimestamp();
                 await interaction.editReply({ embeds: [embed] });
@@ -154,23 +187,41 @@ exports.memoryStatsCommand = {
                         return effectDiff;
                     return a.id - b.id;
                 });
-                let markdownTable = '| タイプ | 効果 | 楽曲名 | 枚数 |\n';
-                markdownTable += '| :-- | :-- | :-- | --: |\n';
-                let subtotal = 0;
-                for (const p of idolPIdols) {
+                const items = idolPIdols.map(p => {
                     const count = countMap.get(p.id) || 0;
-                    subtotal += count;
-                    const planText = PLAN_NAMES[p.plan] || p.plan;
-                    const effectText = EFFECT_NAMES[p.recommendedEffect] || p.recommendedEffect || '-';
-                    const titleText = p.title;
-                    markdownTable += `| ${planText} | ${effectText} | ${titleText} | ${count} |\n`;
+                    return {
+                        plan: PLAN_NAMES[p.plan] || p.plan,
+                        effect: EFFECT_NAMES[p.recommendedEffect] || p.recommendedEffect || '-',
+                        title: p.title,
+                        count
+                    };
+                });
+                let subtotal = 0;
+                let maxTitleWidth = 6;
+                for (const item of items) {
+                    subtotal += item.count;
+                    const w = getStringWidth(item.title);
+                    if (w > maxTitleWidth)
+                        maxTitleWidth = w;
                 }
-                // 合計行
-                markdownTable += `| **合計** | | | **${subtotal}** |\n`;
+                const colPlanW = 10;
+                const colEffectW = 8;
+                const colTitleW = Math.max(maxTitleWidth + 2, 10);
+                const colCountW = 5;
+                const sep = `${'-'.repeat(colPlanW)} ${'-'.repeat(colEffectW)} ${'-'.repeat(colTitleW)} ${'-'.repeat(colCountW)}`;
+                let tableText = '```\n';
+                tableText += `${padRight('タイプ', colPlanW)} ${padRight('効果', colEffectW)} ${padRight('楽曲名', colTitleW)} ${padLeft('枚数', colCountW)}\n`;
+                tableText += `${sep}\n`;
+                for (const item of items) {
+                    tableText += `${padRight(item.plan, colPlanW)} ${padRight(item.effect, colEffectW)} ${padRight(item.title, colTitleW)} ${padLeft(item.count.toString(), colCountW)}\n`;
+                }
+                tableText += `${sep}\n`;
+                tableText += `${padRight('合計', colPlanW)} ${padRight('', colEffectW)} ${padRight('', colTitleW)} ${padLeft(subtotal.toString(), colCountW)}\n`;
+                tableText += '```';
                 const embed = new discord_js_1.EmbedBuilder()
                     .setColor(0xFEE75C)
                     .setTitle(`📊 ${targetDef.name} メモリー所持状況`)
-                    .setDescription(markdownTable)
+                    .setDescription(tableText)
                     .setFooter({ text: `所持枚数: ${subtotal}枚` })
                     .setTimestamp();
                 await interaction.editReply({ embeds: [embed] });
