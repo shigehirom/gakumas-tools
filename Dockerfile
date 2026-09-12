@@ -22,8 +22,14 @@ RUN pnpm install --frozen-lockfile
 COPY ./gakumas-tools ./gakumas-tools
 COPY ./packages ./packages
 
-# Copy local P-idol images to Next.js public directory so they can be served statically
-RUN mkdir -p gakumas-tools/public/images/p_idols && cp packages/gakumas-images/images/pIdols/*.png gakumas-tools/public/images/p_idols/
+# Copy local P-idol, P-item, and skill card images to Next.js public directory so they can be served statically
+RUN mkdir -p gakumas-tools/public/images/p_idols && cp packages/gakumas-images/images/pIdols/*.png gakumas-tools/public/images/p_idols/ && \
+    mkdir -p gakumas-tools/public/images/p_items/icons gakumas-tools/public/images/p_items/details && \
+    cp -r packages/gakumas-images/images/pItems/icons/*.png gakumas-tools/public/images/p_items/icons/ 2>/dev/null || true && \
+    cp -r packages/gakumas-images/images/pItems/details/*.png gakumas-tools/public/images/p_items/details/ 2>/dev/null || true && \
+    mkdir -p gakumas-tools/public/images/skill_cards/icons gakumas-tools/public/images/skill_cards/details && \
+    cp -r packages/gakumas-images/images/skillCards/icons/*.png gakumas-tools/public/images/skill_cards/icons/ 2>/dev/null || true && \
+    cp -r packages/gakumas-images/images/skillCards/details/*.png gakumas-tools/public/images/skill_cards/details/ 2>/dev/null || true
 
 
 # Development image, run the development server
