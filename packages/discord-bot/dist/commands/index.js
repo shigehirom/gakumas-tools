@@ -10,6 +10,7 @@ const advisory_1 = require("./advisory");
 const compare_memory_1 = require("./compare-memory");
 const record_contest_1 = require("./record-contest");
 const sync_contest_1 = require("./sync-contest");
+const memory_stats_1 = require("./memory-stats");
 exports.commands = [
     contest_1.contestCommand,
     deck_1.deckCommand,
@@ -19,6 +20,7 @@ exports.commands = [
     advisory_1.advisoryCommand,
     compare_memory_1.compareMemoryCommand,
     record_contest_1.recordContestCommand,
-    sync_contest_1.syncContestCommand
+    sync_contest_1.syncContestCommand,
+    memory_stats_1.memoryStatsCommand
 ];
 exports.commandMap = new Map(exports.commands.map(cmd => [cmd.data.name, cmd]));
