@@ -189,21 +189,23 @@ export const contestCommand = {
                 }
             }
 
-            // 組合せベスト Top 3 のテーブル抽出
+            // 組合せベスト Top 5 のテーブル抽出
             // | 1 | 26/08/13＿16725【クライアイ】 | 26/08/09＿17274【クライアイ】 | ... | ... | 150660 | ...
             const combMatches = Array.from(output.matchAll(/^\|\s*(\d+)\s*\|\s*([^|]+)\|\s*([^|]+)\|\s*([\d,]+)\s*\|\s*([\d,]+)\s*\|\s*([\d,]+)\s*\|\s*([\d,]+)\s*\|\s*([\d,]+)\s*\|\s*([\d,]+)\s*\|/gm));
             if (combMatches.length > 0) {
-                const topCombs = combMatches.slice(0, 3).map(m => {
+                const medals = ['🥇', '🥈', '🥉', '4️⃣', '5️⃣'];
+                const topCombs = combMatches.slice(0, 5).map((m, idx) => {
                     const rank = m[1];
+                    const medal = medals[idx] || `#${rank}`;
                     const mainStr = m[2].trim();
                     const subStr = m[3].trim();
                     const median = parseInt(m[6].replace(/,/g, ''), 10).toLocaleString();
                     const avg = parseInt(m[9].replace(/,/g, ''), 10).toLocaleString();
-                    return `**#${rank}** [中央値: **${median} Pt** / 平均: ${avg} Pt]\n• メイン: \`${mainStr}\`\n• サブ: \`${subStr}\``;
+                    return `${medal} **#${rank}** [中央値: **${median} Pt** / 平均: ${avg} Pt]\n• メイン: \`${mainStr}\`\n• サブ: \`${subStr}\``;
                 }).join('\n\n');
 
                 embed.addFields({
-                    name: '🏆 組合せベスト Top 3',
+                    name: `🏆 組合せベスト Top ${Math.min(5, combMatches.length)}`,
                     value: topCombs,
                     inline: false
                 });
