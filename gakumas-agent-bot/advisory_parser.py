@@ -11,8 +11,11 @@ log = logging.getLogger("advisory_parser")
 
 def _find_dir(candidates: list[Path]) -> Path:
     for c in candidates:
-        if c.exists():
-            return c
+        try:
+            if c.exists():
+                return c
+        except Exception:
+            continue
     return candidates[0]
 
 WORKSPACE_DIR = _find_dir([
@@ -22,10 +25,15 @@ WORKSPACE_DIR = _find_dir([
 ])
 
 INSTRUCTIONS_DIRS = [
-    WORKSPACE_DIR / "shared" / "agent-instructions",
-    WORKSPACE_DIR / "gakumas-tools" / "agent-instructions",
+    Path("/root/gakumas-workspace/shared/agent-instructions"),
+    Path("/root/gakumas-workspace/gakumas-tools/agent-instructions"),
     Path("/app/agent-instructions"),
+    Path("/app/shared/agent-instructions"),
+    Path(__file__).resolve().parent.parent / "shared" / "agent-instructions",
+    Path(__file__).resolve().parent.parent / "gakumas-tools" / "agent-instructions",
+    Path(__file__).resolve().parent.parent / "agent-instructions",
 ]
+
 
 IDOL_KEY_MAP = {
     "saki": "花海咲季",
@@ -60,24 +68,35 @@ IDOL_NAME_TO_KEY = {
 }
 
 
+def safe_exists(p: Path) -> bool:
+    try:
+        return p.exists()
+    except Exception:
+        return False
+
+
 def find_latest_season(season: int | None = None) -> tuple[int, Path] | None:
+    all_found_seasons = []
     for d in INSTRUCTIONS_DIRS:
-        if not d.exists():
+        if not safe_exists(d):
             continue
         if season is not None:
             f = d / f"fried_aji3_advisory_{season}.md"
-            if f.exists():
+            if safe_exists(f):
                 return season, f
         else:
-            files = list(d.glob("fried_aji3_advisory_*.md"))
-            seasons = []
-            for f in files:
-                m = re.search(r"fried_aji3_advisory_(\d+)\.md", f.name)
-                if m:
-                    seasons.append((int(m.group(1)), f))
-            if seasons:
-                seasons.sort(key=lambda x: x[0], reverse=True)
-                return seasons[0]
+            try:
+                files = list(d.glob("fried_aji3_advisory_*.md"))
+                for f in files:
+                    m = re.search(r"fried_aji3_advisory_(\d+)\.md", f.name)
+                    if m:
+                        all_found_seasons.append((int(m.group(1)), f))
+            except Exception:
+                continue
+
+    if all_found_seasons:
+        all_found_seasons.sort(key=lambda x: x[0], reverse=True)
+        return all_found_seasons[0]
     return None
 
 
@@ -90,10 +109,10 @@ def get_stage_regulation(season: int, stage_num: int) -> dict[str, Any]:
     }
     
     for d in INSTRUCTIONS_DIRS:
-        if not d.exists():
+        if not safe_exists(d):
             continue
         reg_file = d / f"regulation_{season}.md"
-        if reg_file.exists():
+        if safe_exists(reg_file):
             try:
                 text = reg_file.read_text(encoding="utf-8")
                 stages = re.split(r"(?m)^#\s*Stage:\s*", text)
@@ -173,6 +192,185 @@ def get_stage_recommended_pidols(stage: int, season: int | None = None) -> list[
     return pidol_entries
 
 
+IDOL_NAME_TO_ID = {
+    "花海咲季": 1, "saki": 1,
+    "月村手毬": 2, "temari": 2,
+    "藤田ことね": 3, "kotone": 3,
+    "有村麻央": 4, "mao": 4,
+    "葛城リーリヤ": 5, "lilja": 5,
+    "倉本千奈": 6, "china": 6,
+    "紫雲清夏": 7, "sumika": 7,
+    "篠澤広": 8, "hiro": 8,
+    "姫崎莉波": 9, "rinami": 9,
+    "花海佑芽": 10, "ume": 10,
+    "十王星南": 11, "sena": 11,
+    "秦谷美鈴": 12, "misuzu": 12,
+    "雨夜燕": 13, "tsubame": 13,
+    "根緒亜紗里": 14, "asari": 14,
+}
+
+def _get_idol_recommended_effect(idol_name: str, title: str) -> str:
+    """p_idols.json からアイドルの得意効果（やる気、好印象等）を取得する"""
+    effect_map = {
+        "motivation": "やる気",
+        "goodImpressionTurns": "好印象",
+        "goodConditionTurns": "好調",
+        "concentration": "集中",
+        "strength": "強気",
+        "fullPower": "全力",
+        "preservation": "温存"
+    }
+    target_clean = idol_name.replace(" ", "").strip()
+    target_id = IDOL_NAME_TO_ID.get(target_clean)
+
+    json_candidates = [
+        WORKSPACE_DIR / "packages" / "gakumas-data" / "json" / "p_idols.json",
+        WORKSPACE_DIR / "gakumas-tools" / "packages" / "gakumas-data" / "json" / "p_idols.json",
+        Path("/app/packages/gakumas-data/json/p_idols.json"),
+    ]
+    for p in json_candidates:
+        if safe_exists(p):
+            try:
+                import json
+                data = json.loads(p.read_text(encoding="utf-8"))
+                for item in data:
+                    if item.get("title") == title:
+                        if target_id is not None and item.get("idolId") != target_id:
+                            continue
+                        eff = item.get("recommendedEffect")
+                        return effect_map.get(eff, "")
+            except Exception:
+                pass
+    return ""
+
+
+def _parse_skill_cards_section(skill_sec: str, matched_entry: dict[str, Any]) -> list[dict[str, Any]]:
+    """skill_card セクションを階層的に解析し、対象アイドル向けのカードリスト（最大10枚）を生成する"""
+    lines = skill_sec.splitlines()
+
+    class Node:
+        def __init__(self, indent: int, text: str):
+            self.indent = indent
+            self.text = text
+            self.children: list['Node'] = []
+
+        def add_child(self, child: 'Node'):
+            self.children.append(child)
+
+    root = Node(-1, "root")
+    stack = [root]
+
+    for raw_line in lines:
+        if not raw_line.strip() or raw_line.strip().startswith("##"):
+            continue
+        expanded = raw_line.replace('\t', '    ')
+        indent = len(expanded) - len(expanded.lstrip())
+        content = raw_line.strip()
+        if content.startswith("- "):
+            content = content[2:].strip()
+        elif content.startswith("-"):
+            content = content[1:].strip()
+        else:
+            continue
+
+        node = Node(indent, content)
+        while len(stack) > 1 and stack[-1].indent >= indent:
+            stack.pop()
+        stack[-1].add_child(node)
+        stack.append(node)
+
+    common_card_nodes = []
+    idol_card_nodes = []
+
+    target_key = matched_entry.get("idol_key", "")
+    target_title = matched_entry.get("title", "")
+    target_name = matched_entry.get("idol_name", "")
+
+    for top in root.children:
+        t_text = top.text
+        if t_text.startswith("common:") or t_text == "common":
+            common_card_nodes.append(top)
+        elif "【" in t_text:
+            if (target_key and target_key in t_text) or (target_name and target_name in t_text):
+                if target_title in t_text:
+                    idol_card_nodes.append(top)
+
+    # 1. アイドル専用セットが定義されている場合
+    if idol_card_nodes:
+        # S51 旧記法（- /元/先/）か、S52 直接カード一覧か判定
+        is_legacy_diff = any(cnode.text.startswith("/") for cnode in idol_card_nodes[0].children)
+        if not is_legacy_diff:
+            res_cards = []
+            for cnode in idol_card_nodes[0].children:
+                card_obj = {"name": cnode.text, "customizations": []}
+                for sub in cnode.children:
+                    if sub.text.startswith("customize:"):
+                        card_obj["customizations"].append(sub.text.split("customize:", 1)[1].strip())
+                res_cards.append(card_obj)
+            if res_cards:
+                return res_cards
+
+    # 2. common ブロック選択
+    selected_common = None
+    if len(common_card_nodes) == 1:
+        selected_common = common_card_nodes[0]
+    elif len(common_card_nodes) > 1:
+        eff = _get_idol_recommended_effect(target_name, target_title)
+        for c in common_card_nodes:
+            if eff and eff in c.text:
+                selected_common = c
+                break
+        if not selected_common:
+            selected_common = common_card_nodes[0]
+
+    if not selected_common:
+        return []
+
+    # 共通カード構築
+    final_cards = []
+    for cnode in selected_common.children:
+        orig_card_name = cnode.text
+        customizations = []
+        replaced_card = None
+
+        for sub in cnode.children:
+            s_text = sub.text
+            if s_text.startswith("customize:"):
+                customizations.append(s_text.split("customize:", 1)[1].strip())
+            elif "【" in s_text:
+                if (target_key and target_key in s_text) or (target_name and target_name in s_text):
+                    if target_title in s_text:
+                        for rnode in sub.children:
+                            r_name = rnode.text
+                            r_custs = []
+                            for rsub in rnode.children:
+                                if rsub.text.startswith("customize:"):
+                                    r_custs.append(rsub.text.split("customize:", 1)[1].strip())
+                            replaced_card = {"name": r_name, "customizations": r_custs}
+
+        if replaced_card:
+            final_cards.append(replaced_card)
+        else:
+            final_cards.append({"name": orig_card_name, "customizations": customizations})
+
+    # 旧形式 diff 置換のサポート（idol_card_nodes に - /元/先/ がある場合）
+    if idol_card_nodes:
+        diff_replacements = {}
+        for cnode in idol_card_nodes[0].children:
+            if cnode.text.startswith("/"):
+                m = re.match(r"^/([^/]+)/([^/]+)/", cnode.text)
+                if m:
+                    orig_c = m.group(1).strip()
+                    new_c = m.group(2).strip()
+                    diff_replacements[orig_c] = new_c
+        if diff_replacements:
+            for idx, c in enumerate(final_cards):
+                if c["name"] in diff_replacements:
+                    final_cards[idx] = {"name": diff_replacements[c["name"]], "customizations": c.get("customizations", [])}
+
+    return final_cards
+
+
 def parse_advisory_for_entry(stage: int, matched_entry: dict[str, Any], season: int | None = None) -> dict[str, Any] | None:
     """単一のPアイドルエントリに対する推奨構成データをパースする"""
     season_info = find_latest_season(season)
@@ -215,8 +413,11 @@ def parse_advisory_for_entry(stage: int, matched_entry: dict[str, Any], season: 
         if line_s.startswith("- common:"):
             curr_target = "common"
         elif line_s.startswith("- ") and "【" in line_s:
-            if matched_entry["idol_key"] in line_s and matched_entry["title"] in line_s:
-                curr_target = "idol"
+            if (matched_entry.get("idol_key") and matched_entry["idol_key"] in line_s) or (matched_entry.get("idol_name") and matched_entry["idol_name"] in line_s):
+                if matched_entry.get("title") and matched_entry["title"] in line_s:
+                    curr_target = "idol"
+                else:
+                    curr_target = "other"
             else:
                 curr_target = "other"
         elif line_s.startswith("- ") and curr_target in ("common", "idol"):
@@ -231,67 +432,7 @@ def parse_advisory_for_entry(stage: int, matched_entry: dict[str, Any], season: 
     pitems = pitems[:2]
 
     # スキルカードパース
-    common_cards = []
-    curr_c = None
-    curr_sec_name = None
-    idol_cards_raw = []
-    
-    for line in skill_sec.splitlines():
-        line_s = line.strip()
-        if line_s.startswith("- common:"):
-            curr_sec_name = "common"
-            continue
-        elif line_s.startswith("- ") and "【" in line_s:
-            if matched_entry["idol_key"] in line_s and matched_entry["title"] in line_s:
-                curr_sec_name = "idol"
-            else:
-                curr_sec_name = "other"
-            continue
-
-        if curr_sec_name == "common":
-            if line_s.startswith("- customize:") and curr_c:
-                cust_val = line_s.split(":", 1)[1].strip()
-                curr_c["customizations"].append(cust_val)
-            elif line_s.startswith("- ") and not line_s.startswith("- customize:"):
-                card_name = line_s[2:].strip()
-                if card_name:
-                    curr_c = {"name": card_name, "customizations": []}
-                    common_cards.append(curr_c)
-        elif curr_sec_name == "idol":
-            if line_s.startswith("- customize:") and idol_cards_raw:
-                cust_val = line_s.split(":", 1)[1].strip()
-                if isinstance(idol_cards_raw[-1], dict):
-                    idol_cards_raw[-1]["customizations"].append(cust_val)
-                elif isinstance(idol_cards_raw[-1], tuple):
-                    idol_cards_raw[-1][1]["customizations"].append(cust_val)
-            elif line_s.startswith("- /"):
-                m_rep = re.match(r"^-\s*/([^/]+)/([^/]+)/", line_s)
-                if m_rep:
-                    target_c = m_rep.group(1).strip()
-                    new_c = m_rep.group(2).strip()
-                    new_card_obj = {"name": new_c, "customizations": []}
-                    idol_cards_raw.append((target_c, new_card_obj))
-            elif line_s.startswith("- ") and not line_s.startswith("- customize:"):
-                c_name = line_s[2:].strip()
-                if c_name:
-                    idol_cards_raw.append({"name": c_name, "customizations": []})
-
-    # スキルカードの合成・置換
-    final_cards = []
-    if idol_cards_raw and all(isinstance(c, dict) for c in idol_cards_raw):
-        final_cards = idol_cards_raw
-    else:
-        for c in common_cards:
-            replaced = False
-            for raw in idol_cards_raw:
-                if isinstance(raw, tuple):
-                    orig, repl = raw
-                    if c["name"] == orig:
-                        final_cards.append(repl)
-                        replaced = True
-                        break
-            if not replaced:
-                final_cards.append(c)
+    final_cards = _parse_skill_cards_section(skill_sec, matched_entry)
 
     return {
         "season": cur_season,

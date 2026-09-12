@@ -1,0 +1,266 @@
+
+# Stage:1 
+## p_idol:
+- hiro: 【ガラクタロード】
+- kotone: 【自己肯定感爆上げ↑↑しゅきしゅきソング】
+	- sub: 【がむしゃらに行こう！】
+- rinami: 【キミとセミブルー】awaken_level: 7
+	- sub: 【clumsy trick】 awaken_level: 7
+	- sub: 【キミとセミブルー】
+- sumika: 【Love & Joy】
+- china: 【ようこそ初星温泉】
+	- sub: 【日々、発見的ステップ！】
+- sena: 【Campus mode!!】
+- china: 【空と約束】
+	- sub: 【日々、発見的ステップ！】
+- tsubame: 【Campus mode!!】
+- ume: 【White Night! White Wish!】
+- kotone: 【がむしゃらに行こう！】
+- misuzu: 【Star-mine】
+- china: 【日々、発見的ステップ！】
+- rinami: 【clumsy trick】awaken_level: 7
+- lilja: 【Campus mode!!】
+- hiro: 【仮装狂騒曲】
+
+## p_item:
+- common: 
+	-  得体のしれないモノ
+	- とろけた時間
+- sena: 【Campus mode!!】
+	- スカウト遮り帽
+	- 天川ラーメン巡り
+
+## skill_card:
+- common: 
+	- シュプレヒコール+
+	- 一発勝負+
+		- ume: 【White Night! White Wish!】
+			- 存在感+
+		- tsubame: 【Campus mode!!】
+			- 演出計画+
+		- sena: 【Campus mode!!】
+			- 天真爛漫
+	- 大胆不敵+
+		- ume: 【White Night! White Wish!】
+			- 仕切り直し
+	- 精神統一+
+		- customize: 集中
+		- customize: パラメータ追加
+	- 国民的アイドル
+	- ほぐれるひととき+
+		- customize: 好調
+	- ひと呼吸
+		- sena: 【Campus mode!!】
+			- ファンサ+
+				- customize: 好調追加
+				- customize: 絶好調追加
+				- customize: パラメータ
+		- lilja: 【Campus mode!!】
+			- 準備運動
+	- 精神統一+
+		- customize: 集中
+		- customize: パラメータ追加
+		- sena: 【Campus mode!!】
+			- 精神統一+
+	- 脚光+
+	- 天賦の才+
+
+- china: 【空と約束】
+	- 練習再開！
+		- customize: 好調
+	- スポットライト+
+		- customize: 好調
+		- customize: 好調
+	- シュプレヒコール+
+	- 静かな意志+
+	- 大胆不敵+
+	- キメ顔で自撮り+
+		- customize: 好調
+		- customize: 好調
+	- 軽い足取り+
+		- customize: 好調
+		- customize: 好調
+		- customize: 好調
+	- スポットライト+
+	- 至高のエンタメ+
+	- 魅惑のパフォーマンス+
+
+# Stage:2
+## p_idol:
+- sena: 【ガラクタロード】
+- rinami: 【L.U.V】
+	- sub: 【36℃ U・B・U】
+- tsubame: 【理論武装して】
+- kotone: 【冠菊】
+	- sub: 【世界一可愛い私】 awaken_level: 7
+	- sub: 【冠菊】
+- china: 【Campus mode!!】
+	- sub: 【Wonder Scale】 awaken_level: 7
+	- sub: 【Campus mode!!】
+- kotone: 【Campus mode!!】
+	- sub: 【冠菊】 awaken_level: 7
+	- sub: 【世界一可愛い私】 awaken_level: 7
+	- sub: 【Campus mode!!】
+- temari: 【ガラクタロード】
+- misuzu: 【Campus mode!!】
+- ume: 【真っ白いページと水彩の主人公】
+	- sub: 【The Rolling Riceball】 awaken_level: 7
+	- sub: 【真っ白いページと水彩の主人公】
+- china: 【Wonder Scale】 awaken_level: 7
+	- sub: 【Campus mode!!】
+	- sub: 【Wonder Scale】
+- ume: 【The Rolling Riceball】 awaken_level: 7
+- lilja: 【ガラクタロード】
+- rinami: 【ようこそ初星温泉】
+	- sub: 【L.U.V】
+
+## p_item: 
+- common: recommend: やる気
+	- 仲直りのきっかけ
+	- 手作りサブスク弁当
+- common: recommend: 好印象
+	- 仲直りのきっかけ
+	- 寝心地は良好
+- sena: 【ガラクタロード】
+	- 仲直りのきっかけ
+	- 迷子のお呼び出し
+- kotone: 【Campus mode!!】
+	- 咲季の完全食・改
+	- とろけた時間
+
+## skill_card: 
+- common: recommend: やる気 
+	- ワクワクが止まらない+
+		- customize: 開始時
+		- customize: やる気
+	- 本番前夜+
+		- china: 【Campus mode!!】
+			- ゆるふわおしゃべり
+		- temari: 【ガラクタロード】
+			- 止められない想い+
+		- misuzu: 【Campus mode!!】
+			- ひなたぼっこ+
+	- 成長痛+
+		- ume: 【The Rolling Riceball】
+			- 止められない想い+
+	- 気まぐれハート+
+	- 私がスター
+		- china: 【Campus mode!!】
+			- 私がスター+
+	- お手並み拝見+
+		- customize: やる気
+		- misuzu: 【Campus mode!!】
+			- 紅葉ランニング+
+				- customize: 元気追加
+	- デイドリーミング+
+		- china: 【Campus mode!!】
+			- デイドリーミング+
+				- customize: 持続効果
+				- customize: 持続効果
+				- customize: 持続効果
+	- せのびの魔法+
+	- 夢色リップ+
+	- 届いて！+
+		- customize: パラメータ
+		- china: 【Campus mode!!】
+			- あのときの約束
+
+- rinami: 【L.U.V】
+	- 対象、ロックオン
+	- 本番前夜+
+		- customize: やる気
+		- customize: やる気
+	- 成長痛+
+	- 星屑センセーション+
+	- 私がスター
+	- 花萌ゆ季節+
+		- customize: 元気追加
+	- パステル気分
+	- 本番前夜+
+		- customize: やる気
+		- customize: やる気
+	- 夢色リップ+
+	- びしっとキメ顔+
+
+- common: recommend: 好印象
+	- オトメゴコロ+
+		- customize: 好印象
+	- 本番前夜+
+	- 止められない想い+
+	- 虹色ドリーマー
+		- sena: 【ガラクタロード】
+			- 星屑センセーション
+	- 私がスター
+	- あこがれ不良ムーブ+
+		- customize: 好印象
+	- 幸せのおまじない+
+		- customize: 好印象
+		- customize: 好印象
+		- customize: 好印象
+		- sena: 【ガラクタロード】
+			- 幸せのおまじない+
+		- kotone: 【Campus mode!!】
+			- 思い出し笑い+
+				- customize: 好印象
+				- customize: 好印象
+				- customize: 好印象
+	- びしっとキメ顔+
+	- 星屑センセーション+
+		- sena: 【ガラクタロード】
+			- 輝くキミへ+
+				- customize: 持続効果+
+	- 夢色リップ+
+
+# Stage:3
+## p_idol:
+- temari: 【一体いつから】 with_asari
+- tsubame: 【クライアイ】
+- kotone: 【GO MY WAY!!】 with_asari
+- rinami: 【Campus mode!!】 with_asari
+- ume: 【Campus mode!!】 with_asari
+- hiro: 【ミラクルナナウ(ﾟ∀ﾟ)！】 with_asari
+	- sub: 【ハッピーミルフィーユ】
+	- sub: 【ミラクルナナウ(ﾟ∀ﾟ)！】
+- lilja: 【Atmosphere】 with_asari
+	- sub: 【桜フォトグラフ】
+	- sub: 【Atmosphere】
+- sumika: 【カクシタワタシ】 with_asari
+- saki: 【桜フォトグラフ】 with_asari
+- sena: 【Star-mine】 with_asari
+	- sub: 【小さな野望】 awaken_level: 7
+
+## p_item: 
+- common:
+	- 天川ラーメン巡り
+	- 悔しさの象徴
+- kotone: 【GO MY WAY!!】
+	- 天川ラーメン巡り
+	- しぼまない思い出
+
+## skill_card:
+- common: 
+	- モチベ+
+		- customize: 保留追加
+		- customize: 開始時手札
+	- アッチェレランド+
+		 - rinami: 【Campus mode!!】
+			 - 嬉しい誤算
+		 - ume: 【Campus mode!!】
+			 - ジャストアピール
+		 - tsubame: 【クライアイ】
+			 - トレンドリーダー+
+		 - lilja: 【Atmosphere】
+			 - あつあつはふはふ
+				 - customize: 全力値+
+	- リスキーチャンス+
+	- プライド+
+	- 本領発揮
+		 - ume: 【Campus mode!!】
+			 - 本領発揮+
+	- 対戦お願いします！+
+		- customize: 全力値追加
+	- セッティング
+	- 全身全霊+
+		- customize: 条件変更
+	- 頂点へ+
+	- 羽ばたけ！+

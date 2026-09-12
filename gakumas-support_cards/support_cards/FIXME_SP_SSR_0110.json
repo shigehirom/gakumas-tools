@@ -1,0 +1,29 @@
+[
+    {
+        "id": "SP_SSR_0110",
+        "name": "もうすぐ本番ですね",
+        "rarity": "SSR",
+        "plan_restriction": "none",
+        "type": "visual",
+        "unlocked_effects": [],
+        "support_events": [
+            {
+                "level": 0,
+                "dsl": "@event: pitem_get"
+            },
+            {
+                "level": 20,
+                "dsl": "@event: vi+20"
+            },
+            {
+                "level": 40,
+                "dsl": "@event: change_basic_card"
+            }
+        ],
+        "acquired_p_item": {
+            "name": "素敵なお仕事",
+            "id": 487
+        },
+        "acquired_skill_card": {}
+    }
+]

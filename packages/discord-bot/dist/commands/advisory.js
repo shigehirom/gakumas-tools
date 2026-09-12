@@ -19,6 +19,37 @@ function resolvePythonScript(scriptName) {
     ];
     return candidatePaths.find(p => fs_1.default.existsSync(p)) || candidatePaths[0];
 }
+function formatRequiredSupportCards(images) {
+    if (!images || images.length === 0)
+        return '';
+    const cardMap = new Map();
+    for (const img of images) {
+        for (const it of (img.p_items_details || [])) {
+            if (!it.card_label || it.card_label === '推奨Pアイテム')
+                continue;
+            if (!cardMap.has(it.card_label)) {
+                cardMap.set(it.card_label, new Set());
+            }
+            cardMap.get(it.card_label).add(`Pアイテム: ${it.item_name}`);
+        }
+        for (const sc of (img.skill_cards_details || [])) {
+            if (!sc.card_label)
+                continue;
+            if (!cardMap.has(sc.card_label)) {
+                cardMap.set(sc.card_label, new Set());
+            }
+            cardMap.get(sc.card_label).add(`スキル: ${sc.card_name}`);
+        }
+    }
+    if (cardMap.size === 0)
+        return '';
+    const lines = [];
+    for (const [label, sources] of cardMap.entries()) {
+        const sourceStr = Array.from(sources).join(' / ');
+        lines.push(`・\`${label}\` （${sourceStr}）`);
+    }
+    return lines.join('\n');
+}
 exports.advisoryCommand = {
     data: new discord_js_1.SlashCommandBuilder()
         .setName('advisory')
@@ -141,22 +172,21 @@ exports.advisoryCommand = {
                     const first = result.images[0];
                     const curSeason = first.season || 51;
                     let msg = '';
-                    const pitemLines = (first.p_items_details || [])
-                        .map((it) => `・**${it.item_name}** ➔ \`${it.card_label}\``)
-                        .join('\n');
                     if (result.mode === 'single') {
                         msg = `📋 **[推奨構成レポート]** シーズン${curSeason} Stage ${stage}：**${first.full_title}**\n` +
                             `あじふらい氏アドバイスに基づく推奨Pアイテムおよびスキルカードの構成画像を出力しました。`;
-                        if (pitemLines) {
-                            msg += `\n\n💡 **推奨Pアイテム & 対象サポートカード**:\n${pitemLines}`;
+                        const supportReqs = formatRequiredSupportCards([first]);
+                        if (supportReqs) {
+                            msg += `\n\n💡 **推奨構成に必要なサポートカード一覧**:\n${supportReqs}`;
                         }
                     }
                     else {
                         msg = `📋 **[推奨構成レポート]** シーズン${curSeason} Stage ${stage}（所持おすすめPアイドル ${attachments.length}名）\n` +
                             `あじふらい氏推奨の所持Pアイドル構成画像を出力しました：\n` +
                             titles.map(t => `・**${t}**`).join('\n');
-                        if (pitemLines) {
-                            msg += `\n\n💡 **Stage ${stage} 共通推奨Pアイテム**:\n${pitemLines}`;
+                        const supportReqs = formatRequiredSupportCards(result.images);
+                        if (supportReqs) {
+                            msg += `\n\n💡 **推奨構成に必要なサポートカード一覧 (Stage ${stage})**:\n${supportReqs}`;
                         }
                     }
                     await interaction.followUp({

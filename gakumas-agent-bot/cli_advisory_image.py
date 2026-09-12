@@ -13,8 +13,11 @@ from pathlib import Path
 
 def _find_dir(candidates: list[Path]) -> Path:
     for c in candidates:
-        if c.exists():
-            return c
+        try:
+            if c.exists():
+                return c
+        except Exception:
+            continue
     return candidates[0]
 
 WORKSPACE_DIR = _find_dir([
@@ -30,20 +33,39 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from advisory_parser import parse_advisory, get_stage_recommended_pidols, parse_advisory_for_entry
 from advisory_image_builder import AdvisoryImageBuilder
 
-def get_owned_pidol_titles(mongo_uri: str = "mongodb://192.168.100.4:27017", user_id: str = "755794545861591082") -> set[str]:
-    """MongoDB から所持している Pアイドルのタイトル集合を取得する"""
+def get_owned_pidol_data(mongo_uri: str = "mongodb://192.168.100.4:27017", user_id: str = "755794545861591082") -> tuple[set[str], set[tuple[str, str]]]:
+    """MongoDB から所持している Pアイドルのタイトル集合および (idol, title) ペアを取得する"""
     try:
         from pymongo import MongoClient
+        import re
         client = MongoClient(mongo_uri, serverSelectionTimeoutMS=2000)
         db = client["gakumas-tools"]
-        cursor = db["owned_p_idols"].find({"userId": user_id}, {"title": 1, "_id": 0})
-        titles = {d["title"].strip() for d in cursor if "title" in d and d["title"]}
-        if not titles:
-            cursor_all = db["owned_p_idols"].find({}, {"title": 1, "_id": 0})
-            titles = {d["title"].strip() for d in cursor_all if "title" in d and d["title"]}
-        return titles
+        cursor = list(db["owned_p_idols"].find({"userId": user_id}))
+        if not cursor:
+            cursor = list(db["owned_p_idols"].find({}))
+        
+        from advisory_parser import IDOL_NAME_TO_KEY
+        owned_titles = set()
+        owned_pairs = set()
+        for d in cursor:
+            raw_title = d.get("title", "")
+            m = re.search(r'【([^】]+)】', raw_title)
+            costume_title = m.group(1).strip() if m else raw_title.strip()
+            if not costume_title:
+                continue
+            owned_titles.add(costume_title)
+            
+            raw_name = d.get("idol_name") or d.get("name") or ""
+            clean_name = raw_name.replace(" ", "").strip()
+            if clean_name:
+                owned_pairs.add((clean_name, costume_title))
+                idol_k = IDOL_NAME_TO_KEY.get(clean_name)
+                if idol_k:
+                    owned_pairs.add((idol_k, costume_title))
+        return owned_titles, owned_pairs
     except Exception as e:
-        return set()
+        return set(), set()
+
 
 def main():
     parser = argparse.ArgumentParser(description="Generate contest advisory infographic image(s)")
@@ -118,13 +140,16 @@ def main():
         }, ensure_ascii=False))
         sys.exit(1)
 
-    owned_titles = get_owned_pidol_titles(mongo_uri=args.mongo_uri)
+    owned_titles, owned_pairs = get_owned_pidol_data(mongo_uri=args.mongo_uri)
     target_entries = []
 
     # 所持しているおすすめを優先抽出
-    if owned_titles:
+    if owned_titles or owned_pairs:
         for entry in all_recs:
-            if entry["title"] in owned_titles:
+            e_key = entry.get("idol_key", "")
+            e_name = entry.get("idol_name", "")
+            e_title = entry.get("title", "")
+            if (e_key, e_title) in owned_pairs or (e_name, e_title) in owned_pairs or e_title in owned_titles:
                 target_entries.append(entry)
 
     # 所持データがない、または0件の場合は上位3件をフォールバック
