@@ -20,8 +20,29 @@ WORKSPACE_DIR = Path("/root/gakumas-workspace")
 BOT_DIR = WORKSPACE_DIR / "gakumas-agent-bot"
 sys.path.insert(0, str(BOT_DIR))
 
+env_paths = [
+    BOT_DIR / ".env",
+    WORKSPACE_DIR / "gakumas-tools" / ".env.local",
+    WORKSPACE_DIR / ".env",
+]
+for env_file in env_paths:
+    if env_file.exists():
+        with open(env_file, encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line or line.startswith("#") or "=" not in line:
+                    continue
+                if "#" in line:
+                    line = line.split("#", 1)[0].strip()
+                k, v = line.split("=", 1)
+                k = k.strip()
+                v = v.strip().strip("'\"")
+                if k and k not in os.environ:
+                    os.environ[k] = v
+
 from agent_engine import AgentEngine
 from gakumas_tools import GakumasToolExecutor
+
 
 
 async def status_callback(msg: str) -> None:

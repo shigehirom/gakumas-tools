@@ -412,6 +412,36 @@ TOOLS_SCHEMA: list[dict] = [
             },
         },
     },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_contest_advisory",
+            "description": (
+                "あじふらい氏のコンテスト推奨編成・理想デッキアドバイザリデータ（fried_aji3_advisory_XX.md）を取得する。"
+                "「あじふらい氏の推奨構成」「おすすめのスキルカード」「理想のPアイテム」「ステージ1の推奨アイドルは誰？」「手持ちメモリーとあじふらい氏の推奨構成の差分」などの質問には必ずこのツールを実行する。"
+                "指定ステージの推奨Pアイドル優先度一覧（上位順）、推奨Pアイテム、推奨スキルカード10枚（カスタマイズ指定付き）を返す。"
+                "idol_name を指定すると、そのアイドル専用の推奨構成・カード差替をピンポイントで取得できる。"
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "stage": {
+                        "type": "integer",
+                        "description": "対象ステージ番号（1, 2, 3）。必須。",
+                    },
+                    "idol_name": {
+                        "type": "string",
+                        "description": "特定のアイドル名（例: '篠澤 広', '広', '星南', '手毬'）。指定するとそのアイドル向けの推奨カードを抽出。省略時はステージの全体推奨およびトップ推奨アイドル",
+                    },
+                    "season": {
+                        "type": "integer",
+                        "description": "対象シーズン番号（例: 52）。省略時は最新シーズン",
+                    },
+                },
+                "required": ["stage"],
+            },
+        },
+    },
 ]
 
 
@@ -503,6 +533,7 @@ class GakumasToolExecutor:
             "get_support_card_details": self.get_support_card_details,
             "get_optimized_deck":       self.get_optimized_deck,
             "get_support_bonus":        self.get_support_bonus,
+            "get_contest_advisory":     self.get_contest_advisory,
         }
         fn = dispatch.get(tool_name)
         if fn is None:
@@ -1911,6 +1942,71 @@ class GakumasToolExecutor:
             output_lines.append("")
 
         return "\n".join(output_lines).strip()
+
+    # ── ツール: get_contest_advisory ─────────────────────────────────────────
+
+    def get_contest_advisory(
+        self,
+        stage: int,
+        idol_name: str = "",
+        season: int | None = None,
+        **kwargs: Any,
+    ) -> str:
+        """
+        あじふらい氏推奨構成 Markdown（fried_aji3_advisory_XX.md）から指定ステージ（およびアイドル）の
+        推奨Pアイドル優先度順、推奨Pアイテム、推奨スキルカード10枚（カスタマイズ付き）を取得する。
+        """
+        try:
+            from advisory_parser import parse_advisory, get_stage_recommended_pidols, find_latest_season, get_stage_regulation
+        except ImportError:
+            import sys
+            sys.path.insert(0, str(WORKSPACE_DIR / "gakumas-agent-bot"))
+            sys.path.insert(0, str(Path(__file__).resolve().parent))
+            from advisory_parser import parse_advisory, get_stage_recommended_pidols, find_latest_season, get_stage_regulation
+
+        season_info = find_latest_season(season)
+        if not season_info:
+            return f"※ 第{season if season else ''}シーズンのあじふらい氏推奨アドバイザリ（fried_aji3_advisory_*.md）が見つかりませんでした。"
+
+        cur_season, _ = season_info
+        reg_info = get_stage_regulation(cur_season, stage)
+        pidols = get_stage_recommended_pidols(stage, cur_season)
+
+        lines = [
+            f"【第{cur_season}シーズン ステージ{stage} あじふらい氏推奨アドバイザリ】",
+            f"■ 審査基準: {reg_info.get('criteria', '')} ｜ プラン: {reg_info.get('plan_jp', '')} ({reg_info.get('plan', '')}) ｜ ターン数: {reg_info.get('turns', 12)}T"
+        ]
+
+        # おすすめPアイドル一覧（上位順）
+        if pidols:
+            lines.append("\n■ おすすめPアイドル一覧（上から優先度順）:")
+            for idx, p in enumerate(pidols, 1):
+                sub_str = f" (サブ候補: {', '.join([s['title'] for s in p.get('subs', [])])})" if p.get("subs") else ""
+                extra_str = f" {p.get('extra', '')}" if p.get('extra') else ""
+                lines.append(f"  {idx}. {p.get('idol_name', '')}【{p.get('title', '')}】{extra_str}{sub_str}")
+
+        # 特定アイドルまたはトップ推奨アイドルの詳細推奨構成
+        data = parse_advisory(stage=stage, idol_query=idol_name if idol_name else None, season=cur_season)
+        if data:
+            target_p = data.get("p_idol", {})
+            target_name = target_p.get("idol_name", "")
+            target_title = target_p.get("title", "")
+            lines.append(f"\n■ 【{target_name}【{target_title}】向けの推奨構成】")
+
+            # 推奨Pアイテム
+            p_items = data.get("p_items", [])
+            if p_items:
+                lines.append(f"  - 推奨Pアイテム: {', '.join([f'『{item}』' for item in p_items])}")
+
+            # 推奨スキルカード（最大10枚）
+            skill_cards = data.get("skill_cards", [])
+            if skill_cards:
+                lines.append("  - 推奨スキルカード10枚（カスタマイズ指定）:")
+                for c_idx, c in enumerate(skill_cards, 1):
+                    cust_str = f" (カスタム: {', '.join(c['customizations'])})" if c.get("customizations") else ""
+                    lines.append(f"    {c_idx}. 『{c.get('name', '')}』{cust_str}")
+
+        return "\n".join(lines)
 
 
 

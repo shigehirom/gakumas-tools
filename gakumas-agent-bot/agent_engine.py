@@ -36,7 +36,7 @@ class AgentEngine:
     あさり先生 AI エージェント（Gemini 3.6 Flash メイン ＆ llama.cpp フォールバック）
     """
 
-    MAX_ITER = 3
+    MAX_ITER = 4
     MAX_HISTORY = 20
 
     def __init__(
@@ -203,13 +203,23 @@ class AgentEngine:
         for iteration in range(self.MAX_ITER):
             log.info(f"[AgentEngine-Gemini] 反復 {iteration + 1}/{self.MAX_ITER}")
 
-            # 最終反復のみツールを無効化してテキスト生成を強制
+            # 最終反復のみツール呼び出しを禁止してテキスト生成を強制
             is_last_iter = (iteration == self.MAX_ITER - 1)
-            current_config = types.GenerateContentConfig(
-                system_instruction=system_prompt,
-                temperature=0.7,
-                tools=[{"function_declarations": gemini_tools}] if not is_last_iter else None,
-            )
+            if is_last_iter:
+                current_config = types.GenerateContentConfig(
+                    system_instruction=system_prompt,
+                    temperature=0.7,
+                    tools=[{"function_declarations": gemini_tools}],
+                    tool_config=types.ToolConfig(
+                        function_calling_config=types.FunctionCallingConfig(mode="NONE")
+                    ),
+                )
+            else:
+                current_config = types.GenerateContentConfig(
+                    system_instruction=system_prompt,
+                    temperature=0.7,
+                    tools=[{"function_declarations": gemini_tools}],
+                )
 
             response = await asyncio.to_thread(
                 self._gemini_client.models.generate_content,
@@ -230,6 +240,25 @@ class AgentEngine:
 
             if not function_calls or is_last_iter:
                 final_text = _extract_response_text(response)
+                if not final_text and is_last_iter:
+                    # 最終反復でテキストが空の場合は明示的プロンプトを付与して再試行
+                    summary_prompt = "これまでのツール検索結果を踏まえて、プロデューサーくんへの親切で具体的なアドバイスとして最終回答をまとめてください。"
+                    force_contents = chat_contents + [types.Content(role="user", parts=[types.Part.from_text(text=summary_prompt)])]
+                    force_resp = await asyncio.to_thread(
+                        self._gemini_client.models.generate_content,
+                        model=model,
+                        contents=force_contents,
+                        config=types.GenerateContentConfig(
+                            system_instruction=system_prompt,
+                            temperature=0.7,
+                            tools=[{"function_declarations": gemini_tools}],
+                            tool_config=types.ToolConfig(
+                                function_calling_config=types.FunctionCallingConfig(mode="NONE")
+                            ),
+                        ),
+                    )
+                    final_text = _extract_response_text(force_resp)
+
                 if not final_text and not is_last_iter:
                     # テキストがなくfunction_callsもない場合は再試行
                     pass
@@ -277,11 +306,19 @@ class AgentEngine:
             chat_contents.append(types.Content(role="user", parts=function_response_parts))
 
         # 最大反復到達時
+        fallback_contents = chat_contents + [types.Content(role="user", parts=[types.Part.from_text(text="これまでのツール検索結果を踏まえて、プロデューサーくんへの親切で具体的なアドバイスとして最終回答をまとめてください。")])]
         fallback_resp = await asyncio.to_thread(
             self._gemini_client.models.generate_content,
             model=model,
-            contents=chat_contents,
-            config=types.GenerateContentConfig(system_instruction=system_prompt, temperature=0.7),
+            contents=fallback_contents,
+            config=types.GenerateContentConfig(
+                system_instruction=system_prompt,
+                temperature=0.7,
+                tools=[{"function_declarations": gemini_tools}],
+                tool_config=types.ToolConfig(
+                    function_calling_config=types.FunctionCallingConfig(mode="NONE")
+                ),
+            ),
         )
         final_text = _extract_response_text(fallback_resp) or "（アドバイスをまとめきれませんでした。もう一度具体的に教えてもらえるかしら？）"
         self.history.append({"role": "assistant", "content": final_text})
