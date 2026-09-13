@@ -38,3 +38,4 @@ export function getIdolColor(keyOrId: string | number): IdolColor | undefined {
     }
     return IDOL_KEY_TO_COLOR[keyOrId.toLowerCase()];
 }
+

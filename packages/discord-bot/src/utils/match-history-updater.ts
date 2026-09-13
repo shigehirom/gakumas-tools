@@ -4,9 +4,10 @@ import { spawn } from 'child_process';
 import { MongoClient } from 'mongodb';
 import { config } from '../config';
 import { ContestAnalysisResult } from './contest-parser';
+import { MasterData } from './master-data';
 
 export interface UpdateOptions {
-    season?: number; // default: auto-detected from CSV files
+    season?: number; // default: auto-detected from CSV files or master data
     date?: Date;     // default: today (JST)
     targetFilePath?: string;
     userId?: string; // Discord UserID of the recording user
@@ -55,10 +56,92 @@ export function findMatchHistoryCsv(season: number): string {
 }
 
 /**
- * 既存の match_history_XX.csv から最新のシーズン番号を自動取得する
+ * 新シーズン用の match_history_XX.csv テンプレートを自動生成する
+ */
+export function createMatchHistoryTemplate(season: number, startDate?: Date, days: number = 16): string {
+    let start = startDate;
+    if (!start) {
+        // 前シーズンの最終日の翌日を開始日候補として探索
+        const prevCsvPath = findMatchHistoryCsv(season - 1);
+        if (fs.existsSync(prevCsvPath)) {
+            try {
+                const content = fs.readFileSync(prevCsvPath, 'utf-8');
+                const lines = content.split(/\r?\n/).filter(l => l.trim().length > 0);
+                for (let i = lines.length - 1; i >= 1; i--) {
+                    const match = lines[i].split(',')[0]?.trim().match(/^(\d{2})\/(\d{2})\/(\d{2})$/);
+                    if (match) {
+                        const year = 2000 + parseInt(match[1], 10);
+                        const month = parseInt(match[2], 10) - 1;
+                        const day = parseInt(match[3], 10);
+                        const prevEnd = new Date(year, month, day);
+                        prevEnd.setDate(prevEnd.getDate() + 1);
+                        start = prevEnd;
+                        break;
+                    }
+                }
+            } catch {}
+        }
+    }
+    if (!start) {
+        start = new Date();
+    }
+
+    const lines: string[] = ['日付,相手名,メモ,自S1,敵S1,自S2,敵S2,自S3,敵S3,結果,獲得Pt'];
+    const current = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+    for (let d = 0; d < days; d++) {
+        const yy = String(current.getFullYear()).slice(-2);
+        const mm = String(current.getMonth() + 1).padStart(2, '0');
+        const dd = String(current.getDate()).padStart(2, '0');
+        const formattedDate = `${yy}/${mm}/${dd}`;
+        for (let i = 0; i < 5; i++) {
+            lines.push(`${formattedDate},,3,,,,,,,WIN LOSE,`);
+        }
+        current.setDate(current.getDate() + 1);
+    }
+    const csvContent = lines.join('\n') + '\n';
+
+    const targetPath = findMatchHistoryCsv(season);
+    try {
+        fs.mkdirSync(path.dirname(targetPath), { recursive: true });
+        fs.writeFileSync(targetPath, csvContent, 'utf-8');
+        console.log(`[match-history-updater] Created new template: ${targetPath}`);
+
+        // shared/agent-instructions または gakumas-tools/agent-instructions 等の主要候補にも複製
+        const candidateDirsToSync = [
+            '/root/gakumas-workspace/shared/agent-instructions',
+            '/root/gakumas-workspace/gakumas-tools/agent-instructions'
+        ];
+        for (const dir of candidateDirsToSync) {
+            if (fs.existsSync(dir)) {
+                const mirrorPath = path.join(dir, `match_history_${season}.csv`);
+                if (mirrorPath !== targetPath) {
+                    fs.writeFileSync(mirrorPath, csvContent, 'utf-8');
+                }
+            }
+        }
+    } catch (e) {
+        console.error(`[match-history-updater] Failed to create template:`, e);
+    }
+    return targetPath;
+}
+
+/**
+ * 既存の match_history_XX.csv または stages.json から最新のシーズン番号を自動取得する
  */
 export function getLatestSeasonNumber(): number {
     let maxSeason = 50;
+
+    // 1. stages.json からコンテストの最大シーズン番号を取得
+    try {
+        const stages = MasterData.getStages();
+        for (const s of stages) {
+            if (s.type === 'contest' && typeof s.season === 'number' && s.season > maxSeason) {
+                maxSeason = s.season;
+            }
+        }
+    } catch {}
+
+    // 2. CSV ディレクトリから最大シーズン番号を取得
     for (const dir of CSV_CANDIDATE_DIRS) {
         if (dir && fs.existsSync(dir)) {
             try {
@@ -163,11 +246,10 @@ export async function updateMatchHistoryCsv(
     const targetDate = options.date ?? new Date();
     const dateStr = formatDateToYYMMDD(targetDate);
 
-    const csvPath = options.targetFilePath ?? findMatchHistoryCsv(season);
+    let csvPath = options.targetFilePath ?? findMatchHistoryCsv(season);
 
     if (!fs.existsSync(csvPath)) {
-        fs.mkdirSync(path.dirname(csvPath), { recursive: true });
-        fs.writeFileSync(csvPath, '日付,相手名,メモ,自S1,敵S1,自S2,敵S2,自S3,敵S3,結果,獲得Pt\n', 'utf-8');
+        csvPath = createMatchHistoryTemplate(season);
     }
 
     const fileContent = fs.readFileSync(csvPath, 'utf-8');
@@ -205,7 +287,22 @@ export async function updateMatchHistoryCsv(
         targetLineIndex = lines.length - 1;
     }
 
-    fs.writeFileSync(csvPath, lines.join('\n'), 'utf-8');
+    const updatedContent = lines.join('\n');
+    fs.writeFileSync(csvPath, updatedContent, 'utf-8');
+
+    // shared/agent-instructions または gakumas-tools/agent-instructions 等の主要候補にも同期
+    const candidateDirsToSync = [
+        '/root/gakumas-workspace/shared/agent-instructions',
+        '/root/gakumas-workspace/gakumas-tools/agent-instructions'
+    ];
+    for (const dir of candidateDirsToSync) {
+        if (fs.existsSync(dir)) {
+            const mirrorPath = path.join(dir, `match_history_${season}.csv`);
+            if (mirrorPath !== csvPath) {
+                try { fs.writeFileSync(mirrorPath, updatedContent, 'utf-8'); } catch {}
+            }
+        }
+    }
 
     // MongoDB への保存（失敗してもCSV保存の結果には影響させない）
     const mongoId = await saveContestMatchToMongo(analysis, options);

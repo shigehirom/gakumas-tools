@@ -36,7 +36,7 @@ export function registerMatchHistoryCommand(cli: CAC) {
             const targetFilePath = path.join(instructionsDir, `match_history_${season}.csv`);
 
             // Generate CSV content
-            const lines: string[] = ['日付,相手名,メモ,獲得Pt,自S1,敵S1,自S2,敵S2,自S3,敵S3,結果'];
+            const lines: string[] = ['日付,相手名,メモ,自S1,敵S1,自S2,敵S2,自S3,敵S3,結果,獲得Pt'];
 
             // Loop through each date
             let current = new Date(start);
@@ -48,7 +48,7 @@ export function registerMatchHistoryCommand(cli: CAC) {
 
                 // 5 rounds per day
                 for (let i = 0; i < 5; i++) {
-                    lines.push(`${formattedDate},,3,,,,,,,,WIN LOSE`);
+                    lines.push(`${formattedDate},,3,,,,,,,WIN LOSE,`);
                 }
 
                 // Advance by 1 day
