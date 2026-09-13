@@ -12,6 +12,10 @@ echo "Fetching latest match history from TrueNAS..."
 rsync -avz --inplace --no-owner --no-group --no-perms --include='match_history_*.csv' --exclude='*' $TARGET:${TARGET_DIR}agent-instructions/ ../shared/agent-instructions/ 2>/dev/null || true
 rsync -avz --inplace --no-owner --no-group --no-perms --include='match_history_*.csv' --exclude='*' $TARGET:${TARGET_DIR}agent-instructions/ ./agent-instructions/ 2>/dev/null || true
 
+# 0.4. レギュレーションファイル（regulation_*.md）から未作成の match_history_*.csv を自動生成
+echo "Checking and generating missing match history CSVs from regulations..."
+node packages/cli/scripts/sync-regulation-csv.mjs 2>/dev/null || true
+
 # 0.5. MongoDB から最新の全対戦データを CSV へ自動同期・完全復元
 echo "Syncing all match records from MongoDB to CSV..."
 node packages/cli/scripts/sync-mongo-to-csv.mjs 2>/dev/null || true
