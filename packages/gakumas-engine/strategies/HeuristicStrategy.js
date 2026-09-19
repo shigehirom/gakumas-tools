@@ -315,6 +315,9 @@ export default class HeuristicStrategy extends BaseStrategy {
     // Double cost turns
     score += Math.min(state[S.doubleCostTurns], turnsRemaining) * -6;
 
+    // Double buff cost turns
+    score += Math.min(state[S.doubleBuffCostTurns], turnsRemaining) * -6;
+
     // Cost reduction
     score += state[S.costReduction] * turnsRemaining * 0.5;
 

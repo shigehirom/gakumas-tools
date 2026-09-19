@@ -81,4 +81,4 @@ logs/check-upstream.log
 # Broken git directory backup
 .git-broken/
 
-
+.claude/
