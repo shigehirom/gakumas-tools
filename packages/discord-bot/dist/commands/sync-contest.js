@@ -5,7 +5,7 @@ const discord_js_1 = require("discord.js");
 const match_history_updater_1 = require("../utils/match-history-updater");
 exports.syncContestCommand = {
     data: new discord_js_1.SlashCommandBuilder()
-        .setName('sync_contest')
+        .setName('sync-contest')
         .setDescription('Googleスプレッドシート(Contest)とMongoDBの対戦記録を双方向同期します'),
     async execute(interaction) {
         await interaction.deferReply();

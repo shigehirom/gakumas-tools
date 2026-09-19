@@ -30,7 +30,15 @@ sys.path.insert(0, str(WORKSPACE_DIR / "gakumas-agent-bot"))
 sys.path.insert(0, str(WORKSPACE_DIR / "gakumas-tools" / "gakumas-agent-bot"))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from advisory_parser import parse_advisory, get_stage_recommended_pidols, parse_advisory_for_entry
+from advisory_parser import (
+    parse_advisory,
+    get_stage_recommended_pidols,
+    parse_advisory_for_entry,
+    get_stage_support_combinations,
+    get_stage_configurations,
+    get_owned_support_card_names,
+    is_support_card_owned
+)
 from advisory_image_builder import AdvisoryImageBuilder
 
 def get_owned_pidol_data(mongo_uri: str = "mongodb://192.168.100.4:27017", user_id: str = "755794545861591082") -> tuple[set[str], set[tuple[str, str]]]:
@@ -74,6 +82,7 @@ def main():
     parser.add_argument("--season", type=int, default=None, help="Season number (optional)")
     parser.add_argument("--columns", type=int, choices=[1, 2], default=1, help="Number of columns (1: slim/default, 2: wide)")
     parser.add_argument("--limit", type=int, default=5, help="Max images in multi mode (default: 5)")
+    parser.add_argument("--source", type=str, choices=["human", "ai"], default="human", help="Advisory source (human: Aji-fry, ai: AI auto-advisory)")
     parser.add_argument("--mongo-uri", type=str, default="mongodb://192.168.100.4:27017", help="MongoDB URI")
     parser.add_argument("--output", type=str, default=None, help="Output path (single mode only)")
 
@@ -82,9 +91,11 @@ def main():
     tmp_dir = Path("/tmp/advisory_images")
     tmp_dir.mkdir(parents=True, exist_ok=True)
 
+    owned_support_cards = get_owned_support_card_names(mongo_uri=args.mongo_uri)
+
     # 1. 単一アイドル指定モード
     if args.idol:
-        data = parse_advisory(stage=args.stage, idol_query=args.idol, season=args.season)
+        data = parse_advisory(stage=args.stage, idol_query=args.idol, season=args.season, source=args.source)
         if not data:
             print(json.dumps({
                 "success": False,
@@ -93,6 +104,7 @@ def main():
             sys.exit(1)
 
         data["columns"] = args.columns
+        data["owned_support_cards"] = list(owned_support_cards)
         cur_season = data.get("season", 51)
         p_idol = data.get("p_idol", {})
         idol_key = p_idol.get("idol_key", "idol")
@@ -105,15 +117,42 @@ def main():
             full_title += f" ({p_idol.get('extra')})"
 
         p_items = data.get("p_items", [])
-        p_items_details = [
-            {"item_name": it, "card_label": builder.resolver.get_p_item_card_label(it)}
-            for it in p_items
-        ]
+        p_items_details = []
+        for it in p_items:
+            lbl = builder.resolver.get_p_item_card_label(it)
+            sc_name = builder.resolver.get_p_item_support_card_name(it)
+            is_owned = is_support_card_owned(sc_name, owned_support_cards)
+            p_items_details.append({
+                "item_name": it,
+                "card_label": lbl,
+                "support_card_name": sc_name,
+                "is_owned": is_owned
+            })
+
         skill_cards = data.get("skill_cards", [])
-        skill_cards_details = [
-            {"card_name": sc["name"], "card_label": builder.resolver.get_skill_card_support_label(sc["name"])}
-            for sc in skill_cards if builder.resolver.get_skill_card_support_label(sc["name"])
-        ]
+        skill_cards_details = []
+        for sc in skill_cards:
+            lbl = builder.resolver.get_skill_card_support_label(sc["name"])
+            if lbl:
+                sc_name = builder.resolver.get_skill_card_support_card_name(sc["name"])
+                is_owned = is_support_card_owned(sc_name, owned_support_cards)
+                skill_cards_details.append({
+                    "card_name": sc["name"],
+                    "card_label": lbl,
+                    "support_card_name": sc_name,
+                    "is_owned": is_owned
+                })
+
+        checklist_items = {
+            "p_items": p_items,
+            "skill_cards": [
+                {
+                    "name": sc.get("name", ""),
+                    "customizations": sc.get("customizations", [])
+                }
+                for sc in skill_cards[:10]
+            ]
+        }
 
         print(json.dumps({
             "success": True,
@@ -126,48 +165,29 @@ def main():
                 "title": p_idol.get("title", ""),
                 "full_title": full_title,
                 "p_items_details": p_items_details,
-                "skill_cards_details": skill_cards_details
+                "skill_cards_details": skill_cards_details,
+                "checklist_items": checklist_items
             }]
         }, ensure_ascii=False))
         return
 
-    # 2. 所持Pアイドル一括出力モード
-    all_recs = get_stage_recommended_pidols(args.stage, args.season)
-    if not all_recs:
+    # 2. ステージ推奨構成一括出力モード（汎用 common + 個別指定アイドル）
+    stage_configs = get_stage_configurations(args.stage, args.season, owned_cards=owned_support_cards, source=args.source)
+    if not stage_configs:
         print(json.dumps({
             "success": False,
-            "error": f"No recommended P-idols found for Stage {args.stage}"
+            "error": f"No advisory configurations found for Stage {args.stage}"
         }, ensure_ascii=False))
         sys.exit(1)
 
-    owned_titles, owned_pairs = get_owned_pidol_data(mongo_uri=args.mongo_uri)
-    target_entries = []
-
-    # 所持しているおすすめを優先抽出
-    if owned_titles or owned_pairs:
-        for entry in all_recs:
-            e_key = entry.get("idol_key", "")
-            e_name = entry.get("idol_name", "")
-            e_title = entry.get("title", "")
-            if (e_key, e_title) in owned_pairs or (e_name, e_title) in owned_pairs or e_title in owned_titles:
-                target_entries.append(entry)
-
-    # 所持データがない、または0件の場合は上位3件をフォールバック
-    if not target_entries:
-        target_entries = all_recs[:3]
-    else:
-        target_entries = target_entries[:args.limit]
-
     images_output = []
-    for idx, entry in enumerate(target_entries):
-        adv_data = parse_advisory_for_entry(stage=args.stage, matched_entry=entry, season=args.season)
-        if not adv_data:
-            continue
-
+    for idx, cfg in enumerate(stage_configs):
+        adv_data = cfg["data"]
         adv_data["columns"] = args.columns
+        adv_data["owned_support_cards"] = list(owned_support_cards)
         cur_season = adv_data.get("season", 51)
         p_idol = adv_data.get("p_idol", {})
-        idol_key = p_idol.get("idol_key", f"idol_{idx}")
+        idol_key = p_idol.get("idol_key", f"cfg_{idx}")
         col_suffix = f"_{args.columns}col"
         out_path = tmp_dir / f"advisory_s{cur_season}_stage{args.stage}_{idol_key}_{idx}{col_suffix}.png"
 
@@ -177,15 +197,31 @@ def main():
             full_title += f" ({p_idol.get('extra')})"
 
         p_items = adv_data.get("p_items", [])
-        p_items_details = [
-            {"item_name": it, "card_label": builder.resolver.get_p_item_card_label(it)}
-            for it in p_items
-        ]
+        p_items_details = []
+        for it in p_items:
+            lbl = builder.resolver.get_p_item_card_label(it)
+            sc_name = builder.resolver.get_p_item_support_card_name(it)
+            is_owned = is_support_card_owned(sc_name, owned_support_cards)
+            p_items_details.append({
+                "item_name": it,
+                "card_label": lbl,
+                "support_card_name": sc_name,
+                "is_owned": is_owned
+            })
+
         skill_cards = adv_data.get("skill_cards", [])
-        skill_cards_details = [
-            {"card_name": sc["name"], "card_label": builder.resolver.get_skill_card_support_label(sc["name"])}
-            for sc in skill_cards if builder.resolver.get_skill_card_support_label(sc["name"])
-        ]
+        skill_cards_details = []
+        for sc in skill_cards:
+            lbl = builder.resolver.get_skill_card_support_label(sc["name"])
+            if lbl:
+                sc_name = builder.resolver.get_skill_card_support_card_name(sc["name"])
+                is_owned = is_support_card_owned(sc_name, owned_support_cards)
+                skill_cards_details.append({
+                    "card_name": sc["name"],
+                    "card_label": lbl,
+                    "support_card_name": sc_name,
+                    "is_owned": is_owned
+                })
 
         images_output.append({
             "image_path": str(out_path.resolve()),
@@ -194,16 +230,25 @@ def main():
             "idol_name": p_idol.get("idol_name", ""),
             "title": p_idol.get("title", ""),
             "full_title": full_title,
+            "config_type": cfg.get("type", "common"),
+            "label": cfg.get("label", ""),
+            "target_idols": cfg.get("target_idols", []),
+            "target_idols_short": cfg.get("target_idols_short", []),
             "p_items_details": p_items_details,
             "skill_cards_details": skill_cards_details
         })
 
+    support_info = get_stage_support_combinations(args.stage, args.season, owned_cards=owned_support_cards, source=args.source)
+
     print(json.dumps({
         "success": True,
-        "mode": "multi",
+        "mode": "stage_overview",
         "count": len(images_output),
         "stage": args.stage,
-        "images": images_output
+        "season": support_info.get("season", cur_season),
+        "images": images_output,
+        "support_combinations": support_info.get("combinations", []),
+        "asari_idols": support_info.get("asari_idols", [])
     }, ensure_ascii=False))
 
 if __name__ == "__main__":

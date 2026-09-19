@@ -8,9 +8,12 @@ import { compareMemoryCommand } from './compare-memory';
 import { recordContestCommand } from './record-contest';
 import { syncContestCommand } from './sync-contest';
 import { memoryStatsCommand } from './memory-stats';
+import { calcCommand } from './calc';
+import { contestChartCommand } from './contest-chart';
 
 export const commands = [
     contestCommand,
+    contestChartCommand,
     deckCommand,
     recentMemoriesCommand,
     importMemoryCommand,
@@ -19,7 +22,8 @@ export const commands = [
     compareMemoryCommand,
     recordContestCommand,
     syncContestCommand,
-    memoryStatsCommand
+    memoryStatsCommand,
+    calcCommand
 ];
 
 export const commandMap = new Map(commands.map(cmd => [cmd.data.name, cmd]));

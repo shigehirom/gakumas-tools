@@ -82,6 +82,120 @@ RARITY_WEIGHT = {"SSR": 3, "SR": 2, "R": 1}
 
 MAX_TOOL_RESULT_CHARS = 2000  # ツール結果のトークン制限（文字数上限）
 
+# ── アイドル特性（Vo/Da/Vi 得意傾向）と審査基準判定 ─────────────────────────
+
+DEFAULT_IDOL_CHARACTERISTICS: dict[str, str] = {
+    "花海咲季": "Vi>Da>Vo",
+    "月村手毬": "Vo>Da>Vi",
+    "藤田ことね": "Da>Vi>Vo",
+    "有村麻央": "Vo>Vi>Da",
+    "葛城リーリヤ": "Vi>Da>Vo",
+    "倉本千奈": "Da>Vi>Vo",
+    "紫雲清夏": "Da>Vi>Vo",
+    "篠澤広": "Vo>Da>Vi",
+    "姫崎莉波": "Vi>Da>Vo",
+    "花海佑芽": "Da>Vo>Vi",
+    "十王星南": "Vi>Vo>Da",
+    "秦谷美鈴": "Vo>Vi>Da",
+    "雨夜燕": "Da>Vo>Vi",
+    "根緒亜紗里": "",
+}
+
+
+def parse_criteria(criteria_str: str) -> tuple[int, int, int, str]:
+    """
+    審査基準文字列から (vo, da, vi, trend_str) を抽出する。
+    例: '(Vo, Da, Vi) = (45, 35, 20)' -> (45, 35, 20, 'Vo>Da>Vi')
+        '0.45,0.2,0.35' -> (45, 20, 35, 'Vo>Vi>Da')
+    """
+    if not criteria_str:
+        return 0, 0, 0, ""
+
+    m = re.search(r"(\d+(?:\.\d+)?)\s*,\s*(\d+(?:\.\d+)?)\s*,\s*(\d+(?:\.\d+)?)", criteria_str)
+    if not m:
+        m_vo = re.search(r"Vo\D*(\d+)", criteria_str, re.IGNORECASE)
+        m_da = re.search(r"Da\D*(\d+)", criteria_str, re.IGNORECASE)
+        m_vi = re.search(r"Vi\D*(\d+)", criteria_str, re.IGNORECASE)
+        if m_vo and m_da and m_vi:
+            vo = float(m_vo.group(1))
+            da = float(m_da.group(1))
+            vi = float(m_vi.group(1))
+        else:
+            return 0, 0, 0, ""
+    else:
+        vo = float(m.group(1))
+        da = float(m.group(2))
+        vi = float(m.group(3))
+        if vo <= 1.0 and da <= 1.0 and vi <= 1.0:
+            vo, da, vi = round(vo * 100), round(da * 100), round(vi * 100)
+        else:
+            vo, da, vi = round(vo), round(da), round(vi)
+
+    scores = [("Vo", vo), ("Da", da), ("Vi", vi)]
+    scores.sort(key=lambda x: x[1], reverse=True)
+    trend = f"{scores[0][0]}>{scores[1][0]}>{scores[2][0]}"
+    return int(vo), int(da), int(vi), trend
+
+
+def evaluate_stage_compatibility(criteria_str: str, char_str: str) -> dict[str, Any]:
+    """
+    審査基準文字列とアイドルの特性（例: 'Vo>Da>Vi'）を照合し、適合度判定結果を返す。
+    """
+    _, _, _, crit_trend = parse_criteria(criteria_str)
+    if not crit_trend or not char_str:
+        return {"level": "unknown", "tag": "", "reason": "判定不可"}
+
+    c_parts = crit_trend.split(">")
+    p_parts = char_str.split(">")
+    if len(c_parts) != 3 or len(p_parts) != 3:
+        return {"level": "unknown", "tag": "", "reason": "判定不可"}
+
+    # 1. 完全合致
+    if crit_trend == char_str:
+        return {
+            "level": "perfect",
+            "tag": "🎯完全合致",
+            "reason": f"審査基準の優先度（{crit_trend}）と特性が100%一致（最優秀適合）"
+        }
+
+    # 2. 準合致 (1位得意が一致)
+    if c_parts[0] == p_parts[0]:
+        return {
+            "level": "semi",
+            "tag": f"🥈準合致({c_parts[0]}得意一致)",
+            "reason": f"審査最高配分の {c_parts[0]} が最も得意"
+        }
+
+    # 3. 準合致 (最低比率のステータスが最低得意)
+    if c_parts[2] == p_parts[2]:
+        return {
+            "level": "semi",
+            "tag": f"🥈準合致(低配分{c_parts[2]}抑制・上位集中)",
+            "reason": f"審査最低配分の {c_parts[2]} を抑え、高配分2種にステータスが集中"
+        }
+
+    # 4. 逆相性（審査1位が最も苦手、または審査3位が最も得意）
+    if c_parts[0] == p_parts[2]:
+        return {
+            "level": "disadvantage",
+            "tag": f"⚠️逆相性(最高配分{c_parts[0]}苦手)",
+            "reason": f"審査最高配分の {c_parts[0]} が最も苦手なためステータス面で不利"
+        }
+    if c_parts[2] == p_parts[0]:
+        return {
+            "level": "disadvantage",
+            "tag": f"⚠️逆相性(最低配分{c_parts[2]}特化)",
+            "reason": f"審査最低配分の {c_parts[2]} にステータスが偏るため効率低下"
+        }
+
+    # 5. 普通
+    return {
+        "level": "normal",
+        "tag": "中立",
+        "reason": "突出した得意・苦手相性なし"
+    }
+
+
 # ── TOOLS_SCHEMA（Ollama / OpenAI 互換 JSON Schema）──────────────────────────
 
 TOOLS_SCHEMA: list[dict] = [
@@ -415,6 +529,32 @@ TOOLS_SCHEMA: list[dict] = [
     {
         "type": "function",
         "function": {
+            "name": "get_stage_loadout",
+            "description": (
+                "MongoDB loadouts コレクションから、指定ステージ・指定アイドルの最新の実走シミュレーション結果"
+                "（期待中央値、平均値、Vo/Da/Vi/HP実効パラメータ、スキルカード12枚、獲得Pアイテム、メイン/サブメモリー名）を直接取得する。"
+                "「広の最新シミュレーション結果はどう？」「今の実走構成を教えて」「ステージ3の最新ロードアウト」「シミュレーションで出たスコアとカード」などの質問に実行する。"
+                "日次最適化レポート（get_optimized_deck）の更新前でも、最新のローカル計算結果を即座に確認できる。"
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "stage": {
+                        "type": "integer",
+                        "description": "対象ステージ番号（1, 2, 3）。必須。",
+                    },
+                    "idol_name": {
+                        "type": "string",
+                        "description": "アイドル名またはキー（例: '篠澤広', '広', 'hiro', '手毬', 'temari'）。必須。",
+                    },
+                },
+                "required": ["stage", "idol_name"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
             "name": "get_contest_advisory",
             "description": (
                 "あじふらい氏のコンテスト推奨編成・理想デッキアドバイザリデータ（fried_aji3_advisory_XX.md）を取得する。"
@@ -442,6 +582,32 @@ TOOLS_SCHEMA: list[dict] = [
             },
         },
     },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_contest_regulation",
+            "description": (
+                "コンテストのステージレギュレーション（指定プラン、審査基準Vo/Da/Vi比率、ターン数、Pアイテム、ギミック）を取得し、"
+                "各アイドルのパラメータ特性（Vo/Da/Vi得意傾向）と照合した適合度診断（完全合致・準合致・逆相性アイドル）を返す。"
+                "「ステージ3の審査基準に合致したアイドルは？」「第52シーズンのルールとおすすめの特性は？」「このステージに向いているアイドルは？」"
+                "「なぜ手毬や星南が推奨されるの？」といった質問には必ずこのツールを実行する。"
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "stage": {
+                        "type": "integer",
+                        "description": "ステージ番号（1〜3）。省略時は全ステージの概要を返す",
+                    },
+                    "season": {
+                        "type": "integer",
+                        "description": "コンテストシーズン番号（例: 52）。省略時は最新シーズン",
+                    },
+                },
+                "required": [],
+            },
+        },
+    },
 ]
 
 
@@ -461,10 +627,11 @@ class GakumasToolExecutor:
         self._support_cards_master: list[dict[str, Any]] = []
         self._match_histories: dict[str, list[dict[str, Any]]] = {}
         self._db: Any = None
-        self._load_csv_data()
         self._init_mongo()
+        self._load_csv_data()
 
     # ── 初期化 ───────────────────────────────────────────────────────────────
+
 
     def _load_csv_data(self) -> None:
         for fname, attr in [
@@ -499,13 +666,37 @@ class GakumasToolExecutor:
                 except Exception:
                     pass
 
-        if INSTRUCTIONS_DIR.exists():
-            for p in INSTRUCTIONS_DIR.glob("match_history_*.csv"):
-                m = re.search(r"match_history_(\d+)\.csv", p.name)
-                if m:
-                    season = m.group(1)
-                    with open(p, encoding="utf-8") as f:
-                        self._match_histories[season] = list(csv.DictReader(f))
+        self._load_contest_matches()
+
+    def _load_contest_matches(self) -> None:
+        """MongoDB contest_matches コレクションから対戦履歴をロードする"""
+        if self._db is None:
+            return
+        try:
+            col = self._db["contest_matches"]
+            docs = list(col.find({}).sort([("season", 1), ("date", 1), ("matchIndex", 1)]))
+            self._match_histories = {}
+            for doc in docs:
+                s = str(doc.get("season", ""))
+                if not s:
+                    continue
+                if s not in self._match_histories:
+                    self._match_histories[s] = []
+                self._match_histories[s].append({
+                    "日付": doc.get("date", ""),
+                    "相手名": doc.get("opponent", {}).get("name", ""),
+                    "グレード": str(doc.get("opponent", {}).get("grade", "")),
+                    "自S1": str(doc.get("stages", {}).get("stage1", {}).get("myScore", "")),
+                    "敵S1": str(doc.get("stages", {}).get("stage1", {}).get("enemyScore", "")),
+                    "自S2": str(doc.get("stages", {}).get("stage2", {}).get("myScore", "")),
+                    "敵S2": str(doc.get("stages", {}).get("stage2", {}).get("enemyScore", "")),
+                    "自S3": str(doc.get("stages", {}).get("stage3", {}).get("myScore", "")),
+                    "敵S3": str(doc.get("stages", {}).get("stage3", {}).get("enemyScore", "")),
+                    "結果": doc.get("overallResult", ""),
+                    "獲得Pt": str(doc.get("earnedPt", "")),
+                })
+        except Exception as e:
+            print(f"[GakumasToolExecutor] Failed to load contest_matches from MongoDB: {e}")
 
     def _init_mongo(self) -> None:
         try:
@@ -519,7 +710,31 @@ class GakumasToolExecutor:
         self._load_csv_data()
         self._init_mongo()
 
+    def get_idol_characteristic(self, idol_name: str) -> str:
+        """アイドルのパラメータ特性（例: 'Vo>Da>Vi'）を返す。MongoDB から優先取得し、なければ定数にフォールバック"""
+        if not idol_name:
+            return ""
+        norm_name = re.sub(r"\s+", "", idol_name)
+        if self._db is not None:
+            try:
+                doc = self._db["owned_idols"].find_one({
+                    "$or": [
+                        {"name": norm_name},
+                        {"name": " ".join(norm_name)},
+                        {"name": {"$regex": re.escape(norm_name)}},
+                    ]
+                })
+                if doc and doc.get("characteristic"):
+                    return str(doc["characteristic"]).strip()
+            except Exception:
+                pass
+        for k, v in DEFAULT_IDOL_CHARACTERISTICS.items():
+            if k in norm_name or norm_name in k:
+                return v
+        return ""
+
     # ── 公開ディスパッチャ ────────────────────────────────────────────────────
+
 
     async def execute(self, tool_name: str, args: dict[str, Any]) -> str:
         dispatch = {
@@ -532,12 +747,15 @@ class GakumasToolExecutor:
             "get_contest_stats":        self.get_contest_stats,
             "get_support_card_details": self.get_support_card_details,
             "get_optimized_deck":       self.get_optimized_deck,
+            "get_stage_loadout":        self.get_stage_loadout,
             "get_support_bonus":        self.get_support_bonus,
             "get_contest_advisory":     self.get_contest_advisory,
+            "get_contest_regulation":   self.get_contest_regulation,
         }
         fn = dispatch.get(tool_name)
         if fn is None:
             return f"※ 未知のツール: {tool_name}"
+
         try:
             result = fn(**args)
             # トークン節約のため長すぎる結果は末尾を省略
@@ -1435,8 +1653,8 @@ class GakumasToolExecutor:
         recent_count: int = 5,
         **kwargs: Any,
     ) -> str:
-        # 常に最新の match_history CSV をリロード
-        self._load_csv_data()
+        # 常に最新の対戦履歴をMongoDBからリロード
+        self._load_contest_matches()
 
         all_seasons = sorted(self._match_histories.keys(), key=lambda x: int(x))
         if not all_seasons:
@@ -1755,13 +1973,17 @@ class GakumasToolExecutor:
                     owned_status = f"所持中（才能開花: ★{talent} ｜ 特訓: Lv.{awaken}）"
 
             skills_text = "\n".join(unique_skills) if unique_skills else "  - （固有スキルデータなし）"
+            char = self.get_idol_characteristic(iname)
+            char_line = f"- パラメータ特性: **`{char}`**\n" if char else ""
             lines.append(
                 f"【Pアイドル詳細: **{iname}** 【{t}】 `[{rarity} / {plan} / {rec_eff_jp}]`】\n"
+                f"{char_line}"
                 f"- 所持・育成状況: **{owned_status}**\n"
                 f"- 固有スキルカード:\n{skills_text}"
             )
 
         return "\n\n".join(lines).strip()
+
 
     # ── ツール: get_optimized_deck ───────────────────────────────────────────
 
@@ -1943,6 +2165,152 @@ class GakumasToolExecutor:
 
         return "\n".join(output_lines).strip()
 
+    # ── ツール: get_stage_loadout ────────────────────────────────────────────
+
+    def get_stage_loadout(
+        self,
+        stage: int,
+        idol_name: str,
+        **kwargs: Any,
+    ) -> str:
+        """
+        MongoDB loadouts コレクションから、指定ステージ・指定アイドルの最新の実走シミュレーション結果
+        （期待中央値、平均値、Vo/Da/Vi/HP実効パラメータ、スキルカード12枚、獲得Pアイテム、メイン/サブメモリー名）を直接取得する。
+        """
+        if self._db is None:
+            return "※ MongoDB に接続されていないため、実走ロードアウトを取得できません。"
+
+        try:
+            from advisory_parser import IDOL_NAME_TO_KEY, IDOL_KEY_MAP
+            from image_resolver import ImageResolver
+            resolver = ImageResolver()
+
+            target_key = IDOL_NAME_TO_KEY.get(idol_name, idol_name.lower())
+            target_name = IDOL_KEY_MAP.get(target_key, idol_name)
+
+            stage_id = 180 + stage if stage in (1, 2, 3) else stage
+
+            # loadouts を検索 (最新のシミュレーション結果)
+            cursor = list(self._db["loadouts"].find({"stageId": stage_id}).sort([("createdAt", -1)]))
+            if not cursor:
+                cursor = list(self._db["loadouts"].find({"stageId": stage_id}).sort([("stats.median", -1)]))
+
+            matched_doc = None
+            norm_target = target_name.replace(" ", "").replace("　", "")
+            for d in cursor:
+                pidol_id = d.get("derived", {}).get("pIdolId")
+                for p in resolver.p_idols:
+                    if str(p.get("id")) == str(pidol_id):
+                        norm_p_name = p.get("idol_name", "").replace(" ", "").replace("　", "")
+                        if norm_p_name == norm_target or norm_target in norm_p_name:
+                            matched_doc = d
+                            break
+                if matched_doc:
+                    break
+
+            if not matched_doc:
+                return f"※ ステージ {stage} のアイドル '{idol_name}'（{target_name}）の実走ロードアウトが見つかりませんでした。"
+
+            # データ展開
+            derived = matched_doc.get("derived", {})
+            season = derived.get("season", 52)
+            main_pidol_id = derived.get("pIdolId")
+            main_pinfo = next((p for p in resolver.p_idols if str(p.get("id")) == str(main_pidol_id)), {})
+            display_title = main_pinfo.get("title", "")
+
+            params = matched_doc.get("params", [0, 0, 0, 0])
+            stats = matched_doc.get("stats", {})
+            med = stats.get("median", 0)
+            mean = stats.get("mean", 0)
+
+            # メモリー名照合
+            groups = matched_doc.get("skillCardIdGroups", [])
+            cust_groups = matched_doc.get("customizationGroups", [])
+            main_mem_name = ""
+            sub_mem_name = ""
+            if len(groups) > 0:
+                m_doc = self._db["memories"].find_one({"skillCardIds": groups[0]})
+                if m_doc:
+                    main_mem_name = m_doc.get("name", "")
+            if len(groups) > 1:
+                s_doc = self._db["memories"].find_one({"skillCardIds": groups[1]})
+                if s_doc:
+                    sub_mem_name = s_doc.get("name", "")
+
+            lines = [
+                f"【⚔️ ステージ{stage} 実走シミュレーション結果: **{target_name} 【{display_title}】**】",
+                f"- **シーズン**: SEASON {season} ｜ **ロードアウト名**: `{matched_doc.get('name', 'latest')}`",
+                f"- **期待中央値スコア**: **{int(med):,} Pt** ｜ 平均値: `{int(mean):,} Pt`",
+                f"- **実効パラメータ**: Vo `{params[0]}` ｜ Da `{params[1]}` ｜ Vi `{params[2]}` ｜ HP `{params[3]}`",
+            ]
+            if main_mem_name or sub_mem_name:
+                lines.append(f"- **使用メモリー**: メイン `{main_mem_name or '不明'}` ｜ サブ `{sub_mem_name or '不明'}`")
+
+            # Pアイテム
+            pitems = []
+            for idx, pid in enumerate(matched_doc.get("pItemIds", [])):
+                if pid > 0:
+                    p_info = resolver.p_items_by_id.get(pid, {"name": f"Item_{pid}"})
+                    p_label = resolver.get_p_item_card_label(p_info["name"])
+                    grp = "メイン" if idx < 4 else "サブ"
+                    pitems.append(f"{p_info['name']} ({grp}: {p_label})")
+            if pitems:
+                lines.append(f"- **獲得Pアイテム ({len(pitems)}枠)**: " + ", ".join(pitems))
+
+            # スキルカード12枚
+            raw_cards = []
+            for g_idx, group in enumerate(groups):
+                cust_group = cust_groups[g_idx] if g_idx < len(cust_groups) else []
+                for c_idx, cid in enumerate(group):
+                    if cid <= 0:
+                        continue
+                    info = resolver.get_card_details(cid)
+                    cust_dict = cust_group[c_idx] if c_idx < len(cust_group) else {}
+                    cust_names = []
+                    for k, v in cust_dict.items():
+                        c_name = resolver.customizations.get(int(k), f"カスタム{k}")
+                        cust_names.append(f"{c_name} Lv{v}" if v > 1 else c_name)
+
+                    is_unique = (c_idx == 0 and info.get("pIdolId", 0) > 0) or info.get("sourceType") == "pidol"
+                    raw_cards.append({
+                        "name": info.get("name", f"Card_{cid}"),
+                        "rarity": info.get("rarity", "R").upper(),
+                        "sourceType": info.get("sourceType", "produce").lower(),
+                        "group": "メイン" if g_idx == 0 else "サブ",
+                        "is_main_unique": (g_idx == 0 and is_unique),
+                        "is_sub_unique": (g_idx == 1 and is_unique),
+                        "customizations": cust_names,
+                    })
+
+            def _sort_key(c):
+                r_order = {"SSR": 0, "SR": 1, "R": 2}.get(c["rarity"], 3)
+                is_support = (c["sourceType"] == "support") or bool(resolver.get_skill_card_support_card_name(c["name"]))
+                if is_support:
+                    s_order = 0
+                elif c.get("is_main_unique"):
+                    s_order = 1
+                elif c.get("is_sub_unique"):
+                    s_order = 2
+                elif c["sourceType"] == "pidol":
+                    s_order = 3
+                else:
+                    s_order = 4
+                return (r_order, s_order, c["name"])
+
+            raw_cards.sort(key=_sort_key)
+
+            lines.append("\n■ **実走スキルカード（12枚構成・レアリティ順）**:")
+            for i, c in enumerate(raw_cards):
+                badge = "[サポカ]" if (c["sourceType"] == "support" or resolver.get_skill_card_support_card_name(c["name"])) else ("[メイン固有]" if c.get("is_main_unique") else ("[サブ固有]" if c.get("is_sub_unique") else f"[{c['group']}]"))
+                cust_desc = f" *(カスタム: {', '.join(c['customizations'])})*" if c["customizations"] else ""
+                lines.append(f"  {i+1}. [{c['rarity']}] {badge} 『{c['name']}』{cust_desc}")
+
+            return "\n".join(lines).strip()
+
+        except Exception as e:
+            log.error(f"[get_stage_loadout] エラー: {e}", exc_info=True)
+            return f"※ 実走ロードアウト取得中にエラーが発生しました: {e}"
+
     # ── ツール: get_contest_advisory ─────────────────────────────────────────
 
     def get_contest_advisory(
@@ -1979,11 +2347,16 @@ class GakumasToolExecutor:
 
         # おすすめPアイドル一覧（上位順）
         if pidols:
-            lines.append("\n■ おすすめPアイドル一覧（上から優先度順）:")
+            criteria_str = reg_info.get("criteria", "")
+            lines.append("\n■ おすすめPアイドル一覧（上から優先度順・特性適合度）:")
             for idx, p in enumerate(pidols, 1):
+                p_name = p.get("idol_name", "")
+                p_char = self.get_idol_characteristic(p_name)
+                p_eval = evaluate_stage_compatibility(criteria_str, p_char)
+                compat_str = f" `[{p_char} {p_eval['tag']}]`" if p_char else ""
                 sub_str = f" (サブ候補: {', '.join([s['title'] for s in p.get('subs', [])])})" if p.get("subs") else ""
-                extra_str = f" {p.get('extra', '')}" if p.get('extra') else ""
-                lines.append(f"  {idx}. {p.get('idol_name', '')}【{p.get('title', '')}】{extra_str}{sub_str}")
+                extra_str = f" {p.get('extra', '')}" if p.get("extra") else ""
+                lines.append(f"  {idx}. {p_name}【{p.get('title', '')}】{compat_str}{extra_str}{sub_str}")
 
         # 特定アイドルまたはトップ推奨アイドルの詳細推奨構成
         data = parse_advisory(stage=stage, idol_query=idol_name if idol_name else None, season=cur_season)
@@ -1991,7 +2364,9 @@ class GakumasToolExecutor:
             target_p = data.get("p_idol", {})
             target_name = target_p.get("idol_name", "")
             target_title = target_p.get("title", "")
-            lines.append(f"\n■ 【{target_name}【{target_title}】向けの推奨構成】")
+            target_char = self.get_idol_characteristic(target_name)
+            char_note = f" (特性: `{target_char}`)" if target_char else ""
+            lines.append(f"\n■ 【{target_name}【{target_title}】向けの推奨構成{char_note}】")
 
             # 推奨Pアイテム
             p_items = data.get("p_items", [])
@@ -2007,6 +2382,146 @@ class GakumasToolExecutor:
                     lines.append(f"    {c_idx}. 『{c.get('name', '')}』{cust_str}")
 
         return "\n".join(lines)
+
+    # ── ツール: get_contest_regulation ───────────────────────────────────────
+
+    def get_contest_regulation(
+        self,
+        stage: int | None = None,
+        season: int | None = None,
+        **kwargs: Any,
+    ) -> str:
+        """
+        コンテストのステージレギュレーション（プラン、審査基準、ターン数、Pアイテム、バフ）を取得し、
+        各アイドルのパラメータ特性（Vo/Da/Vi）との適合度診断を行う。
+        """
+        try:
+            from advisory_parser import find_latest_season, get_stage_regulation, get_stage_recommended_pidols, INSTRUCTIONS_DIRS
+        except ImportError:
+            import sys
+            sys.path.insert(0, str(WORKSPACE_DIR / "gakumas-agent-bot"))
+            sys.path.insert(0, str(Path(__file__).resolve().parent))
+            from advisory_parser import find_latest_season, get_stage_regulation, get_stage_recommended_pidols, INSTRUCTIONS_DIRS
+
+
+        season_info = find_latest_season(season)
+        if not season_info:
+            return f"※ 第{season if season else ''}シーズンのレギュレーション情報（regulation_*.md）が見つかりませんでした。"
+
+        cur_season, _ = season_info
+        stages_to_process = [stage] if stage in (1, 2, 3) else [1, 2, 3]
+
+        # アイドルごとのプラン所持情報（センス/ロジック/アノマリー）を把握
+        from master_data import GakumasMaster
+        master = GakumasMaster()
+        idol_plans: dict[str, dict[str, list[str]]] = {}
+        for p in master.p_idols:
+            iid = int(p.get("idolId", 0))
+            iname = re.sub(r"\s+", "", master.idols.get(iid, ""))
+            pl = p.get("plan", "").lower()
+            title = p.get("title", "")
+            if iname and pl:
+                if iname not in idol_plans:
+                    idol_plans[iname] = {}
+                if pl not in idol_plans[iname]:
+                    idol_plans[iname][pl] = []
+                if title and title not in idol_plans[iname][pl]:
+                    idol_plans[iname][pl].append(title)
+
+        output_lines = [
+            f"【🏆 第{cur_season}コンテストシーズン レギュレーション＆アイドル適合診断】\n"
+        ]
+
+        # regulation_{season}.md のテキスト全体を読み込んで詳細ギミックを取得
+        reg_text = ""
+        for d in INSTRUCTIONS_DIRS:
+            rf = d / f"regulation_{cur_season}.md"
+            if rf.exists():
+                reg_text = rf.read_text(encoding="utf-8")
+                break
+
+        for s_num in stages_to_process:
+            reg_info = get_stage_regulation(cur_season, s_num)
+            plan = reg_info.get("plan", "")
+            plan_jp = reg_info.get("plan_jp", "")
+            criteria = reg_info.get("criteria", "")
+            turns = reg_info.get("turns", 12)
+            vo, da, vi, crit_trend = parse_criteria(criteria)
+
+            # 詳細なバフやPアイテム情報を抽出
+            buff_info = "なし"
+            p_item_info = "なし"
+            if reg_text:
+                stages_split = re.split(r"(?m)^#\s*Stage:\s*", reg_text)
+                for sp in stages_split:
+                    lines = sp.strip().splitlines()
+                    if lines and lines[0].strip().startswith(str(s_num)):
+                        buff_m = re.search(r"buf/debuf:\s*(.*)", sp)
+                        if buff_m and buff_m.group(1).strip() and buff_m.group(1).strip() != "none":
+                            buff_info = buff_m.group(1).strip()
+                        p_item_m = re.search(r"name:\s*(.*)", sp)
+                        if p_item_m:
+                            p_item_info = p_item_m.group(1).strip()
+                        break
+
+            output_lines.append(f"### ■ ステージ {s_num} （{plan_jp} / {turns}ターン）")
+            output_lines.append(f"- **審査基準**: `{criteria}` ➔ **傾向: 【{crit_trend}】** (Vo:{vo}% / Da:{da}% / Vi:{vi}%)")
+            output_lines.append(f"- **ステージギミック/バフ**: {buff_info}")
+            output_lines.append(f"- **ステージPアイテム**: {p_item_info}\n")
+
+            # 適合度分類
+            perfect_list = []
+            semi_list = []
+            disadv_list = []
+
+            for idol_name, default_char in DEFAULT_IDOL_CHARACTERISTICS.items():
+                if not idol_name or idol_name == "根緒亜紗里":
+                    continue
+                char = self.get_idol_characteristic(idol_name) or default_char
+                if not char:
+                    continue
+                eval_res = evaluate_stage_compatibility(criteria, char)
+                norm_idol = re.sub(r"\s+", "", idol_name)
+                matching_titles = idol_plans.get(norm_idol, {}).get(plan, [])
+                if matching_titles:
+                    plan_note = f"✅{plan_jp}衣装あり（【{matching_titles[0]}】等）"
+                else:
+                    plan_note = f"⚠️{plan_jp}衣装なし"
+
+                entry = f"- **{idol_name}** (`{char}` ｜ {plan_note}): {eval_res['reason']}"
+                if eval_res["level"] == "perfect":
+                    perfect_list.append(entry)
+                elif eval_res["level"] == "semi":
+                    semi_list.append(entry)
+                elif eval_res["level"] == "disadvantage":
+                    disadv_list.append(entry)
+
+
+            output_lines.append("【📊 審査基準 × アイドル特性 適合度診断】")
+            if perfect_list:
+                output_lines.append("🎯 **完全合致（最優秀適合）**:")
+                output_lines.extend(["  " + e for e in perfect_list])
+            if semi_list:
+                output_lines.append("🥈 **準合致（好相性）**:")
+                output_lines.extend(["  " + e for e in semi_list])
+            if disadv_list:
+                output_lines.append("⚠️ **逆相性・ステータス不利（要サポート補強）**:")
+                output_lines.extend(["  " + e for e in disadv_list])
+
+            # あじふらい氏推奨アイドル上位との照合
+            pidols = get_stage_recommended_pidols(s_num, cur_season)
+            if pidols:
+                output_lines.append("\n【💡 あじふらい氏推奨アイドル上位との照合】")
+                for idx, p in enumerate(pidols[:5], 1):
+                    p_name = p.get("idol_name", "")
+                    p_char = self.get_idol_characteristic(p_name)
+                    p_eval = evaluate_stage_compatibility(criteria, p_char)
+                    output_lines.append(f"  {idx}. {p_name}【{p.get('title', '')}】 `[{p_char} {p_eval['tag']}]`")
+
+            output_lines.append("")
+
+        return "\n".join(output_lines).strip()
+
 
 
 

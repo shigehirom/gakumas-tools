@@ -15,6 +15,7 @@ export function registerContestCommand(cli: any) {
         .option('--compare <pattern>', 'Compare memories matching pattern (e.g. "再生成*")')
         .option('--force', 'Force re-calculate and overwrite cache')
         .option('--save [count]', 'Save the top N combinations to loadouts (default: 1, max: 5)')
+        .option('--no-save', 'Do not save results to loadouts')
         .option('--name <name>', 'Name for the saved loadout')
         .option('--userId <id>', 'User ID to save the loadout for')
         .option('--supportBonus <value>', 'Support bonus value (default: 0.04)')
@@ -53,10 +54,12 @@ export function registerContestCommand(cli: any) {
             if (options.showWorst) args.push('--showWorst');
             if (options.compare) args.push('--compare', options.compare);
             if (options.force) args.push('--force');
-            if (options.save) {
+            if (options.save !== false && options['no-save'] !== true) {
                 args.push('--save');
                 if (typeof options.save === 'number' || typeof options.save === 'string') {
                     args.push(String(options.save));
+                } else {
+                    args.push('1');
                 }
             }
             if (options.name) args.push('--name', options.name);

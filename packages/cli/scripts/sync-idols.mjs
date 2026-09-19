@@ -1,5 +1,9 @@
-import fs from 'fs';
-import path from 'path';
+/**
+ * sync-idols.mjs
+ * Google スプレッドシートの `Idols` シートからアイドルメタデータ（特性、カラー等）を取得し、
+ * MongoDB の `owned_idols` コレクションに同期・更新するスクリプト
+ */
+
 import { MongoClient } from 'mongodb';
 import { google } from 'googleapis';
 import { getAuthClient, loadEnvLocal } from './utils/sheetsAuth.mjs';
@@ -7,156 +11,137 @@ import { getAuthClient, loadEnvLocal } from './utils/sheetsAuth.mjs';
 loadEnvLocal();
 
 const MONGODB_URI = process.env.MONGODB_URI;
-const MONGODB_DB = process.env.MONGODB_DB || 'gakumas';
+const MONGODB_DB = process.env.MONGODB_DB || 'gakumas-tools';
 const SHEET_ID = process.env.SYNC_SHEET_ID;
-const SHEET_RANGE = 'Idols!A:Z';
 
-const JSON_DIR = path.resolve(process.cwd(), 'packages/gakumas-data/json');
-const IDOLS_JSON_PATH = path.join(JSON_DIR, 'idols.json');
-
-if (!MONGODB_URI) {
-  console.error("Error: MONGODB_URI is not set in .env.local");
-  process.exit(1);
-}
-
-if (!SHEET_ID) {
-  console.error("Error: SYNC_SHEET_ID is not set in .env.local");
-  process.exit(1);
+if (!MONGODB_URI || !SHEET_ID) {
+    console.error('Error: MONGODB_URI and SYNC_SHEET_ID must be set in .env.local');
+    process.exit(1);
 }
 
 const args = process.argv.slice(2);
-const force = args.includes('--force');
+const execute = args.includes('--execute');
 
-async function main() {
-  let auth;
-  try {
-    auth = await getAuthClient();
-  } catch (err) {
-    console.error("Authentication failed.");
-    process.exit(1);
-  }
+async function syncIdols() {
+    console.log(`[sync-idols] Connecting to Google Sheets (${SHEET_ID})...`);
+    const auth = await getAuthClient();
+    const sheets = google.sheets({ version: 'v4', auth });
 
-  // Load JSON reference data
-  let idolsDict = {};
-  if (fs.existsSync(IDOLS_JSON_PATH)) {
-    const data = JSON.parse(fs.readFileSync(IDOLS_JSON_PATH, 'utf8'));
-    data.forEach(item => {
-      idolsDict[item.id.toString()] = item;
+    const res = await sheets.spreadsheets.values.get({
+        spreadsheetId: SHEET_ID,
+        range: 'Idols!A1:Z50',
     });
-  } else {
-    console.error(`Error: Reference JSON not found at ${IDOLS_JSON_PATH}`);
-    process.exit(1);
-  }
 
-  const sheets = google.sheets({ version: 'v4', auth });
-  
-  console.log(`Fetching data from Google Sheets (ID: ${SHEET_ID}, Range: ${SHEET_RANGE})...`);
-  let response;
-  try {
-    response = await sheets.spreadsheets.values.get({
-      spreadsheetId: SHEET_ID,
-      range: SHEET_RANGE,
-    });
-  } catch (err) {
-    console.error('The API returned an error:', err.message);
-    process.exit(1);
-  }
-
-  const rows = response.data.values;
-  if (!rows || rows.length === 0) {
-    console.log('No data found in the spreadsheet.');
-    process.exit(1);
-  }
-
-  const headers = rows[0].map(h => h.trim());
-  const idxMap = {};
-  headers.forEach((h, i) => idxMap[h] = i);
-
-  if (idxMap['ID'] === undefined || idxMap['trust_level'] === undefined) {
-    console.error('Spreadsheet is missing required columns (ID, trust_level).');
-    process.exit(1);
-  }
-
-  const ownedIdols = [];
-
-  for (let i = 1; i < rows.length; i++) {
-    const row = rows[i];
-    if (!row || row.length === 0) continue;
-
-    const idStr = row[idxMap['ID']];
-    if (!idStr) continue;
-
-    const trustLevelStr = row[idxMap['trust_level']];
-    if (trustLevelStr === undefined || trustLevelStr === '') continue; // Skip if no trust level
-
-    const idolRef = idolsDict[idStr];
-    if (!idolRef) {
-      console.warn(`Warning: Idol with ID ${idStr} not found in idols.json`);
-      continue;
+    const rows = res.data.values || [];
+    if (rows.length < 2) {
+        console.log('[sync-idols] No idol records found in Idols sheet.');
+        return;
     }
 
-    const trust_level = parseInt(trustLevelStr, 10);
+    const header = rows[0];
+    const idIdx = header.findIndex(h => h.includes('ID'));
+    const nameIdx = header.findIndex(h => h.includes('アイドル名') || h.includes('名前'));
+    const trustIdx = header.findIndex(h => h.includes('親愛度'));
+    const colorNameIdx = header.findIndex(h => h.includes('色名') || h.includes('カラー'));
+    const rgbIdx = header.findIndex(h => h.includes('RGB') || h.includes('HEX'));
+    const charIdx = header.findIndex(h => h.includes('特性'));
+    const cvIdx = header.findIndex(h => h.includes('CV'));
+    const classIdx = header.findIndex(h => h.includes('学年・クラス') || h.includes('クラス'));
+    const ageIdx = header.findIndex(h => h.includes('年齢'));
+    const bdayIdx = header.findIndex(h => h.includes('誕生日'));
+    const bloodIdx = header.findIndex(h => h.includes('血液型'));
+    const heightIdx = header.findIndex(h => h.includes('身長'));
+    const weightIdx = header.findIndex(h => h.includes('体重'));
+    const bustIdx = header.findIndex(h => h.includes('バスト'));
+    const waistIdx = header.findIndex(h => h.includes('ウエスト'));
+    const hipIdx = header.findIndex(h => h.includes('ヒップ'));
+    const handIdx = header.findIndex(h => h.includes('利き手'));
+    const hometownIdx = header.findIndex(h => h.includes('出身地'));
+    const residenceIdx = header.findIndex(h => h.includes('居住地'));
+    const enrollmentIdx = header.findIndex(h => h.includes('入学'));
+    const hobbyIdx = header.findIndex(h => h.includes('趣味'));
+    const skillIdx = header.findIndex(h => h.includes('特技'));
 
-    ownedIdols.push({
-      _id: idStr,
-      id: parseInt(idStr, 10),
-      name: idolRef.name,
-      trust_level,
-      updatedAt: new Date()
-    });
-  }
+    console.log('[sync-idols] Column indices:', { idIdx, nameIdx, trustIdx, colorNameIdx, rgbIdx, charIdx, cvIdx, bdayIdx, hobbyIdx });
 
-  console.log(`Found ${ownedIdols.length} idols to synchronize.`);
+    const client = new MongoClient(MONGODB_URI);
+    try {
+        await client.connect();
+        const db = client.db(MONGODB_DB);
+        const col = db.collection('owned_idols');
 
-  if (ownedIdols.length === 0) {
-    console.log("No idols found. Exiting.");
-    process.exit(0);
-  }
+        let updatedCount = 0;
+        console.log(`\n--- Idols Sync Preview (${execute ? 'EXECUTE' : 'DRY RUN'}) ---`);
 
-  let client;
-  try {
-    client = new MongoClient(MONGODB_URI);
-    await client.connect();
-    console.log("Connected to MongoDB.");
+        for (let i = 1; i < rows.length; i++) {
+            const row = rows[i];
+            if (!row[idIdx] || !row[nameIdx]) continue;
 
-    const db = client.db(MONGODB_DB);
-    const collection = db.collection('owned_idols');
+            const id = parseInt(row[idIdx], 10);
+            const name = row[nameIdx].trim();
+            const trustLevel = trustIdx !== -1 && row[trustIdx] ? parseInt(row[trustIdx], 10) : undefined;
+            const colorName = colorNameIdx !== -1 ? (row[colorNameIdx] || '').trim() : '';
+            const colorRgb = rgbIdx !== -1 ? (row[rgbIdx] || '').trim() : '';
+            const characteristic = charIdx !== -1 ? (row[charIdx] || '').trim() : '';
 
-    if (force) {
-      console.log("--force flag provided. Dropping existing collection...");
-      try {
-        await collection.drop();
-        console.log("Collection dropped.");
-      } catch (err) {
-        if (err.codeName !== 'NamespaceNotFound') {
-          throw err;
+            const updateData = {
+                id,
+                name,
+                updatedAt: new Date(),
+            };
+            if (trustLevel !== undefined && !isNaN(trustLevel)) {
+                updateData.trust_level = trustLevel;
+            }
+            if (colorName) updateData.color_name = colorName;
+            if (colorRgb) updateData.color_rgb = colorRgb;
+            if (characteristic) updateData.characteristic = characteristic;
+
+            // Profile info
+            const profile = {};
+            if (cvIdx !== -1 && row[cvIdx]) profile.cv = row[cvIdx].trim();
+            if (classIdx !== -1 && row[classIdx]) profile.class = row[classIdx].trim();
+            if (ageIdx !== -1 && row[ageIdx] && !isNaN(parseInt(row[ageIdx], 10))) profile.age = parseInt(row[ageIdx], 10);
+            if (bdayIdx !== -1 && row[bdayIdx]) profile.birthday = row[bdayIdx].trim();
+            if (bloodIdx !== -1 && row[bloodIdx]) profile.blood_type = row[bloodIdx].trim();
+            if (heightIdx !== -1 && row[heightIdx] && !isNaN(parseInt(row[heightIdx], 10))) profile.height = parseInt(row[heightIdx], 10);
+            if (weightIdx !== -1 && row[weightIdx] && !isNaN(parseInt(row[weightIdx], 10))) profile.weight = parseInt(row[weightIdx], 10);
+            if (bustIdx !== -1 && row[bustIdx] && !isNaN(parseInt(row[bustIdx], 10))) profile.bust = parseInt(row[bustIdx], 10);
+            if (waistIdx !== -1 && row[waistIdx] && !isNaN(parseInt(row[waistIdx], 10))) profile.waist = parseInt(row[waistIdx], 10);
+            if (hipIdx !== -1 && row[hipIdx] && !isNaN(parseInt(row[hipIdx], 10))) profile.hip = parseInt(row[hipIdx], 10);
+            if (handIdx !== -1 && row[handIdx]) profile.dominant_hand = row[handIdx].trim();
+            if (hometownIdx !== -1 && row[hometownIdx]) profile.hometown = row[hometownIdx].trim();
+            if (residenceIdx !== -1 && row[residenceIdx]) profile.residence = row[residenceIdx].trim();
+            if (enrollmentIdx !== -1 && row[enrollmentIdx]) profile.enrollment = row[enrollmentIdx].trim();
+            if (hobbyIdx !== -1 && row[hobbyIdx]) profile.hobby = row[hobbyIdx].trim();
+            if (skillIdx !== -1 && row[skillIdx]) profile.skill = row[skillIdx].trim();
+
+            if (Object.keys(profile).length > 0) {
+                updateData.profile = profile;
+            }
+
+            console.log(`[${id}] ${name}: 特性=${characteristic || '(なし)'}, 親愛度=${trustLevel ?? '-'}, 色=${colorName}`);
+
+            if (execute) {
+                await col.updateOne(
+                    { id },
+                    { $set: updateData },
+                    { upsert: true }
+                );
+                updatedCount++;
+            }
         }
-      }
-    }
 
-    let successCount = 0;
-    for (const idol of ownedIdols) {
-      try {
-        await collection.updateOne(
-          { _id: idol._id },
-          { $set: idol },
-          { upsert: true }
-        );
-        successCount++;
-      } catch (err) {
-        console.error(`Failed to upsert Idol ID: ${idol._id}`, err.message);
-      }
+        if (execute) {
+            console.log(`\n[+] Successfully synced ${updatedCount} idols into MongoDB 'owned_idols'.`);
+        } else {
+            console.log('\n[Dry Run] Specify --execute to save changes to MongoDB.');
+        }
+    } finally {
+        await client.close();
     }
-
-    console.log(`Successfully synchronized ${successCount}/${ownedIdols.length} idols.`);
-  } catch (err) {
-    console.error("Database connection or operation failed:", err);
-  } finally {
-    if (client) {
-      await client.close();
-      console.log("MongoDB connection closed.");
-    }
-  }
 }
 
-main();
+syncIdols().catch(err => {
+    console.error('[sync-idols error]:', err.message);
+    process.exit(1);
+});

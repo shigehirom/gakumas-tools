@@ -63,10 +63,17 @@
     "last_updated": "2026-09-08T17:51:15.480566"
   },
   "2026-09-12": {
-    "requests": 1,
-    "prompt_tokens": 19235,
-    "candidate_tokens": 208,
-    "total_tokens": 19443,
-    "last_updated": "2026-09-12T04:33:52.765321"
+    "requests": 5,
+    "prompt_tokens": 103030,
+    "candidate_tokens": 1287,
+    "total_tokens": 104317,
+    "last_updated": "2026-09-12T20:50:23.063770"
+  },
+  "2026-09-13": {
+    "requests": 14,
+    "prompt_tokens": 307747,
+    "candidate_tokens": 4492,
+    "total_tokens": 312239,
+    "last_updated": "2026-09-13T11:38:11.860676"
   }
 }

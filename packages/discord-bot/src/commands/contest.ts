@@ -112,7 +112,8 @@ export const contestCommand = {
                 content: `⏳ **【コンテスト リハーサル実行中】**\n- **対象**: シーズン ${currentSeason} ステージ ${stageNum} (\`${stageArg}\`)\n- **アイドル**: \`${idol}\`\n- **設定**: 2000 runs / 2段階ステップ実行 (\`--step\`)\n*計算が完了するまで少々お待ちください...*`
             });
 
-            const cliArgs = ['contest', stageArg, '2000', idol, '--step'];
+            const targetUserId = interaction.user?.id || config.userId;
+            const cliArgs = ['contest', stageArg, '2000', idol, '--step', '--save', '1', '--userId', targetUserId];
             const result = await runCli(cliArgs);
 
             if (result.exitCode !== 0 && (!result.stdout || result.stdout.trim().length === 0)) {
@@ -131,85 +132,165 @@ export const contestCommand = {
                 .setDescription(`**対象アイドル**: \`${idol}\` | **試行回数**: 2,000 runs (Step実行)`)
                 .setTimestamp();
 
-            // 単一ステージTop3 または ベストスコアの抽出
-            const top3Match = output.match(/### ■ 単一ステージ最適化 \(Top 3\)[\s\S]*?\*\*合計期待中央値：約\s*([\d,]+)\s*Pt\*\*/);
-            if (top3Match) {
-                const totalFormatted = parseInt(top3Match[1].replace(/,/g, ''), 10).toLocaleString();
-                embed.addFields({
-                    name: '🎯 単一ステージ 最適Top3 合計期待中央値',
-                    value: `**${totalFormatted} Pt**`,
-                    inline: false
+            // 各アイドルブロックの抽出
+            const idolSections = output.split(/(?=^##\s+[\d,]+\s+-)/m);
+            interface ParsedIdol {
+                score: number; // 平均スコア
+                medianScore: number;
+                idolName: string;
+                mainTitle: string;
+                subTitle: string;
+                mainMemId: string;
+                subMemId: string;
+                combinations: Array<{
+                    rank: number;
+                    main: string;
+                    sub: string;
+                    median: number;
+                    mean: number;
+                }>;
+            }
+
+            const parsedIdols: ParsedIdol[] = [];
+
+            for (const sec of idolSections) {
+                const headerMatch = sec.match(/^##\s+([\d,]+)\s+-\s+([^\s]+)\s+【(.*?)】【(.*?)】/m);
+                if (!headerMatch) continue;
+
+                const score = parseInt(headerMatch[1].replace(/,/g, ''), 10);
+                const idolName = headerMatch[2];
+                const mainTitle = headerMatch[3];
+                const subTitle = headerMatch[4];
+
+                const memMatch = sec.match(/### メモリー\s*\n-\s*メイン:\s*(.*?)\s*\((.*?)\)\s*\n-\s*サブ[：:]\s*(.*?)\s*\((.*?)\)/);
+                const mainMemId = memMatch ? memMatch[2].trim() : '';
+                const subMemId = memMatch ? memMatch[4].trim() : '';
+
+                const combMatches = Array.from(sec.matchAll(/^\|\s*(\d+)\s*\|\s*([^|]+)\|\s*([^|]+)\|\s*([\d,]+)\s*\|\s*([\d,]+)\s*\|\s*([\d,]+)\s*\|\s*([\d,]+)\s*\|\s*([\d,]+)\s*\|\s*([\d,]+)\s*\|/gm));
+                const combinations = combMatches.map(m => ({
+                    rank: parseInt(m[1], 10),
+                    main: m[2].trim(),
+                    sub: m[3].trim(),
+                    median: parseInt(m[6].replace(/,/g, ''), 10),
+                    mean: parseInt(m[9].replace(/,/g, ''), 10),
+                }));
+
+                const medianScore = combinations.length > 0 ? combinations[0].median : score;
+
+                parsedIdols.push({
+                    score,
+                    medianScore,
+                    idolName,
+                    mainTitle,
+                    subTitle,
+                    mainMemId,
+                    subMemId,
+                    combinations,
                 });
             }
 
-            // メイン/サブメモリーの抽出
-            // - メイン: クライアイ (26/08/13＿16725)
-            // - サブ： クライアイ (26/08/09＿17274)
-            const memMatch = output.match(/### メモリー\s*\n-\s*メイン:\s*(.*?)\s*\((.*?)\)\s*\n-\s*サブ[：:]\s*(.*?)\s*\((.*?)\)/);
-            let mainMemId = '';
-            let mainTitle = '';
-            let subMemId = '';
-            let subTitle = '';
-            if (memMatch) {
-                mainTitle = memMatch[1];
-                mainMemId = memMatch[2];
-                subTitle = memMatch[3];
-                subMemId = memMatch[4];
+            // スコア（中央値）降順ソート
+            parsedIdols.sort((a, b) => b.medianScore - a.medianScore);
+
+            // 単一ステージTop3 の抽出
+            const top3Section = output.match(/### ■ 単一ステージ最適化 \(Top 3\)[\s\S]*?\*\*合計期待中央値：約\s*([\d,\.]+)\s*Pt\*\*([\s\S]*?)(?:$|\n---|\n##)/);
+            let top3Items: Array<{ idol: string; rank: string; main: string; sub: string; median: number }> = [];
+            let top3TotalFormatted = '';
+
+            if (top3Section) {
+                const totalNum = Math.round(parseFloat(top3Section[1].replace(/,/g, '')));
+                top3TotalFormatted = totalNum.toLocaleString();
+                const tableRows = Array.from(top3Section[2].matchAll(/^\|\s*([^|]+)\|\s*([^|]+)\|\s*([^|]+)\|\s*([^|]+)\|\s*([\d,\.]+)\s*\|/gm));
+                top3Items = tableRows
+                    .filter(r => !r[1].includes('アイドル') && !r[1].includes(':---'))
+                    .map(r => ({
+                        idol: r[1].trim(),
+                        rank: r[2].trim(),
+                        main: r[3].trim(),
+                        sub: r[4].trim(),
+                        median: Math.round(parseFloat(r[5].replace(/,/g, ''))),
+                    }));
             }
 
-            // 個別アイドルのベストスコアハイライト (## 150660 - 雨夜燕 【クライアイ】【クライアイ】)
-            const bestMatches = Array.from(output.matchAll(/^##\s+([\d,]+)\s+-\s+([^\s]+)\s+【(.*?)】【(.*?)】/gm));
-            if (bestMatches.length > 0) {
-                const highlights = bestMatches.slice(0, 5).map(m => {
-                    const scoreNum = parseInt(m[1].replace(/,/g, ''), 10);
-                    const formattedScore = scoreNum.toLocaleString();
-                    const mainInfo = mainMemId ? `\`${mainMemId}\` 【${m[3]}】` : `【${m[3]}】`;
-                    const subInfo = subMemId ? `\`${subMemId}\` 【${m[4]}】` : `【${m[4]}】`;
-                    return `• **${m[2]}**: **${formattedScore} Pt**\n  ┣ **メイン**: ${mainInfo}\n  ┗ **サブ**: ${subInfo}`;
-                }).join('\n\n');
+            if (idol === 'all') {
+                // ── 全アイドル実行時 ──
+                // 1. 単一ステージ最適Top3 編成
+                if (top3Items.length > 0) {
+                    const medals = ['🥇', '🥈', '🥉'];
+                    const top3Text = top3Items.map((item, idx) => {
+                        const medal = medals[idx] || `#${idx + 1}`;
+                        return `${medal} **${item.idol}**: **${item.median.toLocaleString()} Pt**\n  ┣ メイン: \`${item.main}\`\n  ┗ サブ: \`${item.sub}\``;
+                    }).join('\n\n');
 
-                embed.addFields({
-                    name: `📊 上位アイドル ベスト期待スコア (上位${Math.min(5, bestMatches.length)}件)`,
-                    value: highlights,
-                    inline: false
-                });
-            }
+                    embed.addFields({
+                        name: `🎯 単一ステージ 最適Top3 編成 (合計期待中央値: 約 ${top3TotalFormatted} Pt)`,
+                        value: top3Text,
+                        inline: false,
+                    });
+                } else if (top3TotalFormatted) {
+                    embed.addFields({
+                        name: '🎯 単一ステージ 最適Top3 合計期待中央値',
+                        value: `**${top3TotalFormatted} Pt**`,
+                        inline: false,
+                    });
+                }
 
-            // 単一アイドル指定時：メインメモリーの詳細（ステータス・Pアイテム・スキルカード）を DB から取得して表示
-            if (mainMemId) {
-                const mainMemDetails = await fetchMemoryDetails(mainMemId);
-                if (mainMemDetails) {
-                    embed.addFields(
-                        {
-                            name: `🎴 メインメモリー詳細 (\`${mainMemId}\`)`,
-                            value: `📊 **ステータス**: ${mainMemDetails.paramsText}\n🎁 **Pアイテム**: ${mainMemDetails.itemsText}\n🃏 **スキルカード**: ${mainMemDetails.cardsText}`,
-                            inline: false
+                // 2. 各アイドル ベストスコアランキング (上位5名)
+                if (parsedIdols.length > 0) {
+                    const ranks = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣'];
+                    const highlights = parsedIdols.slice(0, 5).map((p, idx) => {
+                        const badge = ranks[idx] || `#${idx + 1}`;
+                        const mainInfo = p.mainMemId ? `\`${p.mainMemId}\` 【${p.mainTitle}】` : `【${p.mainTitle}】`;
+                        const subInfo = p.subMemId ? `\`${p.subMemId}\` 【${p.subTitle}】` : `【${p.subTitle}】`;
+                        return `${badge} **${p.idolName}**: 中央値 **${p.medianScore.toLocaleString()} Pt** (平均: ${p.score.toLocaleString()} Pt)\n  ┣ メイン: ${mainInfo}\n  ┗ サブ: ${subInfo}`;
+                    }).join('\n\n');
+
+                    embed.addFields({
+                        name: `📊 各アイドル ベスト期待スコア (上位${Math.min(5, parsedIdols.length)}件)`,
+                        value: highlights,
+                        inline: false,
+                    });
+                }
+            } else {
+                // ── 単一アイドル指定時 ──
+                const target = parsedIdols[0];
+                if (target) {
+                    const mainInfo = target.mainMemId ? `\`${target.mainMemId}\` 【${target.mainTitle}】` : `【${target.mainTitle}】`;
+                    const subInfo = target.subMemId ? `\`${target.subMemId}\` 【${target.subTitle}】` : `【${target.subTitle}】`;
+
+                    embed.addFields({
+                        name: '🎯 ベスト期待スコア & メモリー構成',
+                        value: `中央値: **${target.medianScore.toLocaleString()} Pt** ｜ 平均: **${target.score.toLocaleString()} Pt**\n┣ **メイン**: ${mainInfo}\n┗ **サブ**: ${subInfo}`,
+                        inline: false,
+                    });
+
+                    if (target.mainMemId) {
+                        const mainMemDetails = await fetchMemoryDetails(target.mainMemId);
+                        if (mainMemDetails) {
+                            embed.addFields({
+                                name: `🎴 メインメモリー詳細 (\`${target.mainMemId}\`)`,
+                                value: `📊 **ステータス**: ${mainMemDetails.paramsText}\n🎁 **Pアイテム**: ${mainMemDetails.itemsText}\n🃏 **スキルカード**: ${mainMemDetails.cardsText}`,
+                                inline: false,
+                            });
                         }
-                    );
+                    }
+
+                    if (target.combinations.length > 0) {
+                        const medals = ['🥇', '🥈', '🥉', '4️⃣', '5️⃣'];
+                        const topCombs = target.combinations.slice(0, 5).map((m, idx) => {
+                            const medal = medals[idx] || `#${m.rank}`;
+                            return `${medal} **#${m.rank}** [中央値: **${m.median.toLocaleString()} Pt** / 平均: ${m.mean.toLocaleString()} Pt]\n• メイン: \`${m.main}\`\n• サブ: \`${m.sub}\``;
+                        }).join('\n\n');
+
+                        embed.addFields({
+                            name: `🏆 組合せベスト Top ${Math.min(5, target.combinations.length)}`,
+                            value: topCombs,
+                            inline: false,
+                        });
+                    }
                 }
             }
 
-            // 組合せベスト Top 5 のテーブル抽出
-            // | 1 | 26/08/13＿16725【クライアイ】 | 26/08/09＿17274【クライアイ】 | ... | ... | 150660 | ...
-            const combMatches = Array.from(output.matchAll(/^\|\s*(\d+)\s*\|\s*([^|]+)\|\s*([^|]+)\|\s*([\d,]+)\s*\|\s*([\d,]+)\s*\|\s*([\d,]+)\s*\|\s*([\d,]+)\s*\|\s*([\d,]+)\s*\|\s*([\d,]+)\s*\|/gm));
-            if (combMatches.length > 0) {
-                const medals = ['🥇', '🥈', '🥉', '4️⃣', '5️⃣'];
-                const topCombs = combMatches.slice(0, 5).map((m, idx) => {
-                    const rank = m[1];
-                    const medal = medals[idx] || `#${rank}`;
-                    const mainStr = m[2].trim();
-                    const subStr = m[3].trim();
-                    const median = parseInt(m[6].replace(/,/g, ''), 10).toLocaleString();
-                    const avg = parseInt(m[9].replace(/,/g, ''), 10).toLocaleString();
-                    return `${medal} **#${rank}** [中央値: **${median} Pt** / 平均: ${avg} Pt]\n• メイン: \`${mainStr}\`\n• サブ: \`${subStr}\``;
-                }).join('\n\n');
-
-                embed.addFields({
-                    name: `🏆 組合せベスト Top ${Math.min(5, combMatches.length)}`,
-                    value: topCombs,
-                    inline: false
-                });
-            }
 
             // レポートファイルの添付
             const reportBuffer = Buffer.from(output, 'utf-8');

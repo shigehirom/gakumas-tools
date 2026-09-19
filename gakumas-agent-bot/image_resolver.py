@@ -70,7 +70,11 @@ class ImageResolver:
         self.idols: dict[int, str] = {}  # idolId -> idol_name
         self.p_idols: list[dict[str, Any]] = []  # [{id, idolId, idol_name, title, rarity}]
         self.skill_cards: dict[str, str] = {}  # card_name -> card_id
+        self.skill_card_by_id: dict[int, dict[str, Any]] = {}  # id -> {name, rarity, sourceType, pIdolId, unique}
+        self.skill_card_by_name: dict[str, dict[str, Any]] = {}  # name -> {id, rarity, sourceType, pIdolId, unique}
         self.p_items: dict[str, str] = {}  # item_name -> item_id
+        self.p_items_by_id: dict[int, dict[str, Any]] = {}  # id -> {name, source}
+        self.customizations: dict[int, str] = {}  # id -> name
         self.support_card_to_item: dict[str, str] = {}
         self.support_card_to_wiki_id: dict[str, str] = {}
         self.p_item_to_card_info: dict[str, dict[str, Any]] = {}  # item_name -> {card_name, rarity, type, label}
@@ -113,9 +117,24 @@ class ImageResolver:
             with open(sc_path, encoding="utf-8") as f:
                 for r in csv.DictReader(f):
                     name = r.get("name", "").strip()
-                    cid = r.get("id", "").strip()
-                    if name and cid:
-                        self.skill_cards[name] = cid
+                    cid_str = r.get("id", "").strip()
+                    if name and cid_str:
+                        self.skill_cards[name] = cid_str
+                        try:
+                            cid = int(cid_str)
+                            pid_val = int(r.get("pIdolId", 0)) if r.get("pIdolId") else 0
+                            info = {
+                                "id": cid,
+                                "name": name,
+                                "rarity": r.get("rarity", "").strip(),
+                                "sourceType": r.get("sourceType", "").strip(),
+                                "pIdolId": pid_val,
+                                "unique": r.get("unique", "").lower() == "true",
+                            }
+                            self.skill_card_by_id[cid] = info
+                            self.skill_card_by_name[name] = info
+                        except Exception:
+                            pass
 
         # 4. Pアイテム
         pi_path = CSV_DIR / "p_items.csv"
@@ -123,12 +142,30 @@ class ImageResolver:
             with open(pi_path, encoding="utf-8") as f:
                 for r in csv.DictReader(f):
                     name = r.get("name", "").strip()
-                    pid = r.get("id", "").strip()
+                    pid_str = r.get("id", "").strip()
                     src = r.get("source", "").strip()
-                    if name and pid:
-                        self.p_items[name] = pid
+                    if name and pid_str:
+                        self.p_items[name] = pid_str
+                        try:
+                            pid = int(pid_str)
+                            self.p_items_by_id[pid] = {"name": name, "source": src}
+                        except Exception:
+                            pass
                         if src:
                             self.support_card_to_item[src] = name
+
+        # 4.5 カスタマイズ
+        cust_path = CSV_DIR / "customizations.csv"
+        if cust_path.exists():
+            with open(cust_path, encoding="utf-8") as f:
+                for r in csv.DictReader(f):
+                    cid_str = r.get("id", "").strip()
+                    cname = r.get("name", "").strip()
+                    if cid_str and cname:
+                        try:
+                            self.customizations[int(cid_str)] = cname
+                        except Exception:
+                            pass
 
         # 5. サポートカード（support_cards.csv から wiki_id とカード名を紐付け）
         sc_csv = _find_dir([
@@ -251,6 +288,8 @@ class ImageResolver:
         "光の夜": {"name": "キラキラして綺麗～っ！", "rarity": "SSR", "type": "Da"},
         "練習再開！": {"name": "もう一度、最初から！", "rarity": "SSR", "type": "Vo"},
         "バレンタイン大作戦！": {"name": "バレンタイン会議中ーっ！", "rarity": "SSR", "type": "Vi"},
+        "お手並み拝見": {"name": "私を楽しませろ", "rarity": "SSR", "type": "Da"},
+        "あつあつはふはふ": {"name": "おでん、通りま〜すッ！", "rarity": "SSR", "type": "Vi"},
     }
 
 
@@ -264,8 +303,26 @@ class ImageResolver:
         for k, v in self.SUPPORT_SKILLS_MAP.items():
             if clean in k or k in clean:
                 return f"[{v['rarity']}] {v['name']} ({v['type']})"
+    def get_p_item_support_card_name(self, item_name: str) -> str | None:
+        """Pアイテム名から由来サポートカード名を取得する"""
+        clean_name = item_name.strip()
+        if clean_name in self.p_item_to_card_info:
+            return self.p_item_to_card_info[clean_name].get("card_name")
+        for k, v in self.p_item_to_card_info.items():
+            if clean_name in k or k in clean_name:
+                return v.get("card_name")
         return None
 
+    def get_skill_card_support_card_name(self, card_name: str) -> str | None:
+        """スキルカード名から由来サポートカード名を取得する"""
+        clean = card_name.rstrip("+").strip()
+        info = self.SUPPORT_SKILLS_MAP.get(clean)
+        if info:
+            return info["name"]
+        for k, v in self.SUPPORT_SKILLS_MAP.items():
+            if clean in k or k in clean:
+                return v["name"]
+        return None
 
     def find_images_in_text(self, text: str, max_images: int = 6) -> list[tuple[str, Path]]:
         """
@@ -452,3 +509,89 @@ class ImageResolver:
         if gk_webp.exists():
             return gk_webp
         return None
+
+    def get_asari_icon_image(self) -> Path | None:
+        """あさり先生Botのメガネアバター画像を安全に探索する（フォールバック付き）"""
+        candidates = [
+            WORKSPACE_DIR / "gakumas-tools" / "packages" / "gakumas-images" / "images" / "idols" / "asari_bot.png",
+            WORKSPACE_DIR / "packages" / "gakumas-images" / "images" / "idols" / "asari_bot.png",
+            IMAGES_DIR / "idols" / "asari_bot.png",
+            Path(__file__).resolve().parent / "assets" / "asari_bot.png",
+            WORKSPACE_DIR / "gakumas-agent-bot" / "assets" / "asari_bot.png",
+            WORKSPACE_DIR / "gakumas-tools" / "gakumas-agent-bot" / "assets" / "asari_bot.png",
+            Path("/app/gakumas-agent-bot/assets/asari_bot.png"),
+            Path("/app/packages/gakumas-images/images/idols/asari_bot.png"),
+            # 公式ミニキャラ（フォールバック）
+            IMAGES_DIR / "idols" / "14.png",
+        ]
+        for c in candidates:
+            try:
+                if c.exists() and c.stat().st_size > 100:
+                    return c
+            except Exception:
+                continue
+        return None
+
+    def get_card_details(self, name_or_id: str | int) -> dict[str, Any]:
+        """カード名またはカードIDからマスタ情報（id, name, rarity, sourceType, pIdolId）を取得する"""
+        if isinstance(name_or_id, int) or (isinstance(name_or_id, str) and name_or_id.isdigit()):
+            cid = int(name_or_id)
+            if cid in self.skill_card_by_id:
+                return self.skill_card_by_id[cid]
+        
+        name = str(name_or_id).strip()
+        if name in self.skill_card_by_name:
+            return self.skill_card_by_name[name]
+        
+        # 末尾の '+' を除いた名前で再検索
+        trimmed = name.rstrip("+")
+        if trimmed in self.skill_card_by_name:
+            return self.skill_card_by_name[trimmed]
+            
+        # 記号正規化で検索
+        norm = re.sub(r"[！？\?!\s♪〜～\.\…「」『』【】\+]", "", name.lower())
+        for cname, info in self.skill_card_by_name.items():
+            if re.sub(r"[！？\?!\s♪〜～\.\…「」『』【】\+]", "", cname.lower()) == norm:
+                return info
+                
+        return {"id": 0, "name": name, "rarity": "R", "sourceType": "produce", "pIdolId": 0}
+
+    def get_skill_card_sort_key(self, card_item: dict[str, Any] | str | int) -> tuple[int, int, str]:
+        """
+        スキルカードのソートキー:
+        1. レアリティ (SSR: 0, SR: 1, R: 2, その他: 3)
+        2. 由来 (サポカ: 0, 固有: 1, その他: 2)
+        3. カード名
+        """
+        cname = ""
+        cid = None
+        if isinstance(card_item, dict):
+            cname = card_item.get("name", "")
+            cid = card_item.get("id")
+        elif isinstance(card_item, int) or (isinstance(card_item, str) and card_item.isdigit()):
+            cid = int(card_item)
+        else:
+            cname = str(card_item)
+
+        info = self.get_card_details(cid if cid is not None else cname)
+        rarity = info.get("rarity", "R").upper()
+        source_type = info.get("sourceType", "").lower()
+
+        # サポートカード由来判定（CSVのsourceType == support、またはサポカ由来マップに該当）
+        card_display_name = cname or info.get("name", "")
+        is_support = (source_type == "support") or bool(self.get_skill_card_support_card_name(card_display_name))
+        is_pidol = (source_type == "pidol") or bool(info.get("pIdolId", 0) > 0)
+
+        # 1. レアリティ順序
+        r_order = {"SSR": 0, "SR": 1, "R": 2}.get(rarity, 3)
+
+        # 2. 由来順序: 1. サポカ由来, 2. アイドル固有, 3. その他
+        if is_support:
+            s_order = 0
+        elif is_pidol:
+            s_order = 1
+        else:
+            s_order = 2
+
+        return (r_order, s_order, card_display_name)
+

@@ -73,8 +73,8 @@ class GakumasDataSearcher:
         self.match_histories: dict[str, list[dict[str, Any]]] = {}
         self._mongo_client: pymongo.MongoClient | None = None
         self._db: Any = None
-        self._load_csv_data()
         self._init_mongo()
+        self._load_csv_data()
 
     def _init_mongo(self):
         try:
@@ -106,17 +106,37 @@ class GakumasDataSearcher:
                 for row in reader:
                     self.stages.append(row)
 
-        if INSTRUCTIONS_DIR.exists():
-            for p in INSTRUCTIONS_DIR.glob("match_history_*.csv"):
-                m = re.search(r"match_history_(\d+)\.csv", p.name)
-                if m:
-                    season = m.group(1)
-                    rows = []
-                    with open(p, encoding="utf-8") as f:
-                        reader = csv.DictReader(f)
-                        for r in reader:
-                            rows.append(r)
-                    self.match_histories[season] = rows
+        self._load_contest_matches()
+
+    def _load_contest_matches(self):
+        """MongoDB contest_matches コレクションから対戦履歴をロードする"""
+        if self._db is None:
+            return
+        try:
+            col = self._db["contest_matches"]
+            docs = list(col.find({}).sort([("season", 1), ("date", 1), ("matchIndex", 1)]))
+            self.match_histories = {}
+            for doc in docs:
+                s = str(doc.get("season", ""))
+                if not s:
+                    continue
+                if s not in self.match_histories:
+                    self.match_histories[s] = []
+                self.match_histories[s].append({
+                    "日付": doc.get("date", ""),
+                    "相手名": doc.get("opponent", {}).get("name", ""),
+                    "グレード": str(doc.get("opponent", {}).get("grade", "")),
+                    "自S1": str(doc.get("stages", {}).get("stage1", {}).get("myScore", "")),
+                    "敵S1": str(doc.get("stages", {}).get("stage1", {}).get("enemyScore", "")),
+                    "自S2": str(doc.get("stages", {}).get("stage2", {}).get("myScore", "")),
+                    "敵S2": str(doc.get("stages", {}).get("stage2", {}).get("enemyScore", "")),
+                    "自S3": str(doc.get("stages", {}).get("stage3", {}).get("myScore", "")),
+                    "敵S3": str(doc.get("stages", {}).get("stage3", {}).get("enemyScore", "")),
+                    "結果": doc.get("overallResult", ""),
+                    "獲得Pt": str(doc.get("earnedPt", "")),
+                })
+        except Exception as e:
+            print(f"[GakumasDataSearcher] Failed to load contest_matches from MongoDB: {e}")
 
     # ────────────────────────── MongoDB 所持データ照会 ──────────────────────────
 

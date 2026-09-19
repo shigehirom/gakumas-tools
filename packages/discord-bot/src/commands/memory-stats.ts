@@ -1,16 +1,10 @@
 import {
     SlashCommandBuilder,
     ChatInputCommandInteraction,
-    EmbedBuilder,
-    AttachmentBuilder
+    EmbedBuilder
 } from 'discord.js';
 import { MongoClient } from 'mongodb';
-import { spawn } from 'child_process';
-import * as path from 'path';
-import * as fs from 'fs';
-import * as os from 'os';
-import { MasterData } from '../utils/master-data';
-import { getIdolColor } from '../utils/idol-colors';
+import { MasterData, PIdol } from '../utils/master-data';
 import { config } from '../config';
 
 const IDOL_DEFINITIONS = [
@@ -61,55 +55,11 @@ const EFFECT_ORDER: Record<string, number> = {
     fullPower: 7,
 };
 
-function resolvePythonScript(scriptName: string): string {
-    const candidatePaths = [
-        path.resolve(__dirname, `../../../../gakumas-agent-bot/${scriptName}`),
-        path.resolve(__dirname, `../../../gakumas-agent-bot/${scriptName}`),
-        `/app/gakumas-agent-bot/${scriptName}`,
-        `/root/gakumas-workspace/gakumas-agent-bot/${scriptName}`,
-        `/root/gakumas-workspace/gakumas-tools/gakumas-agent-bot/${scriptName}`,
-    ];
-    return candidatePaths.find(p => fs.existsSync(p)) || candidatePaths[0];
-}
-
-async function generateStatsImage(data: any): Promise<string | null> {
-    const scriptPath = resolvePythonScript('generate_memory_stats_image.py');
-    if (!fs.existsSync(scriptPath)) {
-        console.warn('generate_memory_stats_image.py not found at', scriptPath);
-        return null;
-    }
-
-    const tmpDir = os.tmpdir();
-    const inputPath = path.join(tmpDir, `stats_in_${Date.now()}_${Math.random().toString(36).slice(2)}.json`);
-    const outputPath = path.join(tmpDir, `stats_out_${Date.now()}_${Math.random().toString(36).slice(2)}.png`);
-
-    fs.writeFileSync(inputPath, JSON.stringify(data), 'utf-8');
-
-    return new Promise((resolve) => {
-        const child = spawn('python3', [scriptPath, '--json-input', inputPath, '--output', outputPath]);
-        let stderr = '';
-        child.stderr.on('data', d => { stderr += d.toString(); });
-        child.on('close', (code) => {
-            try { fs.unlinkSync(inputPath); } catch {}
-            if (code === 0 && fs.existsSync(outputPath)) {
-                resolve(outputPath);
-            } else {
-                console.error('generate_memory_stats_image.py failed with code:', code, stderr);
-                resolve(null);
-            }
-        });
-        child.on('error', (err) => {
-            console.error('Failed to spawn python3:', err);
-            try { fs.unlinkSync(inputPath); } catch {}
-            resolve(null);
-        });
-    });
-}
-
 function getStringWidth(str: string): number {
     let width = 0;
     for (const char of str) {
         const code = char.codePointAt(0) || 0;
+        // CJK, Hiragana, Katakana, Fullwidth punctuation
         if (
             (code >= 0x3000 && code <= 0x9FFF) ||
             (code >= 0xF900 && code <= 0xFAFF) ||
@@ -137,7 +87,7 @@ function padLeft(str: string, targetWidth: number): string {
 export const memoryStatsCommand = {
     data: new SlashCommandBuilder()
         .setName('memory-stats')
-        .setDescription('登録されているメモリーの所持状況（プラン別・楽曲別枚数）を画像レポートで表示します')
+        .setDescription('登録されているメモリーの所持状況（プラン別・楽曲別枚数）を集計して表示します')
         .addStringOption(option =>
             option.setName('idol')
                 .setDescription('アイドル名（省略時は全アイドルのサマリー表を表示）')
@@ -183,7 +133,6 @@ export const memoryStatsCommand = {
             if (!selectedIdolKey) {
                 // --- 全アイドルのメモリー状況 ---
                 const rows: Array<{
-                    id: number;
                     name: string;
                     sense: number;
                     logic: number;
@@ -211,7 +160,6 @@ export const memoryStatsCommand = {
 
                     const subtotal = sense + logic + anomaly;
                     rows.push({
-                        id: idolDef.id,
                         name: idolDef.name,
                         sense,
                         logic,
@@ -225,68 +173,35 @@ export const memoryStatsCommand = {
                     grandTotal += subtotal;
                 }
 
-                // 画像生成
-                const title = '全アイドル メモリー所持状況';
-                const subtitle = `総登録枚数: ${grandTotal}枚`;
-                const imagePath = await generateStatsImage({
-                    mode: 'overall',
-                    title,
-                    subtitle,
-                    rows,
-                    totals: {
-                        sense: totalSense,
-                        logic: totalLogic,
-                        anomaly: totalAnomaly,
-                        grandTotal
-                    }
-                });
+                // コードブロックで等幅・桁揃えした表を作成
+                const colNameW = 14;
+                const colSenseW = 6;
+                const colLogicW = 8;
+                const colAnomW = 10;
+                const colSubW = 5;
 
-                if (imagePath) {
-                    const filename = 'memory_stats_overall.png';
-                    const attachment = new AttachmentBuilder(imagePath, { name: filename });
-                    const embed = new EmbedBuilder()
-                        .setColor(0x5865F2)
-                        .setTitle(`📊 ${title}`)
-                        .setImage(`attachment://${filename}`)
-                        .setFooter({ text: subtitle })
-                        .setTimestamp();
+                const sep = `${'-'.repeat(colNameW)} ${'-'.repeat(colSenseW)} ${'-'.repeat(colLogicW)} ${'-'.repeat(colAnomW)} ${'-'.repeat(colSubW)}`;
 
-                    await interaction.editReply({
-                        embeds: [embed],
-                        files: [attachment]
-                    });
-                    try { fs.unlinkSync(imagePath); } catch {}
-                } else {
-                    // フォールバック: テキストコードブロック
-                    const colNameW = 14;
-                    const colSenseW = 6;
-                    const colLogicW = 8;
-                    const colAnomW = 10;
-                    const colSubW = 5;
+                let tableText = '```\n';
+                tableText += `${padRight('アイドル名', colNameW)} ${padLeft('センス', colSenseW)} ${padLeft('ロジック', colLogicW)} ${padLeft('アノマリー', colAnomW)} ${padLeft('計', colSubW)}\n`;
+                tableText += `${sep}\n`;
 
-                    const sep = `${'-'.repeat(colNameW)} ${'-'.repeat(colSenseW)} ${'-'.repeat(colLogicW)} ${'-'.repeat(colAnomW)} ${'-'.repeat(colSubW)}`;
-
-                    let tableText = '```\n';
-                    tableText += `${padRight('アイドル名', colNameW)} ${padLeft('センス', colSenseW)} ${padLeft('ロジック', colLogicW)} ${padLeft('アノマリー', colAnomW)} ${padLeft('計', colSubW)}\n`;
-                    tableText += `${sep}\n`;
-
-                    for (const r of rows) {
-                        tableText += `${padRight(r.name, colNameW)} ${padLeft(r.sense.toString(), colSenseW)} ${padLeft(r.logic.toString(), colLogicW)} ${padLeft(r.anomaly.toString(), colAnomW)} ${padLeft(r.subtotal.toString(), colSubW)}\n`;
-                    }
-
-                    tableText += `${sep}\n`;
-                    tableText += `${padRight('合計', colNameW)} ${padLeft(totalSense.toString(), colSenseW)} ${padLeft(totalLogic.toString(), colLogicW)} ${padLeft(totalAnomaly.toString(), colAnomW)} ${padLeft(grandTotal.toString(), colSubW)}\n`;
-                    tableText += '```';
-
-                    const embed = new EmbedBuilder()
-                        .setColor(0x5865F2)
-                        .setTitle(`📊 ${title}`)
-                        .setDescription(tableText)
-                        .setFooter({ text: subtitle })
-                        .setTimestamp();
-
-                    await interaction.editReply({ embeds: [embed] });
+                for (const r of rows) {
+                    tableText += `${padRight(r.name, colNameW)} ${padLeft(r.sense.toString(), colSenseW)} ${padLeft(r.logic.toString(), colLogicW)} ${padLeft(r.anomaly.toString(), colAnomW)} ${padLeft(r.subtotal.toString(), colSubW)}\n`;
                 }
+
+                tableText += `${sep}\n`;
+                tableText += `${padRight('合計', colNameW)} ${padLeft(totalSense.toString(), colSenseW)} ${padLeft(totalLogic.toString(), colLogicW)} ${padLeft(totalAnomaly.toString(), colAnomW)} ${padLeft(grandTotal.toString(), colSubW)}\n`;
+                tableText += '```';
+
+                const embed = new EmbedBuilder()
+                    .setColor(0x5865F2)
+                    .setTitle('📊 全アイドル メモリー所持状況')
+                    .setDescription(tableText)
+                    .setFooter({ text: `総登録枚数: ${grandTotal}枚` })
+                    .setTimestamp();
+
+                await interaction.editReply({ embeds: [embed] });
 
             } else {
                 // --- 個別アイドルのメモリー状況 ---
@@ -298,7 +213,7 @@ export const memoryStatsCommand = {
                     return;
                 }
 
-                // 対象アイドルの全実装済み PIdol を取得
+                // 対象アイドルの全実装済み PIdol を取得（未実装タイトル空欄を除く）
                 const idolPIdols = allPIdols
                     .filter(p => p.idolId === targetDef.id && p.title && p.title.trim() !== '')
                     .sort((a, b) => {
@@ -316,84 +231,46 @@ export const memoryStatsCommand = {
                     return {
                         plan: PLAN_NAMES[p.plan] || p.plan,
                         effect: EFFECT_NAMES[p.recommendedEffect] || p.recommendedEffect || '-',
-                        rarity: p.rarity,
-                        rawTitle: p.title,
-                        title: `[${p.rarity}] ${p.title}`,
+                        title: p.title,
                         count
                     };
                 });
 
                 let subtotal = 0;
+                let maxTitleWidth = 6;
                 for (const item of items) {
                     subtotal += item.count;
+                    const w = getStringWidth(item.title);
+                    if (w > maxTitleWidth) maxTitleWidth = w;
                 }
 
-                const title = `${targetDef.name} メモリー所持状況`;
-                const subtitle = `所持枚数: ${subtotal}枚`;
-                const idolColor = getIdolColor(targetDef.id);
+                const colPlanW = 10;
+                const colEffectW = 8;
+                const colTitleW = Math.max(maxTitleWidth + 2, 10);
+                const colCountW = 5;
 
-                // 画像生成
-                const imagePath = await generateStatsImage({
-                    mode: 'individual',
-                    title,
-                    subtitle,
-                    idolKey: targetDef.key,
-                    idolId: targetDef.id,
-                    rows: items,
-                    total: subtotal
-                });
+                const sep = `${'-'.repeat(colPlanW)} ${'-'.repeat(colEffectW)} ${'-'.repeat(colTitleW)} ${'-'.repeat(colCountW)}`;
 
-                if (imagePath) {
-                    const filename = `memory_stats_${selectedIdolKey}.png`;
-                    const attachment = new AttachmentBuilder(imagePath, { name: filename });
-                    const embed = new EmbedBuilder()
-                        .setColor(idolColor?.decimal || 0xD4A017)
-                        .setTitle(`📊 ${title}`)
-                        .setImage(`attachment://${filename}`)
-                        .setFooter({ text: subtitle })
-                        .setTimestamp();
+                let tableText = '```\n';
+                tableText += `${padRight('タイプ', colPlanW)} ${padRight('効果', colEffectW)} ${padRight('楽曲名', colTitleW)} ${padLeft('枚数', colCountW)}\n`;
+                tableText += `${sep}\n`;
 
-                    await interaction.editReply({
-                        embeds: [embed],
-                        files: [attachment]
-                    });
-                    try { fs.unlinkSync(imagePath); } catch {}
-                } else {
-                    // フォールバック: テキストコードブロック
-                    let maxTitleWidth = 6;
-                    for (const item of items) {
-                        const w = getStringWidth(item.title);
-                        if (w > maxTitleWidth) maxTitleWidth = w;
-                    }
-
-                    const colPlanW = 10;
-                    const colEffectW = 8;
-                    const colTitleW = Math.max(maxTitleWidth + 2, 10);
-                    const colCountW = 5;
-
-                    const sep = `${'-'.repeat(colPlanW)} ${'-'.repeat(colEffectW)} ${'-'.repeat(colTitleW)} ${'-'.repeat(colCountW)}`;
-
-                    let tableText = '```\n';
-                    tableText += `${padRight('タイプ', colPlanW)} ${padRight('効果', colEffectW)} ${padRight('楽曲名', colTitleW)} ${padLeft('枚数', colCountW)}\n`;
-                    tableText += `${sep}\n`;
-
-                    for (const item of items) {
-                        tableText += `${padRight(item.plan, colPlanW)} ${padRight(item.effect, colEffectW)} ${padRight(item.title, colTitleW)} ${padLeft(item.count.toString(), colCountW)}\n`;
-                    }
-
-                    tableText += `${sep}\n`;
-                    tableText += `${padRight('合計', colPlanW)} ${padRight('', colEffectW)} ${padRight('', colTitleW)} ${padLeft(subtotal.toString(), colCountW)}\n`;
-                    tableText += '```';
-
-                    const embed = new EmbedBuilder()
-                        .setColor(0xFEE75C)
-                        .setTitle(`📊 ${title}`)
-                        .setDescription(tableText)
-                        .setFooter({ text: subtitle })
-                        .setTimestamp();
-
-                    await interaction.editReply({ embeds: [embed] });
+                for (const item of items) {
+                    tableText += `${padRight(item.plan, colPlanW)} ${padRight(item.effect, colEffectW)} ${padRight(item.title, colTitleW)} ${padLeft(item.count.toString(), colCountW)}\n`;
                 }
+
+                tableText += `${sep}\n`;
+                tableText += `${padRight('合計', colPlanW)} ${padRight('', colEffectW)} ${padRight('', colTitleW)} ${padLeft(subtotal.toString(), colCountW)}\n`;
+                tableText += '```';
+
+                const embed = new EmbedBuilder()
+                    .setColor(0xFEE75C)
+                    .setTitle(`📊 ${targetDef.name} メモリー所持状況`)
+                    .setDescription(tableText)
+                    .setFooter({ text: `所持枚数: ${subtotal}枚` })
+                    .setTimestamp();
+
+                await interaction.editReply({ embeds: [embed] });
             }
 
         } catch (error: any) {
@@ -406,5 +283,4 @@ export const memoryStatsCommand = {
         }
     }
 };
-
 

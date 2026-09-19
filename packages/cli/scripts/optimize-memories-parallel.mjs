@@ -824,6 +824,13 @@ async function run() {
                         const db = client.db(process.env.MONGODB_DB || "gakumas-tools");
                         const collection = db.collection("loadouts");
 
+                        // JST日付 (YY-MM-DD) を生成
+                        const jstNow = new Date(Date.now() + 9 * 60 * 60 * 1000);
+                        const yy = String(jstNow.getUTCFullYear()).slice(2);
+                        const mm = String(jstNow.getUTCMonth() + 1).padStart(2, '0');
+                        const dd = String(jstNow.getUTCDate()).padStart(2, '0');
+                        const defaultDateName = `${yy}-${mm}-${dd}`;
+
                         for (let rank = 0; rank < Math.min(saveCount, allResults.length); rank++) {
                             const best = allResults[rank];
                             const mainMem = memories.find(m => m.filename === best.mainFilename);
@@ -834,14 +841,7 @@ async function run() {
                             const mainPIdol = PIdols.getById(mainMem.data.pIdolId);
                             const idolId = mainPIdol ? mainPIdol.idolId : null;
 
-                            let baseName = options.name;
-                            if (!baseName) {
-                                const now = new Date();
-                                const yy = String(now.getFullYear()).slice(2);
-                                const mm = String(now.getMonth() + 1).padStart(2, '0');
-                                const dd = String(now.getDate()).padStart(2, '0');
-                                baseName = `${yy}-${mm}-${dd}_${contestStage.season}-${contestStage.stage}_${currentIdolName}`;
-                            }
+                            const baseName = options.name || defaultDateName;
                             const saveName = saveCount > 1 ? `${baseName}_${rank + 1}` : baseName;
 
                             const loadout = {
@@ -861,6 +861,33 @@ async function run() {
                                 stats: best.stats,
                             };
                             loadout.derived = deriveRunMeta(loadout);
+
+                            // 世代管理ローテーション (1位結果または日付名エントリの場合)
+                            if (rank === 0 && idolId) {
+                                const condition = {
+                                    userId,
+                                    stageId: contestStage.id,
+                                    "derived.idolId": idolId,
+                                };
+
+                                // 1. 既存の .old を削除 (常に最新の1世代前のみ保持)
+                                const oldDeleteResult = await collection.deleteMany({
+                                    ...condition,
+                                    name: `${saveName}.old`
+                                });
+                                if (oldDeleteResult.deletedCount > 0) {
+                                    console.error(`Pruned ${oldDeleteResult.deletedCount} previous .old loadout(s) for ${currentIdolName}`);
+                                }
+
+                                // 2. 既存の同一名レコードがあれば .old にリネーム
+                                const renameResult = await collection.updateMany(
+                                    { ...condition, name: saveName },
+                                    { $set: { name: `${saveName}.old`, updatedAt: new Date() } }
+                                );
+                                if (renameResult.modifiedCount > 0) {
+                                    console.error(`Archived previous loadout (${saveName}) -> (${saveName}.old) for ${currentIdolName}`);
+                                }
+                            }
 
                             const result = await collection.insertOne(loadout);
                             console.error(`Loadout #${rank + 1} (${saveName}) saved successfully with ID: ${result.insertedId}`);

@@ -7,7 +7,7 @@ const match_history_updater_1 = require("../utils/match-history-updater");
 exports.recordContestCommand = {
     data: new discord_js_1.SlashCommandBuilder()
         .setName('record-contest')
-        .setDescription('コンテスト結果のスクリーンショット3枚から結果を解析しCSVに自動登録します')
+        .setDescription('コンテスト結果のスクリーンショット3枚から結果を解析し、MongoDBとスプレッドシートに自動登録します')
         .addAttachmentOption(option => option.setName('image1')
         .setDescription('1枚目: 対戦相手選択画面')
         .setRequired(true))
@@ -151,8 +151,8 @@ exports.recordContestCommand = {
                     targetDate = new Date(jstYear, parseInt(m3[1]) - 1, parseInt(m3[2]), 12, 0, 0);
                 }
             }
-            // CSV更新 + MongoDB保存
-            const csvResult = await (0, match_history_updater_1.updateMatchHistoryCsv)(analysis, {
+            // MongoDB保存 + Googleスプレッドシート双方向同期
+            const recordResult = await (0, match_history_updater_1.recordContestMatch)(analysis, {
                 season,
                 date: targetDate,
                 userId: interaction.user.id
@@ -172,11 +172,11 @@ exports.recordContestCommand = {
                 `・ファン数: \`+${analysis.extra.fans.toLocaleString()}\` | コイン: \`+${analysis.extra.coins.toLocaleString()}\`\n` +
                 `・現在Pt: \`${analysis.extra.currentPt.toLocaleString()}Pt\` (${analysis.extra.currentRank}位)`);
             let footerText = `✅ MongoDB に ${analysis.matchIndex}戦目を保存しました`;
-            if (csvResult.sheetsSuccess) {
+            if (recordResult.sheetsSuccess) {
                 footerText += ' ＆ Googleスプレッドシートに反映完了';
             }
-            else if (csvResult.sheetsError) {
-                footerText += ` ⚠️ スプレッドシート同期失敗: ${csvResult.sheetsError.slice(0, 80)}`;
+            else if (recordResult.sheetsError) {
+                footerText += ` ⚠️ スプレッドシート同期失敗: ${recordResult.sheetsError.slice(0, 80)}`;
             }
             embed.setFooter({
                 text: footerText

@@ -11,8 +11,11 @@ const compare_memory_1 = require("./compare-memory");
 const record_contest_1 = require("./record-contest");
 const sync_contest_1 = require("./sync-contest");
 const memory_stats_1 = require("./memory-stats");
+const calc_1 = require("./calc");
+const contest_chart_1 = require("./contest-chart");
 exports.commands = [
     contest_1.contestCommand,
+    contest_chart_1.contestChartCommand,
     deck_1.deckCommand,
     recent_memories_1.recentMemoriesCommand,
     import_memory_1.importMemoryCommand,
@@ -21,6 +24,7 @@ exports.commands = [
     compare_memory_1.compareMemoryCommand,
     record_contest_1.recordContestCommand,
     sync_contest_1.syncContestCommand,
-    memory_stats_1.memoryStatsCommand
+    memory_stats_1.memoryStatsCommand,
+    calc_1.calcCommand
 ];
 exports.commandMap = new Map(exports.commands.map(cmd => [cmd.data.name, cmd]));

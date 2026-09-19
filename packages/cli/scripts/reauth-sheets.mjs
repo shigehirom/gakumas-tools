@@ -33,13 +33,7 @@ console.log('🔗 以下のURLをブラウザで開き、Googleアカウント�
 console.log(authUrl);
 console.log('================================================================\n');
 
-const rl = readline.createInterface({
-  input: process.stdin,
-  output: process.stdout,
-});
-
-rl.question('📋 ブラウザに表示された認証コードをここに貼り付けて Enter を押してください: ', async (code) => {
-  rl.close();
+async function handleCode(code) {
   try {
     const { tokens } = await oAuth2Client.getToken(code.trim());
     oAuth2Client.setCredentials(tokens);
@@ -63,4 +57,25 @@ rl.question('📋 ブラウザに表示された認証コードをここに貼�
     console.error('❌ トークンの取得に失敗しました:', err);
     process.exit(1);
   }
-});
+}
+
+const argCode = process.argv[2];
+if (argCode) {
+  await handleCode(argCode);
+} else if (!process.stdin.isTTY) {
+  console.log('非対話環境のため入力を待機せず終了します。');
+  console.log('引数に認証コードを指定して再実行してください:');
+  console.log('  node packages/cli/scripts/reauth-sheets.mjs <認証コード>');
+  process.exit(0);
+} else {
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  });
+
+  rl.question('📋 ブラウザに表示された認証コードをここに貼り付けて Enter を押してください: ', async (code) => {
+    rl.close();
+    await handleCode(code);
+  });
+}
+

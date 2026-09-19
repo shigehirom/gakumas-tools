@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const discord_js_1 = require("discord.js");
 const config_1 = require("./config");
 const commands_1 = require("./commands");
+const advisory_1 = require("./commands/advisory");
 const deploy_commands_1 = require("./deploy-commands");
 // プロセス全体のクラッシュ防止ガード
 process.on('uncaughtException', (err) => {
@@ -38,6 +39,17 @@ async function main() {
                 console.error(`Error in autocomplete for /${interaction.commandName}:`, error);
             }
             return;
+        }
+        if (interaction.isStringSelectMenu()) {
+            if (interaction.customId.startsWith('advisory_cl:')) {
+                try {
+                    await (0, advisory_1.handleAdvisoryChecklistInteraction)(interaction);
+                }
+                catch (error) {
+                    console.error('Error in advisory checklist select menu:', error);
+                }
+                return;
+            }
         }
         if (!interaction.isChatInputCommand())
             return;

@@ -130,38 +130,52 @@ async function mongoToSheet(sheets, client) {
         docsMap.set(`${s}_${d}_${m}`, doc);
     }
 
-    // 各シーズンについて、CSV が存在する場合は CSV の日付順序を採用
+    // 各シーズンについて、regulation_XX.md が存在する場合はその全日程を採用、無ければ DB の日付一覧を採用
     const rows = [];
     const seasonList = Array.from(seasonsInDb).sort((a, b) => a - b);
     if (seasonList.length === 0) seasonList.push(51);
 
-    for (const season of seasonList) {
-        const csvCandidates = [
-            path.resolve(__dirname, '../../../agent-instructions', `match_history_${season}.csv`),
-            path.resolve(__dirname, '../../../../shared/agent-instructions', `match_history_${season}.csv`),
+    function getDatesFromRegulation(season) {
+        const candidateDirs = [
+            path.resolve(__dirname, '../../../agent-instructions'),
+            path.resolve(__dirname, '../../../../shared/agent-instructions'),
+            '/root/gakumas-workspace/shared/agent-instructions',
+            '/root/gakumas-workspace/gakumas-tools/agent-instructions',
+            '/mnt/NVMe/gakumas-tools/agent-instructions',
+            '/app/agent-instructions'
         ];
-        let orderedDates = [];
-
-        for (const cp of csvCandidates) {
-            if (fs.existsSync(cp)) {
+        for (const dir of candidateDirs) {
+            const p = path.join(dir, `regulation_${season}.md`);
+            if (fs.existsSync(p)) {
                 try {
-                    const content = fs.readFileSync(cp, 'utf-8');
-                    const lines = content.split(/\r?\n/).slice(1);
-                    const seen = new Set();
-                    for (const l of lines) {
-                        const parts = l.split(',');
-                        const d = parts[0]?.trim();
-                        if (d && !seen.has(d)) {
-                            seen.add(d);
-                            orderedDates.push(d);
+                    const content = fs.readFileSync(p, 'utf-8');
+                    const beginMatch = content.match(/begin:\s*([0-9]{4}[/-][0-9]{1,2}[/-][0-9]{1,2})/);
+                    const endMatch = content.match(/end:\s*([0-9]{4}[/-][0-9]{1,2}[/-][0-9]{1,2})/);
+                    if (beginMatch && endMatch) {
+                        const bp = beginMatch[1].replace(/\//g, '-').split('-').map(Number);
+                        const ep = endMatch[1].replace(/\//g, '-').split('-').map(Number);
+                        const cur = new Date(bp[0], bp[1] - 1, bp[2]);
+                        const end = new Date(ep[0], ep[1] - 1, ep[2]);
+                        const dates = [];
+                        while (cur <= end) {
+                            const yy = String(cur.getFullYear()).slice(-2);
+                            const mm = String(cur.getMonth() + 1).padStart(2, '0');
+                            const dd = String(cur.getDate()).padStart(2, '0');
+                            dates.push(`${yy}/${mm}/${dd}`);
+                            cur.setDate(cur.getDate() + 1);
                         }
+                        if (dates.length > 0) return dates;
                     }
-                    if (orderedDates.length > 0) break;
                 } catch {}
             }
         }
+        return [];
+    }
 
-        // CSV が無ければ DB の日付一覧を採用
+    for (const season of seasonList) {
+        let orderedDates = getDatesFromRegulation(season);
+
+        // regulation が無ければ DB の日付一覧を採用
         if (orderedDates.length === 0) {
             const dbDates = Array.from(datesBySeason.get(season) || []).sort();
             orderedDates = dbDates;
@@ -294,6 +308,11 @@ async function main() {
 }
 
 main().catch(err => {
-    console.error('Fatal error:', err);
+    if (err?.message?.includes('invalid_grant') || err?.response?.data?.error === 'invalid_grant') {
+        console.error('Fatal error: Google OAuth token expired or revoked (invalid_grant). Please re-authenticate by running "node packages/cli/scripts/reauth-sheets.mjs <code_or_interactive>".');
+    } else {
+        console.error('Fatal error:', err.message || err);
+    }
     process.exit(1);
 });
+

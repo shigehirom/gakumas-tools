@@ -13,6 +13,7 @@ import { registerAdvisorCommand } from './commands/advisor';
 import { registerRecommendCommand } from './commands/recommend';
 import { registerValidateAdvisoryCommand } from './commands/validate-advisory';
 import { registerProduceDeckCommand } from './commands/produce-deck';
+import { registerAutoAdvisoryCommand } from './commands/auto-advisory';
 import * as fs from 'fs';
 import * as path from 'path';
 import { GlobalCapture } from './utils/capture';
@@ -228,6 +229,7 @@ registerAdvisorCommand(cli);
 registerRecommendCommand(cli);
 registerValidateAdvisoryCommand(cli);
 registerProduceDeckCommand(cli);
+registerAutoAdvisoryCommand(cli);
 
 cli.help();
 cli.version('0.1.0');

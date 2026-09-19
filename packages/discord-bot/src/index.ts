@@ -1,6 +1,7 @@
 import { Client, GatewayIntentBits, Events } from 'discord.js';
 import { config } from './config';
 import { commandMap } from './commands';
+import { handleAdvisoryChecklistInteraction } from './commands/advisory';
 import { deployCommands } from './deploy-commands';
 
 // プロセス全体のクラッシュ防止ガード
@@ -40,6 +41,17 @@ async function main() {
                 console.error(`Error in autocomplete for /${interaction.commandName}:`, error);
             }
             return;
+        }
+
+        if (interaction.isStringSelectMenu()) {
+            if (interaction.customId.startsWith('advisory_cl:')) {
+                try {
+                    await handleAdvisoryChecklistInteraction(interaction);
+                } catch (error) {
+                    console.error('Error in advisory checklist select menu:', error);
+                }
+                return;
+            }
         }
 
         if (!interaction.isChatInputCommand()) return;

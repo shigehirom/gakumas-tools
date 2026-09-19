@@ -58,7 +58,7 @@
     {
         "card_id": 8,
         "character_name": "SSR",
-        "card_name": "あたしの勝ち、ですね〜！",
+        "card_name": "あたしの勝ち、ですね～！",
         "rarity": "ｻVi",
         "type": "ｴアノマリー",
         "raw_ability_text": "ｱｱ\nスキルカード\nせーのでぱくっ！"
@@ -378,7 +378,7 @@
     {
         "card_id": 48,
         "character_name": "SSR",
-        "card_name": "キラキラして綺麗〜っ！",
+        "card_name": "キラキラして綺麗～っ！",
         "rarity": "ｶDa",
         "type": "ｲセンス",
         "raw_ability_text": "ｱｱ\nスキルカード\n光の夜"
@@ -586,7 +586,7 @@
     {
         "card_id": 74,
         "character_name": "SSR",
-        "card_name": "おいしい顔、いただき〜！",
+        "card_name": "おいしい顔、いただき～！",
         "rarity": "ｶDa",
         "type": "ｱフリー",
         "raw_ability_text": "ｱｱ\nスキルカード\n心のアルバム"
@@ -938,7 +938,7 @@
     {
         "card_id": 118,
         "character_name": "SR",
-        "card_name": "はっぴぃはろうぃ〜〜ん！",
+        "card_name": "はっぴぃはろうぃ～～ん！",
         "rarity": "ｶDa",
         "type": "ｲセンス",
         "raw_ability_text": "ｳｲ\nプロデュース\nアイテム\nびっくり仮装グッズ"
@@ -1026,7 +1026,7 @@
     {
         "card_id": 129,
         "character_name": "SR",
-        "card_name": "2名様、ご案内〜♪",
+        "card_name": "2名様、ご案内～♪",
         "rarity": "ｱVo",
         "type": "ｱフリー",
         "raw_ability_text": "ｳｲ\nプロデュース\nアイテム\nお残しにんじん"
@@ -1122,7 +1122,7 @@
     {
         "card_id": 141,
         "character_name": "SR",
-        "card_name": "きゅる〜んωポーズッ☆",
+        "card_name": "きゅる～んωポーズッ☆",
         "rarity": "ｶDa",
         "type": "ｳロジック",
         "raw_ability_text": "ｳｲ\nプロデュース\nアイテム\nカワイイのつくり方"

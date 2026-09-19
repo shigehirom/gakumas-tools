@@ -33,12 +33,11 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.findMatchHistoryCsv = findMatchHistoryCsv;
-exports.createMatchHistoryTemplate = createMatchHistoryTemplate;
+exports.updateMatchHistoryCsv = void 0;
 exports.getLatestSeasonNumber = getLatestSeasonNumber;
 exports.formatDateToYYMMDD = formatDateToYYMMDD;
 exports.saveContestMatchToMongo = saveContestMatchToMongo;
-exports.updateMatchHistoryCsv = updateMatchHistoryCsv;
+exports.recordContestMatch = recordContestMatch;
 exports.syncContestMatchesToSheets = syncContestMatchesToSheets;
 exports.syncContestMatchesBidirectional = syncContestMatchesBidirectional;
 const fs = __importStar(require("fs"));
@@ -47,8 +46,8 @@ const child_process_1 = require("child_process");
 const mongodb_1 = require("mongodb");
 const config_1 = require("../config");
 const master_data_1 = require("./master-data");
-/** match_history_*.csv を検索するディレクトリ候補（優先順） */
-const CSV_CANDIDATE_DIRS = [
+/** regulation_*.md を検索するディレクトリ候補 */
+const REGULATION_CANDIDATE_DIRS = [
     config_1.config.instructionsDir,
     '/root/gakumas-workspace/shared/agent-instructions',
     '/root/gakumas-workspace/gakumas-tools/agent-instructions',
@@ -61,96 +60,7 @@ const CSV_CANDIDATE_DIRS = [
     path.resolve(__dirname, '../../../../agent-instructions'),
 ];
 /**
- * 既存の match_history_XX.csv ファイルパスを探す
- */
-function findMatchHistoryCsv(season) {
-    const fileName = `match_history_${season}.csv`;
-    for (const dir of CSV_CANDIDATE_DIRS) {
-        if (dir && fs.existsSync(dir)) {
-            const p = path.join(dir, fileName);
-            if (fs.existsSync(p)) {
-                return p;
-            }
-        }
-    }
-    // 既存ファイルがない場合は instructionsDir に配置
-    const targetDir = config_1.config.instructionsDir;
-    try {
-        fs.mkdirSync(targetDir, { recursive: true });
-    }
-    catch { }
-    return path.join(targetDir, fileName);
-}
-/**
- * 新シーズン用の match_history_XX.csv テンプレートを自動生成する
- */
-function createMatchHistoryTemplate(season, startDate, days = 16) {
-    let start = startDate;
-    if (!start) {
-        // 前シーズンの最終日の翌日を開始日候補として探索
-        const prevCsvPath = findMatchHistoryCsv(season - 1);
-        if (fs.existsSync(prevCsvPath)) {
-            try {
-                const content = fs.readFileSync(prevCsvPath, 'utf-8');
-                const lines = content.split(/\r?\n/).filter(l => l.trim().length > 0);
-                for (let i = lines.length - 1; i >= 1; i--) {
-                    const match = lines[i].split(',')[0]?.trim().match(/^(\d{2})\/(\d{2})\/(\d{2})$/);
-                    if (match) {
-                        const year = 2000 + parseInt(match[1], 10);
-                        const month = parseInt(match[2], 10) - 1;
-                        const day = parseInt(match[3], 10);
-                        const prevEnd = new Date(year, month, day);
-                        prevEnd.setDate(prevEnd.getDate() + 1);
-                        start = prevEnd;
-                        break;
-                    }
-                }
-            }
-            catch { }
-        }
-    }
-    if (!start) {
-        start = new Date();
-    }
-    const lines = ['日付,相手名,メモ,自S1,敵S1,自S2,敵S2,自S3,敵S3,結果,獲得Pt'];
-    const current = new Date(start.getFullYear(), start.getMonth(), start.getDate());
-    for (let d = 0; d < days; d++) {
-        const yy = String(current.getFullYear()).slice(-2);
-        const mm = String(current.getMonth() + 1).padStart(2, '0');
-        const dd = String(current.getDate()).padStart(2, '0');
-        const formattedDate = `${yy}/${mm}/${dd}`;
-        for (let i = 0; i < 5; i++) {
-            lines.push(`${formattedDate},,3,,,,,,,WIN LOSE,`);
-        }
-        current.setDate(current.getDate() + 1);
-    }
-    const csvContent = lines.join('\n') + '\n';
-    const targetPath = findMatchHistoryCsv(season);
-    try {
-        fs.mkdirSync(path.dirname(targetPath), { recursive: true });
-        fs.writeFileSync(targetPath, csvContent, 'utf-8');
-        console.log(`[match-history-updater] Created new template: ${targetPath}`);
-        // shared/agent-instructions または gakumas-tools/agent-instructions 等の主要候補にも複製
-        const candidateDirsToSync = [
-            '/root/gakumas-workspace/shared/agent-instructions',
-            '/root/gakumas-workspace/gakumas-tools/agent-instructions'
-        ];
-        for (const dir of candidateDirsToSync) {
-            if (fs.existsSync(dir)) {
-                const mirrorPath = path.join(dir, `match_history_${season}.csv`);
-                if (mirrorPath !== targetPath) {
-                    fs.writeFileSync(mirrorPath, csvContent, 'utf-8');
-                }
-            }
-        }
-    }
-    catch (e) {
-        console.error(`[match-history-updater] Failed to create template:`, e);
-    }
-    return targetPath;
-}
-/**
- * 既存の match_history_XX.csv または stages.json から最新のシーズン番号を自動取得する
+ * stages.json または regulation_*.md から最新のシーズン番号を自動取得する
  */
 function getLatestSeasonNumber() {
     let maxSeason = 50;
@@ -164,13 +74,13 @@ function getLatestSeasonNumber() {
         }
     }
     catch { }
-    // 2. CSV ディレクトリから最大シーズン番号を取得
-    for (const dir of CSV_CANDIDATE_DIRS) {
+    // 2. regulation_*.md から最大シーズン番号を取得
+    for (const dir of REGULATION_CANDIDATE_DIRS) {
         if (dir && fs.existsSync(dir)) {
             try {
                 const files = fs.readdirSync(dir);
                 for (const f of files) {
-                    const match = f.match(/^match_history_(\d+)\.csv$/);
+                    const match = f.match(/^regulation_(\d+)\.md$/);
                     if (match) {
                         const s = parseInt(match[1], 10);
                         if (s > maxSeason)
@@ -240,7 +150,6 @@ async function saveContestMatchToMongo(analysis, options = {}) {
         return insertedId;
     }
     catch (err) {
-        // MongoDB 保存失敗はログのみ（CSV保存は続行）
         console.error('[MongoDB] Failed to save contest match:', err.message);
         return null;
     }
@@ -250,19 +159,16 @@ async function saveContestMatchToMongo(analysis, options = {}) {
     }
 }
 /**
- * 解析結果を match_history_XX.csv に反映・上書き保存し、MongoDB にも保存する。
+ * 対戦結果を MongoDB に保存し、Google スプレッドシート（Contest タブ）と双方向同期する。
  */
-async function updateMatchHistoryCsv(analysis, options = {}) {
-    const season = options.season ?? getLatestSeasonNumber();
+async function recordContestMatch(analysis, options = {}) {
     const targetDate = options.date ?? new Date();
     const dateStr = formatDateToYYMMDD(targetDate);
-    let csvPath = options.targetFilePath ?? findMatchHistoryCsv(season);
-    if (!fs.existsSync(csvPath)) {
-        csvPath = createMatchHistoryTemplate(season);
-    }
-    const fileContent = fs.readFileSync(csvPath, 'utf-8');
-    const lines = fileContent.split(/\r?\n/);
-    const newRow = [
+    // 1. MongoDB への保存
+    const mongoId = await saveContestMatchToMongo(analysis, options);
+    // 2. Google スプレッドシート（Contest タブ）との双方向同期
+    const sheetsResult = await syncContestMatchesBidirectional();
+    const formattedRow = [
         dateStr,
         analysis.opponent.name,
         analysis.opponent.grade,
@@ -275,54 +181,17 @@ async function updateMatchHistoryCsv(analysis, options = {}) {
         analysis.overallResult,
         analysis.earnedPt
     ].join(',');
-    // 対象日付の行を探して上書き（なければ末尾に追加）
-    const matchingIndices = [];
-    for (let i = 0; i < lines.length; i++) {
-        if (lines[i].startsWith(`${dateStr},`)) {
-            matchingIndices.push(i);
-        }
-    }
-    let targetLineIndex = -1;
-    if (matchingIndices.length > 0) {
-        const offset = Math.max(0, Math.min(matchingIndices.length - 1, analysis.matchIndex - 1));
-        targetLineIndex = matchingIndices[offset];
-        lines[targetLineIndex] = newRow;
-    }
-    else {
-        lines.push(newRow);
-        targetLineIndex = lines.length - 1;
-    }
-    const updatedContent = lines.join('\n');
-    fs.writeFileSync(csvPath, updatedContent, 'utf-8');
-    // shared/agent-instructions または gakumas-tools/agent-instructions 等の主要候補にも同期
-    const candidateDirsToSync = [
-        '/root/gakumas-workspace/shared/agent-instructions',
-        '/root/gakumas-workspace/gakumas-tools/agent-instructions'
-    ];
-    for (const dir of candidateDirsToSync) {
-        if (fs.existsSync(dir)) {
-            const mirrorPath = path.join(dir, `match_history_${season}.csv`);
-            if (mirrorPath !== csvPath) {
-                try {
-                    fs.writeFileSync(mirrorPath, updatedContent, 'utf-8');
-                }
-                catch { }
-            }
-        }
-    }
-    // MongoDB への保存（失敗してもCSV保存の結果には影響させない）
-    const mongoId = await saveContestMatchToMongo(analysis, options);
-    // Google スプレッドシート（Contest タブ）への即時同期
-    const sheetsResult = await syncContestMatchesToSheets();
     return {
-        filePath: csvPath,
-        updatedLine: newRow,
-        lineIndex: targetLineIndex + 1,
+        filePath: 'MongoDB: contest_matches',
+        updatedLine: formattedRow,
+        lineIndex: analysis.matchIndex,
         ...(mongoId ? { mongoId } : {}),
         sheetsSuccess: sheetsResult.success,
         ...(sheetsResult.error ? { sheetsError: sheetsResult.error } : {})
     };
 }
+// 呼び出し元の後方互換性エイリアス
+exports.updateMatchHistoryCsv = recordContestMatch;
 /**
  * MongoDB の最新対戦記録を Google スプレッドシート（Contest シート）へ同期する
  */

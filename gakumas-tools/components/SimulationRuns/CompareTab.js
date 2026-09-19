@@ -104,39 +104,62 @@ export default function CompareTab({ currentRun, onAfterLoad }) {
     [range],
   );
 
-  const allPools = useMemo(
-    () => [...history, ...savedRuns, ...(currentRun ? [currentRun] : [])],
-    [history, savedRuns, currentRun],
-  );
+  // フィルター選択肢の候補プール: アクティブタブ（履歴 or 保存済み）と currentRun に限定
+  const filterPool = useMemo(() => {
+    const runs = subTab === "saved" ? savedRuns : historyRuns;
+    return currentRun ? [currentRun, ...runs] : runs;
+  }, [subTab, savedRuns, historyRuns, currentRun]);
 
   const stageOptions = useMemo(() => {
     const map = new Map();
-    for (const r of allPools) {
+    for (const r of filterPool) {
       const key = stageKeyOf(r);
       if (!key || map.has(key)) continue;
       map.set(key, stageLabelOf(r) || key);
     }
     return [...map.entries()].sort((a, b) => a[1].localeCompare(b[1]));
-  }, [allPools]);
+  }, [filterPool]);
 
   const seasonOptions = useMemo(() => {
     const seasons = new Set();
-    for (const r of allPools) {
+    for (const r of filterPool) {
       if (r.derived?.season) seasons.add(r.derived.season);
     }
     return [...seasons].sort((a, b) => a - b);
-  }, [allPools]);
+  }, [filterPool]);
 
   const idolOptions = useMemo(() => {
     const idols = new Map();
-    for (const r of allPools) {
+    for (const r of filterPool) {
       const id = r.derived?.idolId;
       if (id && !idols.has(id)) {
         idols.set(id, getIdolName(id) || String(id));
       }
     }
     return [...idols.entries()];
-  }, [allPools]);
+  }, [filterPool]);
+
+  // localStorage から復元された無効なフィルター値の自動サニタイズ（プールに存在しない場合は "all" にリセット）
+  useEffect(() => {
+    if (seasonFilter !== "all" && seasonOptions.length > 0) {
+      const exists = seasonOptions.some((s) => String(s) === seasonFilter);
+      if (!exists) setSeasonFilter("all");
+    }
+  }, [seasonFilter, seasonOptions, setSeasonFilter]);
+
+  useEffect(() => {
+    if (stageFilter !== "all" && stageOptions.length > 0) {
+      const exists = stageOptions.some(([key]) => key === stageFilter);
+      if (!exists) setStageFilter("all");
+    }
+  }, [stageFilter, stageOptions, setStageFilter]);
+
+  useEffect(() => {
+    if (idolFilter !== "all" && idolOptions.length > 0) {
+      const exists = idolOptions.some(([id]) => String(id) === idolFilter);
+      if (!exists) setIdolFilter("all");
+    }
+  }, [idolFilter, idolOptions, setIdolFilter]);
 
   function promptSignIn() {
     setModal(

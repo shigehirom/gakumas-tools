@@ -939,7 +939,76 @@ class GakumasAntigravityBot(discord.Client):
                         f"シーズン{data.get('season', 51)} Stage {stg} の **{full_title}** 推奨構成画像よ！"
                     )
                     file = discord.File(io.BytesIO(png_bytes), filename=f"advisory_s{data.get('season', 51)}_stage{stg}_{p_idol.get('idol_key', 'idol')}.png")
+                    return
+
+                # /loadout または !loadout — 実走シミュレーション結果（loadouts）画像出力（テキストコマンド版）
+                if first_token in ["/loadout", "!loadout"]:
+                    parts = content.split()
+                    if len(parts) < 3:
+                        await message.channel.send("💡 使い方: `!loadout <ステージ(1-3)> <アイドル名>` (例: `!loadout 3 広`)")
+                        return
+                    try:
+                        stg = int(parts[1])
+                        if stg not in [1, 2, 3]:
+                            raise ValueError
+                    except ValueError:
+                        await message.channel.send("⚠️ ステージ番号は 1, 2, 3 のいずれかを指定してください。")
+                        return
+                    idol_q = parts[2]
+
+                    from cli_loadout_image import get_latest_loadout
+                    from loadout_image_builder import LoadoutImageBuilder
+                    from advisory_parser import IDOL_NAME_TO_KEY
+
+                    idol_key = IDOL_NAME_TO_KEY.get(idol_q, idol_q.lower())
+                    doc = get_latest_loadout(stg, idol_key)
+                    if not doc:
+                        await message.channel.send(f"⚠️ Stage {stg} のアイドル `{idol_q}` の実走ロードアウトが見つかりませんでした。")
+                        return
+
+                    builder = LoadoutImageBuilder()
+                    png_bytes = builder.build(doc, columns=2)
+                    derived = doc.get("derived", {})
+                    season = derived.get("season", 52)
+                    pinfo = builder._get_pidol_info(derived.get("pIdolId"))
+                    full_title = f"{pinfo.get('idol_name', idol_q)}【{pinfo.get('title', '')}】"
+                    score_med = doc.get("stats", {}).get("median", 0)
+                    msg_text = (
+                        f"⚔️ **実走シミュレーション結果（ロードアウト構成）**\n"
+                        f"シーズン{season} Stage {stg} の **{full_title}** 実走構成画像（期待中央値: **{int(score_med):,} Pt**）よ！"
+                    )
+                    file = discord.File(io.BytesIO(png_bytes), filename=f"loadout_s{season}_stage{stg}_{idol_key}.png")
                     await message.channel.send(content=msg_text, file=file)
+                    return
+
+                # /contest_chart または !contest_chart — コンテスト箱ひげ図画像出力（テキストコマンド版）
+                if first_token in ["/contest_chart", "!contest_chart"]:
+                    stg = 1
+                    if len(parts) > 1:
+                        try:
+                            stg = int(parts[1])
+                            if stg not in [1, 2, 3]:
+                                raise ValueError
+                        except ValueError:
+                            await message.channel.send("⚠️ ステージ番号は 1, 2, 3 のいずれかを指定してください。（例: `!contest_chart 1`）")
+                            return
+
+                    from generate_contest_boxplot import ContestBoxPlotGenerator
+                    try:
+                        gen = ContestBoxPlotGenerator()
+                        png_bytes, meta = gen.build_png_bytes(stage=stg)
+                        cur_season = meta["season"]
+                        runs_count = meta["runs"][0].get("runs_count", 2000) if meta["runs"] else 2000
+                        msg_text = (
+                            f"📊 **シーズン{cur_season} Stage {stg} コンテストリハーサル推計**\n"
+                            f"全13アイドルのスコア分布グラフ（試行{runs_count:,}回・日付: {meta['date_str']}）よ！"
+                        )
+                        filename = f"contest_boxplot_s{cur_season}_stage{stg}_{meta['date_str']}.png"
+                        file = discord.File(io.BytesIO(png_bytes), filename=filename)
+                        await message.channel.send(content=msg_text, file=file)
+                    except Exception as e:
+                        log.error(f"[text_contest_chart] エラー: {e}", exc_info=True)
+                        await message.channel.send(f"⚠️ グラフ生成中にエラーが発生しました: `{e}`")
                     return
 
                 # /new — 会話セッションリセット（テキストコマンド版）
@@ -973,6 +1042,76 @@ class GakumasAntigravityBot(discord.Client):
                 await message.channel.send("✨ 会話をリセットしたわ！何か聞きたいことはある？")
                 return
             content = stripped
+
+        # ─── コンテストグラフ（横方向箱ひげ図）の自然言語リクエスト判定 ───────
+        chart_match = re.search(r"(?:ステージ|stage)\s*([1-3]).*?(?:グラフ|チャート|箱ひげ|分布)", content, re.IGNORECASE)
+        if not chart_match:
+            chart_match = re.search(r"(?:グラフ|チャート|箱ひげ|分布).*?(?:ステージ|stage)\s*([1-3])", content, re.IGNORECASE)
+
+        if chart_match and any(w in content for w in ["見せて", "表示", "出して", "お願い", "教えて", "画像", "送って", "欲しい"]) or (chart_match and len(content) <= 20):
+            stg = int(chart_match.group(1))
+            from generate_contest_boxplot import ContestBoxPlotGenerator
+            try:
+                gen = ContestBoxPlotGenerator()
+                png_bytes, meta = gen.build_png_bytes(stage=stg)
+                cur_season = meta["season"]
+                runs_count = meta["runs"][0].get("runs_count", 2000) if meta["runs"] else 2000
+                msg_text = (
+                    f"👩‍🏫 **プロデューサーくん、お疲れ様！**\n"
+                    f"シーズン{cur_season} Stage {stg} のコンテストシミュレーション結果グラフ（全13アイドル横方向箱ひげ図）よ！\n"
+                    f"試行回数 {runs_count:,}回、最新日付 `{meta['date_str']}` のデータに基づいているわ。育成や編成の参考にしてね！"
+                )
+                filename = f"contest_boxplot_s{cur_season}_stage{stg}_{meta['date_str']}.png"
+                file = discord.File(io.BytesIO(png_bytes), filename=filename)
+                await message.channel.send(content=msg_text, file=file)
+                return
+            except Exception as e:
+                log.error(f"[nl_contest_chart] エラー: {e}", exc_info=True)
+
+        # ─── 実走ロードアウト画像の自然言語リクエスト判定 ─────────────────────
+        loadout_kw = ["実走画像", "ロードアウト画像", "実走構成", "実走の画像", "シミュレーション結果の画像", "シミュレーションの画像"]
+        is_loadout_request = any(k in content for k in loadout_kw) or (
+            ("画像" in content or "見せて" in content or "出して" in content) and
+            ("実走" in content or "ロードアウト" in content)
+        )
+        if is_loadout_request:
+            stg = 3  # デフォルト
+            stg_m = re.search(r"(?:ステージ|stage)\s*([1-3])", content, re.IGNORECASE)
+            if stg_m:
+                stg = int(stg_m.group(1))
+
+            from advisory_parser import IDOL_NAME_TO_KEY
+            target_idol_key = None
+            for iname, ikey in IDOL_NAME_TO_KEY.items():
+                if iname in content or ikey in content.lower():
+                    target_idol_key = ikey
+                    break
+
+            if target_idol_key:
+                try:
+                    from cli_loadout_image import get_latest_loadout
+                    from loadout_image_builder import LoadoutImageBuilder
+
+                    doc = get_latest_loadout(stg, target_idol_key)
+                    if doc:
+                        builder = LoadoutImageBuilder()
+                        png_bytes = builder.build(doc, columns=2)
+                        derived = doc.get("derived", {})
+                        season = derived.get("season", 52)
+                        pinfo = builder._get_pidol_info(derived.get("pIdolId"))
+                        full_title = f"{pinfo.get('idol_name', '')}【{pinfo.get('title', '')}】"
+                        med_score = doc.get("stats", {}).get("median", 0)
+                        msg_text = (
+                            f"👩‍🏫 **プロデューサーくん、お疲れ様！**\n"
+                            f"シーズン{season} Stage {stg} の **{full_title}** 実走シミュレーション結果（期待中央値: **{int(med_score):,} Pt**）の画像よ！\n"
+                            f"Vo/Da/Vi/HP ステータスや12枚のデッキ構成をまとめたわ。確認してみてね！"
+                        )
+                        filename = f"loadout_s{season}_stage{stg}_{target_idol_key}.png"
+                        file = discord.File(io.BytesIO(png_bytes), filename=filename)
+                        await message.channel.send(content=msg_text, file=file)
+                        return
+                except Exception as e:
+                    log.error(f"[nl_loadout_image] エラー: {e}", exc_info=True)
 
         # ─── 通常メッセージの処理（重複・多重実行ガード） ─────────────────────
         if self._is_busy:

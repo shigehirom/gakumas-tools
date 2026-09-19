@@ -3,7 +3,7 @@ import { syncContestMatchesBidirectional } from '../utils/match-history-updater'
 
 export const syncContestCommand = {
     data: new SlashCommandBuilder()
-        .setName('sync_contest')
+        .setName('sync-contest')
         .setDescription('Googleスプレッドシート(Contest)とMongoDBの対戦記録を双方向同期します'),
 
     async execute(interaction: ChatInputCommandInteraction) {

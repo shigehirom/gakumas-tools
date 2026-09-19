@@ -80,9 +80,8 @@ async function main() {
 
     const isOwnedStr = row[idxMap['is_owned']] ? row[idxMap['is_owned']].trim().toLowerCase() : '';
     
-    // Check if is_owned is truthy (e.g. TRUE, true, 1, yes, o, ○, etc.)
     if (isOwnedStr && isOwnedStr !== 'false' && isOwnedStr !== '0' && isOwnedStr !== 'no') {
-      const cardName = row[idxMap['card_name']];
+      const cardName = (row[idxMap['card_name']] || '').replace(/\u301c/g, '\uff5e');
       const rarity = row[idxMap['rarity']];
       const planRestriction = row[idxMap['plan_restriction']];
       const type = row[idxMap['type']];

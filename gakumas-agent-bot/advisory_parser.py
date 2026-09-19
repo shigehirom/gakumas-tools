@@ -75,20 +75,21 @@ def safe_exists(p: Path) -> bool:
         return False
 
 
-def find_latest_season(season: int | None = None) -> tuple[int, Path] | None:
+def find_latest_season(season: int | None = None, source: str = "human") -> tuple[int, Path] | None:
+    prefix = "auto_advisory_" if source == "ai" else "fried_aji3_advisory_"
     all_found_seasons = []
     for d in INSTRUCTIONS_DIRS:
         if not safe_exists(d):
             continue
         if season is not None:
-            f = d / f"fried_aji3_advisory_{season}.md"
+            f = d / f"{prefix}{season}.md"
             if safe_exists(f):
                 return season, f
         else:
             try:
-                files = list(d.glob("fried_aji3_advisory_*.md"))
+                files = list(d.glob(f"{prefix}*.md"))
                 for f in files:
-                    m = re.search(r"fried_aji3_advisory_(\d+)\.md", f.name)
+                    m = re.search(rf"{prefix}(\d+)\.md", f.name)
                     if m:
                         all_found_seasons.append((int(m.group(1)), f))
             except Exception:
@@ -98,6 +99,50 @@ def find_latest_season(season: int | None = None) -> tuple[int, Path] | None:
         all_found_seasons.sort(key=lambda x: x[0], reverse=True)
         return all_found_seasons[0]
     return None
+
+
+def normalize_card_name(name: str) -> str:
+    if not name:
+        return ""
+    # 波ダッシュ (U+301C) と 全角チルダ (U+FF5E) の統一、全角半角記号・空白の正規化
+    return (name.replace("\uff5e", "\u301c")
+            .replace("!", "！")
+            .replace("?", "？")
+            .replace(" ", "")
+            .replace("　", "")
+            .strip()
+            .lower())
+
+
+def is_support_card_owned(card_name: str | None, owned_cards: set[str] | None) -> bool:
+    """カード名（サポートカード名）が所持セットに含まれているか、表記揺れを吸収して判定する"""
+    if not card_name or not owned_cards:
+        return True
+    if card_name in owned_cards:
+        return True
+    norm_target = normalize_card_name(card_name)
+    for c in owned_cards:
+        if normalize_card_name(c) == norm_target:
+            return True
+    return False
+
+
+def get_owned_support_card_names(mongo_uri: str = "mongodb://192.168.100.4:27017") -> set[str]:
+    """MongoDB (gakumas-tools.owned_support_cards) から所持サポートカード名を取得する"""
+    try:
+        from pymongo import MongoClient
+        client = MongoClient(mongo_uri, serverSelectionTimeoutMS=2000)
+        db = client["gakumas-tools"]
+        docs = list(db["owned_support_cards"].find({}, {"card_name": 1}))
+        owned = set()
+        for d in docs:
+            cname = d.get("card_name", "").strip()
+            if cname:
+                owned.add(cname)
+        return owned
+    except Exception as e:
+        log.warning(f"Failed to fetch owned_support_cards from mongo: {e}")
+        return set()
 
 
 def get_stage_regulation(season: int, stage_num: int) -> dict[str, Any]:
@@ -138,9 +183,9 @@ def get_stage_regulation(season: int, stage_num: int) -> dict[str, Any]:
     return default_info
 
 
-def get_stage_recommended_pidols(stage: int, season: int | None = None) -> list[dict[str, Any]]:
+def get_stage_recommended_pidols(stage: int, season: int | None = None, source: str = "human") -> list[dict[str, Any]]:
     """指定ステージに記載されている全おすすめPアイドル一覧を取得する"""
-    season_info = find_latest_season(season)
+    season_info = find_latest_season(season, source=source)
     if not season_info:
         return []
     cur_season, adv_path = season_info
@@ -315,7 +360,7 @@ def _parse_skill_cards_section(skill_sec: str, matched_entry: dict[str, Any]) ->
     if len(common_card_nodes) == 1:
         selected_common = common_card_nodes[0]
     elif len(common_card_nodes) > 1:
-        eff = _get_idol_recommended_effect(target_name, target_title)
+        eff = matched_entry.get("effect") or matched_entry.get("recommended_effect") or _get_idol_recommended_effect(target_name, target_title)
         for c in common_card_nodes:
             if eff and eff in c.text:
                 selected_common = c
@@ -371,9 +416,9 @@ def _parse_skill_cards_section(skill_sec: str, matched_entry: dict[str, Any]) ->
     return final_cards
 
 
-def parse_advisory_for_entry(stage: int, matched_entry: dict[str, Any], season: int | None = None) -> dict[str, Any] | None:
+def parse_advisory_for_entry(stage: int, matched_entry: dict[str, Any], season: int | None = None, source: str = "human") -> dict[str, Any] | None:
     """単一のPアイドルエントリに対する推奨構成データをパースする"""
-    season_info = find_latest_season(season)
+    season_info = find_latest_season(season, source=source)
     if not season_info:
         return None
     cur_season, adv_path = season_info
@@ -404,14 +449,19 @@ def parse_advisory_for_entry(stage: int, matched_entry: dict[str, Any], season: 
 
     # Pアイテムパース
     pitem_lines = pitem_sec.splitlines()
-    common_items = []
+    common_blocks = {}
     idol_items = []
+    curr_common_eff = ""
     curr_target = None
     
     for line in pitem_lines:
         line_s = line.strip()
         if line_s.startswith("- common:"):
             curr_target = "common"
+            m_eff = re.search(r"recommend:\s*([^\s]+)", line_s)
+            curr_common_eff = m_eff.group(1).strip() if m_eff else ""
+            if curr_common_eff not in common_blocks:
+                common_blocks[curr_common_eff] = []
         elif line_s.startswith("- ") and "【" in line_s:
             if (matched_entry.get("idol_key") and matched_entry["idol_key"] in line_s) or (matched_entry.get("idol_name") and matched_entry["idol_name"] in line_s):
                 if matched_entry.get("title") and matched_entry["title"] in line_s:
@@ -424,11 +474,22 @@ def parse_advisory_for_entry(stage: int, matched_entry: dict[str, Any], season: 
             item_name = line_s[2:].strip()
             if item_name and not item_name.startswith("common:") and "【" not in item_name:
                 if curr_target == "common":
-                    common_items.append(item_name)
+                    if curr_common_eff not in common_blocks:
+                        common_blocks[curr_common_eff] = []
+                    common_blocks[curr_common_eff].append(item_name)
                 elif curr_target == "idol":
                     idol_items.append(item_name)
 
-    pitems = idol_items if idol_items else common_items
+    target_eff = matched_entry.get("effect") or matched_entry.get("recommended_effect") or _get_idol_recommended_effect(matched_entry.get("idol_name", ""), matched_entry.get("title", ""))
+    selected_common_items = []
+    if target_eff and target_eff in common_blocks:
+        selected_common_items = common_blocks[target_eff]
+    elif "" in common_blocks:
+        selected_common_items = common_blocks[""]
+    elif common_blocks:
+        selected_common_items = list(common_blocks.values())[0]
+
+    pitems = idol_items if idol_items else selected_common_items
     pitems = pitems[:2]
 
     # スキルカードパース
@@ -444,13 +505,13 @@ def parse_advisory_for_entry(stage: int, matched_entry: dict[str, Any], season: 
     }
 
 
-def parse_advisory(stage: int, idol_query: str | None = None, season: int | None = None) -> dict[str, Any] | None:
-    pidol_entries = get_stage_recommended_pidols(stage, season)
+def parse_advisory(stage: int, idol_query: str | None = None, season: int | None = None, source: str = "human") -> dict[str, Any] | None:
+    pidol_entries = get_stage_recommended_pidols(stage, season, source=source)
     if not pidol_entries:
         return None
 
     if not idol_query:
-        return parse_advisory_for_entry(stage, pidol_entries[0], season)
+        return parse_advisory_for_entry(stage, pidol_entries[0], season, source=source)
 
     raw_q = idol_query.strip()
     m_title = re.search(r'【([^】]+)】', raw_q)
@@ -469,17 +530,17 @@ def parse_advisory(stage: int, idol_query: str | None = None, season: int | None
         for e in pidol_entries:
             if clean(e['title']) == clean_ext or clean_ext in clean(e['title']) or clean(e['title']) in clean_ext:
                 if clean(e['idol_name']) in q_clean or clean(e['idol_key']) in q_clean:
-                    return parse_advisory_for_entry(stage, e, season)
+                    return parse_advisory_for_entry(stage, e, season, source=source)
         # タイトルのみ一致
         for e in pidol_entries:
             if clean(e['title']) == clean_ext or clean_ext in clean(e['title']) or clean(e['title']) in clean_ext:
-                return parse_advisory_for_entry(stage, e, season)
+                return parse_advisory_for_entry(stage, e, season, source=source)
 
     # 2. クエリ内に e['title'] が含まれている（例: 'china 空と約束' -> '空と約束' in q）
     for e in pidol_entries:
         e_title_clean = clean(e['title'])
         if len(e_title_clean) >= 2 and e_title_clean in q_clean:
-            return parse_advisory_for_entry(stage, e, season)
+            return parse_advisory_for_entry(stage, e, season, source=source)
 
     # 3. 完全一致 / アイドル名一致
     for e in pidol_entries:
@@ -487,7 +548,7 @@ def parse_advisory(stage: int, idol_query: str | None = None, season: int | None
         e_name = clean(e['idol_name'])
         e_title = clean(e['title'])
         if target_key == e_key or q_clean == e_name or q_clean == e_title:
-            return parse_advisory_for_entry(stage, e, season)
+            return parse_advisory_for_entry(stage, e, season, source=source)
 
     # 4. 双方向部分一致
     for e in pidol_entries:
@@ -495,7 +556,519 @@ def parse_advisory(stage: int, idol_query: str | None = None, season: int | None
         e_name = clean(e['idol_name'])
         e_title = clean(e['title'])
         if q_clean in e_key or e_key in q_clean or q_clean in e_name or e_name in q_clean or q_clean in e_title or e_title in q_clean:
-            return parse_advisory_for_entry(stage, e, season)
+            return parse_advisory_for_entry(stage, e, season, source=source)
+
+    # 5. フォールバック: マスターデータ (ImageResolver) から該当アイドルを探索して動的にエントリを生成
+    try:
+        from image_resolver import ImageResolver
+        resolver = ImageResolver()
+        for p in resolver.p_idols:
+            p_name_clean = clean(p.get("idol_name", ""))
+            p_title_clean = clean(p.get("title", ""))
+            c_name = p.get("idol_name", "").replace(" ", "")
+            p_key = IDOL_NAME_TO_KEY.get(c_name, "")
+
+            if extracted_title and (clean(extracted_title) == p_title_clean or p_title_clean in clean(extracted_title) or clean(extracted_title) in p_title_clean):
+                if target_key == p_key or p_name_clean in q_clean or q_clean in p_name_clean:
+                    dyn_entry = {
+                        "idol_key": p_key,
+                        "idol_name": c_name,
+                        "title": p.get("title", ""),
+                        "extra": "with_asari" if (stage == 3 or "asari" in q_clean) else "",
+                        "subs": []
+                    }
+                    return parse_advisory_for_entry(stage, dyn_entry, season, source=source)
+
+        stage_plan = "sense" if stage == 1 else ("logic" if stage == 2 else "anomaly")
+        try:
+            reg = get_stage_regulation(cur_season, stage)
+            stage_plan = reg.get("plan", stage_plan)
+        except Exception:
+            pass
+
+        # 1. ステージプラン一致 かつ SSR
+        for p in resolver.p_idols:
+            p_name_clean = clean(p.get("idol_name", ""))
+            c_name = p.get("idol_name", "").replace(" ", "")
+            p_key = IDOL_NAME_TO_KEY.get(c_name, "")
+            if target_key == p_key or q_clean == p_name_clean or (len(q_clean) >= 2 and (q_clean in p_name_clean or p_name_clean in q_clean)):
+                if p.get("plan") == stage_plan and p.get("rarity") == "SSR":
+                    dyn_entry = {
+                        "idol_key": p_key,
+                        "idol_name": c_name,
+                        "title": p.get("title", ""),
+                        "extra": "with_asari" if (stage == 3 or "asari" in q_clean) else "",
+                        "subs": []
+                    }
+                    return parse_advisory_for_entry(stage, dyn_entry, season, source=source)
+
+        # 2. 任意のSSR
+        for p in resolver.p_idols:
+            p_name_clean = clean(p.get("idol_name", ""))
+            c_name = p.get("idol_name", "").replace(" ", "")
+            p_key = IDOL_NAME_TO_KEY.get(c_name, "")
+            if target_key == p_key or q_clean == p_name_clean or (len(q_clean) >= 2 and (q_clean in p_name_clean or p_name_clean in q_clean)):
+                if p.get("rarity") == "SSR":
+                    dyn_entry = {
+                        "idol_key": p_key,
+                        "idol_name": c_name,
+                        "title": p.get("title", ""),
+                        "extra": "with_asari" if (stage == 3 or "asari" in q_clean) else "",
+                        "subs": []
+                    }
+                    return parse_advisory_for_entry(stage, dyn_entry, season, source=source)
+    except Exception:
+        pass
 
     return None
+
+
+def get_stage_support_combinations(stage: int, season: int | None = None, owned_cards: set[str] | None = None, source: str = "human") -> dict[str, Any]:
+    """
+    指定ステージにおける必須サポートカード構成の組合せ（共通構成・特定アイドル専用構成・方針別構成）を解析して返す。
+    """
+    from image_resolver import ImageResolver
+    resolver = ImageResolver()
+
+    if owned_cards is None:
+        owned_cards = get_owned_support_card_names()
+
+    season_info = find_latest_season(season, source=source)
+    if not season_info:
+        return {"season": season or 52, "stage": stage, "combinations": [], "asari_idols": []}
+    cur_season, adv_path = season_info
+    text = adv_path.read_text(encoding="utf-8")
+
+    stages = re.split(r"(?m)^#\s*Stage:\s*", text)
+    stage_text = next((s for s in stages if s.strip() and s.splitlines()[0].strip().startswith(str(stage))), "")
+    if not stage_text:
+        return {"season": cur_season, "stage": stage, "combinations": [], "asari_idols": []}
+
+    sections = re.split(r"(?m)^##\s+", stage_text)
+    pidol_sec = next((s for s in sections if s.strip().startswith("p_idol:")), "")
+    pitem_sec = next((s for s in sections if s.strip().startswith("p_item")), "")
+    skill_sec = next((s for s in sections if s.strip().startswith("skill_card")), "")
+
+    all_pidols = get_stage_recommended_pidols(stage, season, source=source)
+    asari_idols = [f"{p['idol_name']}【{p['title']}】" for p in all_pidols if "with_asari" in p.get("extra", "")]
+
+    # 1. p_item ブロックの抽出
+    pitem_blocks: dict[str, list[dict[str, Any]]] = {}
+    curr_pi_key = None
+    for l in pitem_sec.splitlines():
+        line = l.rstrip()
+        if not line or line.startswith("p_item"):
+            continue
+        if line.strip().startswith("- common: recommend:"):
+            curr_pi_key = line.strip().replace("- ", "").strip()
+            pitem_blocks[curr_pi_key] = []
+        elif line.strip().startswith("- common:"):
+            curr_pi_key = "common"
+            pitem_blocks[curr_pi_key] = []
+        elif line.strip().startswith("- ") and "【" in line:
+            curr_pi_key = line.strip().replace("- ", "").strip()
+            pitem_blocks[curr_pi_key] = []
+        elif line.startswith("\t- ") or line.startswith("    - ") or (line.strip().startswith("- ") and curr_pi_key):
+            it = line.strip().replace("- ", "").strip()
+            if it and not it.startswith("common") and "【" not in it:
+                lbl = resolver.get_p_item_card_label(it)
+                sc_name = resolver.get_p_item_support_card_name(it)
+                is_owned = is_support_card_owned(sc_name, owned_cards)
+                pitem_blocks[curr_pi_key].append({
+                    "item_name": it,
+                    "card_label": lbl,
+                    "support_card_name": sc_name,
+                    "is_owned": is_owned
+                })
+
+    # 2. skill_card AST の構築
+    class Node:
+        def __init__(self, indent: int, text: str):
+            self.indent = indent
+            self.text = text
+            self.children: list['Node'] = []
+        def add_child(self, c: 'Node'):
+            self.children.append(c)
+
+    root = Node(-1, "root")
+    stack = [root]
+    for raw_line in skill_sec.splitlines():
+        if not raw_line.strip() or raw_line.strip().startswith("##"):
+            continue
+        expanded = raw_line.replace("\t", "    ")
+        indent = len(expanded) - len(expanded.lstrip())
+        content = raw_line.strip()
+        if content.startswith("- "):
+            content = content[2:].strip()
+        elif content.startswith("-"):
+            content = content[1:].strip()
+        else:
+            continue
+        node = Node(indent, content)
+        while len(stack) > 1 and stack[-1].indent >= indent:
+            stack.pop()
+        stack[-1].add_child(node)
+        stack.append(node)
+
+    skill_common_blocks: dict[str, dict[str, Any]] = {}
+    skill_idol_blocks: dict[str, list[dict[str, Any]]] = {}
+
+    for top in root.children:
+        t_text = top.text
+        if t_text.startswith("common: recommend:") or t_text.startswith("common:") or t_text == "common":
+            s_key = "common" if t_text in ("common", "common:") else t_text
+            base_cards = []
+            replacements: dict[str, list[dict[str, Any]]] = {}
+            for cnode in top.children:
+                c_name = cnode.text.split(":")[0].strip()
+                lbl = resolver.get_skill_card_support_label(c_name)
+                sc_name = resolver.get_skill_card_support_card_name(c_name)
+                is_owned = is_support_card_owned(sc_name, owned_cards)
+                if lbl:
+                    base_cards.append({
+                        "card_name": c_name,
+                        "card_label": lbl,
+                        "support_card_name": sc_name,
+                        "is_owned": is_owned
+                    })
+                for sub in cnode.children:
+                    if "【" in sub.text:
+                        idol_key = sub.text.strip()
+                        if idol_key not in replacements:
+                            replacements[idol_key] = []
+                        for rnode in sub.children:
+                            r_name = rnode.text.split(":")[0].strip()
+                            r_lbl = resolver.get_skill_card_support_label(r_name)
+                            r_sc_name = resolver.get_skill_card_support_card_name(r_name)
+                            r_is_owned = is_support_card_owned(r_sc_name, owned_cards)
+                            if r_lbl:
+                                replacements[idol_key].append({
+                                    "card_name": r_name,
+                                    "card_label": r_lbl,
+                                    "support_card_name": r_sc_name,
+                                    "is_owned": r_is_owned,
+                                    "replaces": c_name
+                                })
+            skill_common_blocks[s_key] = {"base_cards": base_cards, "replacements": replacements}
+        elif "【" in t_text:
+            cards = []
+            for cnode in top.children:
+                c_name = cnode.text.split(":")[0].strip()
+                lbl = resolver.get_skill_card_support_label(c_name)
+                sc_name = resolver.get_skill_card_support_card_name(c_name)
+                is_owned = is_support_card_owned(sc_name, owned_cards)
+                if lbl:
+                    cards.append({
+                        "card_name": c_name,
+                        "card_label": lbl,
+                        "support_card_name": sc_name,
+                        "is_owned": is_owned
+                    })
+            skill_idol_blocks[t_text] = cards
+
+    def get_idol_display(k: str) -> str:
+        m = re.match(r"^([a-zA-Z0-9_]+):\s*(【[^】]+】)", k)
+        if m:
+            idol_key = m.group(1)
+            title = m.group(2)
+            name = IDOL_KEY_MAP.get(idol_key, idol_key)
+            return f"{name}{title}"
+        return k
+
+    has_policies = any("recommend:" in k for k in pitem_blocks.keys()) or any("recommend:" in k for k in skill_common_blocks.keys())
+
+    raw_combinations = []
+    if not has_policies:
+        com_pi = pitem_blocks.get("common", [])
+        com_sc = skill_common_blocks.get("common", {}).get("base_cards", [])
+        raw_combinations.append({
+            "name": "共通（common）構成",
+            "p_items": com_pi,
+            "skill_cards": com_sc,
+            "is_common": True,
+            "special_idol": None
+        })
+
+        for k, items in pitem_blocks.items():
+            if k == "common":
+                continue
+            sc = skill_idol_blocks.get(k, com_sc)
+            raw_combinations.append({
+                "name": f"{get_idol_display(k)} 専用構成",
+                "p_items": items,
+                "skill_cards": sc,
+                "is_common": False,
+                "special_idol": k
+            })
+
+        for k, cards in skill_idol_blocks.items():
+            if any(c.get("special_idol") == k for c in raw_combinations):
+                continue
+            pi = pitem_blocks.get(k, com_pi)
+            raw_combinations.append({
+                "name": f"{get_idol_display(k)} 専用構成",
+                "p_items": pi,
+                "skill_cards": cards,
+                "is_common": False,
+                "special_idol": k
+            })
+
+        com_repls = skill_common_blocks.get("common", {}).get("replacements", {})
+        for k, repl_cards in com_repls.items():
+            if any(c.get("special_idol") == k for c in raw_combinations):
+                continue
+            replaces_names = {rc.get("replaces") for rc in repl_cards}
+            final_sc = [c for c in com_sc if c["card_name"] not in replaces_names] + repl_cards
+            pi = pitem_blocks.get(k, com_pi)
+            raw_combinations.append({
+                "name": f"{get_idol_display(k)} 専用構成",
+                "p_items": pi,
+                "skill_cards": final_sc,
+                "is_common": False,
+                "special_idol": k
+            })
+    else:
+        policies = []
+        for k in list(pitem_blocks.keys()) + list(skill_common_blocks.keys()):
+            if "recommend:" in k:
+                p_name = k.split("recommend:", 1)[1].strip()
+                if p_name not in policies:
+                    policies.append(p_name)
+
+        for pol in policies:
+            pol_key = f"common: recommend: {pol}"
+            pol_pi = pitem_blocks.get(pol_key, [])
+            pol_sc_info = skill_common_blocks.get(pol_key, {"base_cards": [], "replacements": {}})
+            pol_sc = pol_sc_info["base_cards"]
+
+            raw_combinations.append({
+                "name": f"共通・{pol}型構成",
+                "p_items": pol_pi,
+                "skill_cards": pol_sc,
+                "is_common": True,
+                "policy": pol,
+                "special_idol": None
+            })
+
+            for k, repl_cards in pol_sc_info.get("replacements", {}).items():
+                replaces_names = {rc.get("replaces") for rc in repl_cards}
+                final_sc = [c for c in pol_sc if c["card_name"] not in replaces_names] + repl_cards
+                pi = pitem_blocks.get(k, pol_pi)
+                raw_combinations.append({
+                    "name": f"{get_idol_display(k)}（{pol}型）構成",
+                    "p_items": pi,
+                    "skill_cards": final_sc,
+                    "is_common": False,
+                    "policy": pol,
+                    "special_idol": k
+                })
+
+        for k, items in pitem_blocks.items():
+            if k.startswith("common"):
+                continue
+            if any(c.get("special_idol") == k for c in raw_combinations):
+                continue
+            sc = skill_idol_blocks.get(k, [])
+            if not sc:
+                sc = skill_common_blocks.get("common: recommend: 好印象", {}).get("base_cards", [])
+            raw_combinations.append({
+                "name": f"{get_idol_display(k)} 専用構成",
+                "p_items": items,
+                "skill_cards": sc,
+                "is_common": False,
+                "special_idol": k
+            })
+
+        for k, cards in skill_idol_blocks.items():
+            if any(c.get("special_idol") == k for c in raw_combinations):
+                continue
+            pi = pitem_blocks.get(k, [])
+            if not pi:
+                pi = pitem_blocks.get("common: recommend: やる気", [])
+            raw_combinations.append({
+                "name": f"{get_idol_display(k)} 専用構成",
+                "p_items": pi,
+                "skill_cards": cards,
+                "is_common": False,
+                "special_idol": k
+            })
+
+    # 重複排除: 共通構成と全く同じサポカセットを持つ個別エントリは除外
+    final_combinations = []
+    common_card_sets = {}
+    for comb in raw_combinations:
+        pi_cards = tuple(sorted(it["card_label"] for it in comb["p_items"] if it.get("card_label") and it["card_label"] != "推奨Pアイテム"))
+        sc_cards = tuple(sorted(sc["card_label"] for sc in comb["skill_cards"] if sc.get("card_label")))
+        sig = (pi_cards, sc_cards)
+
+        if comb["is_common"]:
+            common_card_sets[comb.get("policy", "all")] = sig
+            comb["signature"] = sig
+            final_combinations.append(comb)
+        else:
+            if sig in common_card_sets.values():
+                continue
+            comb["signature"] = sig
+            final_combinations.append(comb)
+
+    for idx, comb in enumerate(final_combinations, 1):
+        labels = set(comb["signature"][0] + comb["signature"][1])
+        comb["total_required"] = len(labels)
+        comb["index"] = idx
+        # clean signature for serialization
+        comb.pop("signature", None)
+
+    return {
+        "season": cur_season,
+        "stage": stage,
+        "combinations": final_combinations,
+        "asari_idols": asari_idols
+    }
+
+
+def get_stage_configurations(stage: int, season: int | None = None, owned_cards: set[str] | None = None, source: str = "human") -> list[dict[str, Any]]:
+    """
+    ステージ内の「汎用 (common)」および「個別定義されたアイドル (それ以外)」の構成リストを取得する。
+    """
+    if owned_cards is None:
+        owned_cards = get_owned_support_card_names()
+
+    season_info = find_latest_season(season, source=source)
+    if not season_info:
+        return []
+    cur_season, adv_path = season_info
+    text = adv_path.read_text(encoding="utf-8")
+
+    stages = re.split(r"(?m)^#\s*Stage:\s*", text)
+    stage_text = None
+    for s in stages:
+        if not s.strip():
+            continue
+        lines = s.splitlines()
+        if lines[0].strip().startswith(str(stage)):
+            stage_text = s
+            break
+    if not stage_text:
+        return []
+
+    sections = re.split(r"(?m)^##\s+", stage_text)
+    pitem_sec = ""
+    skill_sec = ""
+    for sec in sections:
+        sec_clean = sec.strip()
+        if sec_clean.startswith("p_item:"):
+            pitem_sec = sec_clean
+        elif sec_clean.startswith("skill_card:"):
+            skill_sec = sec_clean
+
+    # 1. 個別指定されたアイドル (それ以外) の抽出を先に行う
+    # p_item や skill_card のトップレベルで - <idol>: 【<title>】 と定義されているものを抽出
+    specific_pairs = []
+    for sec in [pitem_sec, skill_sec]:
+        for line in sec.splitlines():
+            if not line.startswith("- "):
+                continue
+            line_s = line.strip()
+            if line_s.startswith("- common:"):
+                continue
+            if "【" in line_s:
+                m = re.match(r"^-\s*([a-zA-Z0-9_]+):\s*(【[^】]+】)(.*)", line_s)
+                if m:
+                    k = m.group(1)
+                    t = m.group(2).strip("【】")
+                    if (k, t) not in specific_pairs:
+                        specific_pairs.append((k, t))
+
+    # ステージ推奨Pアイドル全リストから、個別指定のないアイドルを汎用対象とする
+    all_pidols = get_stage_recommended_pidols(stage, season, source=source)
+    specific_keys_titles = set(specific_pairs)
+    target_common_pidols = [
+        p for p in all_pidols
+        if (p.get("idol_key"), p.get("title")) not in specific_keys_titles
+    ]
+    target_idol_names = [f"{p['idol_name']}【{p['title']}】" for p in target_common_pidols]
+    target_idol_short = [p['idol_name'] for p in target_common_pidols]
+
+    # 2. 汎用 (common) の抽出（Stage 2 などで やる気 / 好印象 が分かれているか確認）
+    common_effects = []
+    for sec in [pitem_sec, skill_sec]:
+        for line in sec.splitlines():
+            line_s = line.strip()
+            if line_s.startswith("- common:"):
+                m_eff = re.search(r"recommend:\s*([^\s]+)", line_s)
+                eff = m_eff.group(1).strip() if m_eff else ""
+                if eff and eff not in common_effects:
+                    common_effects.append(eff)
+
+    configs = []
+
+    if common_effects:
+        for eff in common_effects:
+            entry = {
+                "idol_key": "common",
+                "idol_name": f"汎用 ({eff})",
+                "title": f"{eff}型 ステージ共通推奨",
+                "effect": eff,
+                "is_common": True,
+                "config_type": "common",
+                "type_label": f"汎用 ({eff})",
+                "target_idols": target_idol_names,
+                "target_idols_short": target_idol_short
+            }
+            data = parse_advisory_for_entry(stage, entry, season, source=source)
+            if data:
+                data["owned_support_cards"] = list(owned_cards)
+                configs.append({
+                    "type": "common",
+                    "label": f"汎用 ({eff})",
+                    "entry": entry,
+                    "data": data,
+                    "target_idols": target_idol_names,
+                    "target_idols_short": target_idol_short
+                })
+    else:
+        entry = {
+            "idol_key": "common",
+            "idol_name": "汎用 (common)",
+            "title": "ステージ共通推奨",
+            "is_common": True,
+            "config_type": "common",
+            "type_label": "汎用 (common)",
+            "target_idols": target_idol_names,
+            "target_idols_short": target_idol_short
+        }
+        data = parse_advisory_for_entry(stage, entry, season, source=source)
+        if data:
+            data["owned_support_cards"] = list(owned_cards)
+            configs.append({
+                "type": "common",
+                "label": "汎用 (common)",
+                "entry": entry,
+                "data": data,
+                "target_idols": target_idol_names,
+                "target_idols_short": target_idol_short
+            })
+
+    for k, t in specific_pairs:
+        idol_name = IDOL_KEY_MAP.get(k, k)
+        entry = {
+            "idol_key": k,
+            "idol_name": idol_name,
+            "title": t,
+            "is_common": False,
+            "config_type": "specific",
+            "type_label": f"{idol_name}【{t}】"
+        }
+        data = parse_advisory_for_entry(stage, entry, season, source=source)
+        if data:
+            data["owned_support_cards"] = list(owned_cards)
+            configs.append({
+                "type": "specific",
+                "label": f"{idol_name}【{t}】",
+                "entry": entry,
+                "data": data
+            })
+
+    return configs
+
 

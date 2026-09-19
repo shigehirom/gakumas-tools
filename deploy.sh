@@ -7,21 +7,8 @@ TARGET_DIR="/mnt/NVMe/gakumas-tools/"
 
 echo "Deploying to TrueNAS ($TARGET)..."
 
-# 0. TrueNAS 側で記録された最新の対戦履歴（match_history_*.csv）を保護・同期
-echo "Fetching latest match history from TrueNAS..."
-rsync -avz --inplace --no-owner --no-group --no-perms --include='match_history_*.csv' --exclude='*' $TARGET:${TARGET_DIR}agent-instructions/ ../shared/agent-instructions/ 2>/dev/null || true
-rsync -avz --inplace --no-owner --no-group --no-perms --include='match_history_*.csv' --exclude='*' $TARGET:${TARGET_DIR}agent-instructions/ ./agent-instructions/ 2>/dev/null || true
-
-# 0.4. レギュレーションファイル（regulation_*.md）から未作成の match_history_*.csv を自動生成
-echo "Checking and generating missing match history CSVs from regulations..."
-node packages/cli/scripts/sync-regulation-csv.mjs 2>/dev/null || true
-
-# 0.5. MongoDB から最新の全対戦データを CSV へ自動同期・完全復元
-echo "Syncing all match records from MongoDB to CSV..."
-node packages/cli/scripts/sync-mongo-to-csv.mjs 2>/dev/null || true
-
-# 0.6. Google スプレッドシート（Contest）と MongoDB の双方向同期
-echo "Syncing Contest records with Google Sheets..."
+# 0. Google スプレッドシート（Contest）と MongoDB の双方向同期
+echo "Syncing Contest records with Google Sheets and MongoDB..."
 node packages/cli/scripts/sync-contest-matches.mjs --mode bidirectional --execute 2>/dev/null || true
 
 
@@ -60,6 +47,11 @@ ssh -t $TARGET "cd $TARGET_DIR && \
   echo '==> Building Web UI & Discord Bots...' && \
   sudo docker compose build --no-cache asari-agent gakumas-bot && \
   sudo docker compose build gakumas-tools && \
+  echo '==> Stopping and cleaning old Bot containers...' && \
+  sudo docker compose stop gakumas-bot asari-agent 2>/dev/null || true && \
+  sudo docker compose rm -f gakumas-bot asari-agent 2>/dev/null || true && \
+  sudo docker ps -q --filter name=gakumas-bot | xargs -r sudo docker rm -f 2>/dev/null || true && \
+  sudo docker ps -q --filter name=asari-agent | xargs -r sudo docker rm -f 2>/dev/null || true && \
   echo '==> Starting Discord Bots...' && \
   sudo docker compose up -d --force-recreate gakumas-bot asari-agent && \
   echo '==> Container Status:' && \

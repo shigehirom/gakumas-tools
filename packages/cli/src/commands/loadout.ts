@@ -107,4 +107,45 @@ export function registerLoadoutCommand(cli: any) {
                 process.exit(1);
             }
         });
+
+    cli.command('loadout:prune', 'Prune old loadouts by season or date')
+        .option('--season-before <season>', 'Remove loadouts with season lower than specified')
+        .option('--before <date>', 'Remove loadouts created before date (YY-MM-DD or YYYY-MM-DD)')
+        .option('--dry-run', 'Preview loadouts to be deleted without actual deletion')
+        .option('-f, --force', 'Force deletion without confirmation prompt')
+        .action(async (options?: any) => {
+            try {
+                const scriptPath = path.join(LOCAL_SCRIPTS_DIR, 'loadout-prune.mjs');
+                const args: string[] = [];
+                if (options?.seasonBefore !== undefined) {
+                    args.push('--season-before', String(options.seasonBefore));
+                }
+                if (options?.before) {
+                    args.push('--before', String(options.before));
+                }
+                if (options?.dryRun) {
+                    args.push('--dry-run');
+                }
+                if (options?.force) {
+                    args.push('--force');
+                }
+
+                const child = spawn('node', ['--no-warnings', scriptPath, ...args], {
+                    cwd: GAKUMAS_TOOLS_ROOT,
+                    stdio: 'inherit',
+                    env: { ...process.env }
+                });
+
+                await new Promise<void>((resolve, reject) => {
+                    child.on('close', (code) => {
+                        if (code === 0) resolve();
+                        else reject(new Error(`Script exited with code ${code}`));
+                    });
+                    child.on('error', reject);
+                });
+            } catch (error) {
+                console.error('Prune failed:', error);
+                process.exit(1);
+            }
+        });
 }
