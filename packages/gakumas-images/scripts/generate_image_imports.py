@@ -15,7 +15,7 @@ image_dirs = [
 
 
 def sort_key(name):
-    return tuple(int(p) for p in name.split("_"))
+    return tuple((0, int(p)) if p.isdigit() else (1, p) for p in name.split("_"))
 
 
 for dir in image_dirs:
