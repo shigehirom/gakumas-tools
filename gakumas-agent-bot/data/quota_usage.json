@@ -75,5 +75,12 @@
     "candidate_tokens": 4492,
     "total_tokens": 312239,
     "last_updated": "2026-09-13T11:38:11.860676"
+  },
+  "2026-09-20": {
+    "requests": 3,
+    "prompt_tokens": 80254,
+    "candidate_tokens": 4864,
+    "total_tokens": 85118,
+    "last_updated": "2026-09-20T19:24:16.464076"
   }
 }

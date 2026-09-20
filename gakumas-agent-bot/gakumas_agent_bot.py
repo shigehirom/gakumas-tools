@@ -738,17 +738,66 @@ class GakumasAntigravityBot(discord.Client):
                 resolver = ImageResolver()
                 found_images = resolver.find_images_in_text(full_text, max_images=6)
 
+                # ── コンテストメモリー・構成に関するインフォグラフィック画像の自動生成判定 ──
+                infographic_file = None
+                from advisory_parser import IDOL_NAME_TO_KEY
+
+                combined_query = prompt + " " + full_text[:600]
+                detected_stage = None
+                stg_m = re.search(r"(?:ステージ|stage)\s*([1-3])", combined_query, re.IGNORECASE)
+                if stg_m:
+                    detected_stage = int(stg_m.group(1))
+
+                detected_idol_key = None
+                for iname, ikey in IDOL_NAME_TO_KEY.items():
+                    if iname in prompt or ikey in prompt.lower():
+                        detected_idol_key = ikey
+                        break
+                if not detected_idol_key:
+                    for iname, ikey in IDOL_NAME_TO_KEY.items():
+                        if iname in full_text[:600]:
+                            detected_idol_key = ikey
+                            break
+
+                is_contest_memory_query = any(w in prompt for w in ["コンテスト", "メモリー", "実走", "ロードアウト", "編成", "構成", "おすすめ"]) or any(w in full_text for w in ["実走シミュレーション結果", "あじふらい氏", "推奨構成", "ロードアウト", "最新実走デッキ詳細"])
+
+                if detected_stage and detected_idol_key and is_contest_memory_query:
+                    try:
+                        from cli_loadout_image import get_latest_loadout
+                        from loadout_image_builder import LoadoutImageBuilder
+                        from advisory_parser import parse_advisory
+                        from advisory_image_builder import AdvisoryImageBuilder
+
+                        # 1. まず実走ロードアウトを探索
+                        doc = get_latest_loadout(detected_stage, detected_idol_key)
+                        if doc:
+                            builder = LoadoutImageBuilder()
+                            png_bytes = builder.build(doc, columns=2)
+                            fn = f"loadout_s{doc.get('derived', {}).get('season', 52)}_stage{detected_stage}_{detected_idol_key}.png"
+                            infographic_file = discord.File(io.BytesIO(png_bytes), filename=fn)
+                        else:
+                            # 2. 実走がなければあじふらい氏推奨構成画像を生成
+                            adv_data = parse_advisory(stage=detected_stage, idol_query=detected_idol_key)
+                            if adv_data:
+                                builder = AdvisoryImageBuilder()
+                                png_bytes = builder.build(adv_data, columns=2)
+                                fn = f"advisory_s{adv_data.get('season', 52)}_stage{detected_stage}_{detected_idol_key}.png"
+                                infographic_file = discord.File(io.BytesIO(png_bytes), filename=fn)
+                    except Exception as e:
+                        log.warning(f"[Bot] インフォグラフィック自動生成スキップ: {e}")
+
                 # ユーザーが「1つずつ」「個別に」投稿を求めた場合の判定
                 wants_individual = any(w in prompt for w in ["1つずつ", "ひとつずつ", "1枚ずつ", "個別", "順番に"])
 
                 if wants_individual and found_images:
                     # ── 個別投稿モード ──
-                    # まず本文を送信
                     if chunks:
                         for chunk in chunks:
                             await channel.send(chunk)
 
-                    # 各画像を1枚ずつラベル付きで個別に投稿
+                    if infographic_file:
+                        await channel.send("📊 **【コンテスト構成インフォグラフィック】**", file=infographic_file)
+
                     for idx, (lbl, img_path) in enumerate(found_images, 1):
                         if img_path.exists():
                             safe_name = re.sub(r'[\\/*?:"<>|]', "", f"{idx:02d}_{lbl}.png")
@@ -760,9 +809,18 @@ class GakumasAntigravityBot(discord.Client):
                     # ── 通常投稿モード（画像ファイル名と対応キャプションを整備） ──
                     discord_files = []
                     caption_lines = []
+
+                    if infographic_file:
+                        discord_files.append(infographic_file)
+                        caption_lines.append("📊 **【コンテスト実走構成インフォグラフィック（基本情報・Pアイテム・スキルカード12枚）】**")
+                        # インフォグラフィックがある場合は、見やすい1枚画像としてお届けするため個別カード画像は添付しない
+                        max_card_icons = 0
+                    else:
+                        max_card_icons = 6
+
                     num_emojis = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣", "🔟"]
 
-                    for idx, (lbl, img_path) in enumerate(found_images, 1):
+                    for idx, (lbl, img_path) in enumerate(found_images[:max_card_icons], 1):
                         if img_path.exists():
                             emoji = num_emojis[idx - 1] if idx <= len(num_emojis) else f"[{idx}]"
                             safe_name = re.sub(r'[\\/*?:"<>|]', "", f"{idx:02d}_{lbl}.png")
@@ -771,7 +829,7 @@ class GakumasAntigravityBot(discord.Client):
 
                     img_caption = ""
                     if caption_lines:
-                        img_caption = "\n\n🖼️ **【添付画像の対応一覧】**\n" + "\n".join(caption_lines)
+                        img_caption = "\n\n🖼️ **【添付画像一覧】**\n" + "\n".join(caption_lines)
 
                     for i, chunk in enumerate(chunks):
                         if i == len(chunks) - 1:

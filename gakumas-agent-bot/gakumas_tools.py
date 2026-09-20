@@ -1994,10 +1994,230 @@ class GakumasToolExecutor:
         **kwargs: Any,
     ) -> str:
         """
-        最新のコンテスト最適化デッキ Markdown レポートから指定ステージ（または全ステージ）の
-        3名編成、メイン/サブメモリー構成、期待中央値スコアを取得する。
-        idol_name が指定された場合は、該当アイドルのメイン・サブメモリーの全スキルカード12枚・Pアイテム・ステータスを詳細展開する。
+        MongoDB loadouts コレクションから各ステージ（または指定ステージ）の最新シミュレーション結果を直接集計し、
+        最新の最適化編成（3ステージ上位アイドル、メイン/サブメモリー、期待中央値）を取得する。
+        idol_name が指定された場合は、該当アイドルの実効ステータス、全スキルカード12枚（カスタム付き）、Pアイテムを詳細展開する。
+        MongoDB 未接続時はフォールバックとして *_optimized.md を参照する。
         """
+        if self._db is None:
+            return self._get_optimized_deck_from_markdown(stage=stage, idol_name=idol_name, **kwargs)
+
+        try:
+            from advisory_parser import IDOL_NAME_TO_KEY, IDOL_KEY_MAP
+            from image_resolver import ImageResolver
+            resolver = ImageResolver()
+
+            cards_map = {int(sc["id"]): sc["name"] for sc in self._skill_cards if sc.get("id", "").isdigit()}
+            items_map = {int(pi["id"]): pi["name"] for pi in self._p_items if pi.get("id", "").isdigit()}
+
+            # ── 1. 特定アイドルの詳細デッキ構成展開 ───────────────────────────
+            if idol_name:
+                target_key = IDOL_NAME_TO_KEY.get(idol_name, idol_name.lower())
+                target_name = IDOL_KEY_MAP.get(target_key, idol_name)
+                norm_target = target_name.replace(" ", "").replace("　", "")
+
+                stages_to_search = [stage] if stage in (1, 2, 3) else [3, 2, 1]
+                matched_doc = None
+                matched_stage = None
+
+                for s_num in stages_to_search:
+                    stage_id = 180 + s_num
+                    docs = list(self._db["loadouts"].find({"stageId": stage_id}).sort([("createdAt", -1)]))
+                    for d in docs:
+                        pidol_id = d.get("derived", {}).get("pIdolId")
+                        for p in resolver.p_idols:
+                            if str(p.get("id")) == str(pidol_id):
+                                norm_p = p.get("idol_name", "").replace(" ", "").replace("　", "")
+                                if norm_p == norm_target or norm_target in norm_p:
+                                    matched_doc = d
+                                    matched_stage = s_num
+                                    break
+                        if matched_doc:
+                            break
+                    if matched_doc:
+                        break
+
+                if not matched_doc:
+                    return f"※ MongoDB loadouts 内に、指定されたアイドル '{idol_name}'（ステージ: {stage or '全ステージ'}）の実走データが見つかりませんでした。"
+
+                derived = matched_doc.get("derived", {})
+                season = derived.get("season", 52)
+                main_pidol_id = derived.get("pIdolId")
+                main_pinfo = next((p for p in resolver.p_idols if str(p.get("id")) == str(main_pidol_id)), {})
+                display_title = main_pinfo.get("title", "")
+
+                params = matched_doc.get("params", [0, 0, 0, 0])
+                stats = matched_doc.get("stats", {})
+                med = stats.get("median", 0)
+                mean = stats.get("mean", 0)
+
+                groups = matched_doc.get("skillCardIdGroups", [])
+                cust_groups = matched_doc.get("customizationGroups", [])
+
+                main_mem_name = ""
+                sub_mem_name = ""
+                if len(groups) > 0:
+                    m_doc = self._db["memories"].find_one({"skillCardIds": groups[0]})
+                    if m_doc:
+                        main_mem_name = m_doc.get("name", "")
+                if len(groups) > 1:
+                    s_doc = self._db["memories"].find_one({"skillCardIds": groups[1]})
+                    if s_doc:
+                        sub_mem_name = s_doc.get("name", "")
+
+                detail_lines = [
+                    f"【🛡️ コンテスト最新実走デッキ詳細: **{target_name} 【{display_title}】**】",
+                    f"- **配置ステージ**: ステージ {matched_stage} (SEASON {season}) ｜ **ロードアウト名**: `{matched_doc.get('name', 'latest')}`",
+                    f"- **期待中央値スコア**: **{int(med):,} Pt** ｜ 平均値: `{int(mean):,} Pt`",
+                    f"- **実効ステータス**: Vo `{params[0]}` ｜ Da `{params[1]}` ｜ Vi `{params[2]}` ｜ HP `{params[3]}`",
+                ]
+                if main_mem_name or sub_mem_name:
+                    detail_lines.append(f"- **使用メモリー**: メイン `{main_mem_name or '不明'}` ｜ サブ `{sub_mem_name or '不明'}`")
+
+                pitems = []
+                for p_idx, iid in enumerate(matched_doc.get("pItemIds", [])):
+                    if iid != 0:
+                        iname = items_map.get(iid, f"ID:{iid}")
+                        p_desc = f"『{iname}』"
+                        if p_idx == 0:
+                            p_desc += " *(メイン固有)*"
+                        elif p_idx == 1:
+                            p_desc += " *(サブ固有)*"
+                        elif p_idx >= 2:
+                            p_desc += " *(サポカ持ち込み)*"
+                        pitems.append(p_desc)
+                if pitems:
+                    detail_lines.append("- **獲得Pアイテム**:")
+                    for idx, pi in enumerate(pitems, 1):
+                        detail_lines.append(f"  {idx}. {pi}")
+
+                detail_lines.append("- **採用スキルカード（12枚）**:")
+                card_count = 1
+                for g_idx, grp in enumerate(groups):
+                    grp_label = "メインメモリー由来" if g_idx == 0 else "サブメモリー由来"
+                    detail_lines.append(f"  ■ **{grp_label}**:")
+                    cg = cust_groups[g_idx] if g_idx < len(cust_groups) else []
+                    for c_idx, cid in enumerate(grp):
+                        cname = cards_map.get(cid, f"ID:{cid}")
+                        cust = cg[c_idx] if c_idx < len(cg) else {}
+                        cust_names = []
+                        if cust and isinstance(cust, dict):
+                            for k in cust.keys():
+                                c_info = self._customizations.get(str(k), {})
+                                cust_names.append(c_info.get("name", str(k)))
+                        cust_desc = f" *(カスタム: {', '.join(cust_names)})*" if cust_names else ""
+                        detail_lines.append(f"    {card_count}. 『{cname}』{cust_desc}")
+                        card_count += 1
+
+                return "\n".join(detail_lines).strip()
+
+            # ── 2. 全ステージ（または指定ステージ）の最新最適化編成サマリー ──
+            stages_to_show = [stage] if stage in (1, 2, 3) else [1, 2, 3]
+            stages_data = {}
+            overall_median = 0
+            all_top_idols = []
+
+            for s_num in [1, 2, 3]:
+                stage_id = 180 + s_num
+                docs = list(self._db["loadouts"].find({"stageId": stage_id}).sort([("createdAt", -1)]))
+
+                idol_best = {}
+                for d in docs:
+                    d_name = d.get("name", "")
+                    if ".old" in d_name:
+                        continue
+                    pidol_id = d.get("derived", {}).get("pIdolId")
+                    if not pidol_id:
+                        continue
+
+                    pinfo = next((p for p in resolver.p_idols if str(p.get("id")) == str(pidol_id)), {})
+                    iname = pinfo.get("idol_name", "")
+                    title = pinfo.get("title", "")
+                    med = d.get("stats", {}).get("median", 0)
+
+                    if iname not in idol_best or med > idol_best[iname]["median"]:
+                        groups = d.get("skillCardIdGroups", [])
+                        m_name = ""
+                        s_name = ""
+                        if len(groups) > 0:
+                            m_doc = self._db["memories"].find_one({"skillCardIds": groups[0]})
+                            if m_doc:
+                                m_name = m_doc.get("name", "")
+                        if len(groups) > 1:
+                            s_doc = self._db["memories"].find_one({"skillCardIds": groups[1]})
+                            if s_doc:
+                                s_name = s_doc.get("name", "")
+
+                        idol_best[iname] = {
+                            "doc": d,
+                            "idol_name": iname,
+                            "title": title,
+                            "median": med,
+                            "name": d_name,
+                            "main_mem": m_name,
+                            "sub_mem": s_name,
+                        }
+
+                sorted_idols = sorted(idol_best.values(), key=lambda x: x["median"], reverse=True)
+                top3 = sorted_idols[:3]
+                stg_sum = sum(x["median"] for x in top3)
+                overall_median += stg_sum
+
+                stages_data[s_num] = {
+                    "total": stg_sum,
+                    "idols": top3,
+                }
+                for itm in top3:
+                    all_top_idols.append((s_num, itm["idol_name"]))
+
+            output_lines = [
+                "【🛡️ 現在のコンテスト最新最適化編成（MongoDB `loadouts` 直読）】",
+            ]
+            if stage is None:
+                output_lines.append(f"- **3ステージ総合期待中央値**: **約 {int(overall_median):,} Pt**\n")
+
+            for s_num in stages_to_show:
+                s_data = stages_data.get(s_num)
+                if not s_data:
+                    continue
+                output_lines.append(f"### ■ ステージ {s_num} （合計期待中央値: **約 {int(s_data['total']):,} Pt**）")
+                for idx, idol_item in enumerate(s_data["idols"], 1):
+                    full_id = f"{idol_item['idol_name']}【{idol_item['title']}】" if idol_item['title'] else idol_item['idol_name']
+                    output_lines.append(
+                        f"- **枠{idx}: {full_id}** ｜ 期待中央値: **{int(idol_item['median']):,} Pt**\n"
+                        f"  └ メイン: `{idol_item['main_mem'] or '不明'}`\n"
+                        f"  └ サブ: `{idol_item['sub_mem'] or '不明'}`"
+                    )
+                output_lines.append("")
+
+            # 同一アイドルの重複検出
+            seen_idols = {}
+            duplicates = []
+            for s_num, iname in all_top_idols:
+                if iname in seen_idols:
+                    duplicates.append((iname, seen_idols[iname], s_num))
+                else:
+                    seen_idols[iname] = s_num
+
+            if duplicates and stage is None:
+                dup_msgs = [f"『{name}』（ステージ{s1} と ステージ{s2}）" for name, s1, s2 in duplicates]
+                output_lines.append(
+                    f"⚠️ **アイドル重複の注意**: {', '.join(dup_msgs)} が各ステージの単体トップ3で重複しています。"
+                    f"実際のコンテスト本番では同一アイドルはいずれか1ステージにのみ配置可能です。"
+                )
+
+            return "\n".join(output_lines).strip()
+
+        except Exception as e:
+            return f"※ MongoDB loadouts からの最適化編成取得エラー: {e}（フォールバック試行中...）\n" + self._get_optimized_deck_from_markdown(stage=stage, idol_name=idol_name, **kwargs)
+
+    def _get_optimized_deck_from_markdown(
+        self,
+        stage: int | None = None,
+        idol_name: str = "",
+        **kwargs: Any,
+    ) -> str:
+        """Markdown ファイル (*_optimized.md) から過去のレポートを取得するフォールバック"""
         search_dirs = [
             WORKSPACE_DIR / "shared" / "documents",
             WORKSPACE_DIR / "documents",
@@ -2013,7 +2233,6 @@ class GakumasToolExecutor:
         if not found_files:
             return "※ 最適化デッキレポート（*_optimized.md）が見つかりませんでした。"
 
-        # ファイル名で降順ソート（最新の日付・シーズンのものを取得）
         found_files.sort(key=lambda p: p.name, reverse=True)
         latest_file = found_files[0]
 
@@ -2022,148 +2241,7 @@ class GakumasToolExecutor:
         except Exception as e:
             return f"※ 最適化レポートの読み込みに失敗しました: {e}"
 
-        # 総合期待中央値の抽出
-        overall_score = ""
-        m_overall = re.search(r"総合期待中央値：約\s*([\d,]+)\s*Pt", content)
-        if m_overall:
-            overall_score = m_overall.group(1)
-
-        # アイドル名解決用
-        from master_data import GakumasMaster
-        master = GakumasMaster()
-        target_idol = master.resolve_idol_name(idol_name) if idol_name else ""
-
-        # マッピング辞書の作成
-        cards_map = {int(sc["id"]): sc["name"] for sc in self._skill_cards if sc.get("id", "").isdigit()}
-        items_map = {int(pi["id"]): pi["name"] for pi in self._p_items if pi.get("id", "").isdigit()}
-
-        # 各ステージのパース
-        stages_data = {}
-        for s_num in [1, 2, 3]:
-            stage_pattern = re.compile(
-                rf"###\s+■\s+ステージ{s_num}([\s\S]*?)(?=###\s+■\s+ステージ|$)",
-                re.IGNORECASE
-            )
-            m_stage = stage_pattern.search(content)
-            if not m_stage:
-                continue
-
-            stage_text = m_stage.group(1)
-            stage_total = ""
-            m_total = re.search(r"合計期待中央値：約\s*([\d,]+)\s*Pt", stage_text)
-            if m_total:
-                stage_total = m_total.group(1)
-
-            idols_list = []
-            for line in stage_text.split("\n"):
-                line = line.strip()
-                if line.startswith("|") and not ("アイドル" in line or ":---" in line):
-                    cols = [c.strip() for c in line.split("|") if c.strip()]
-                    # | アイドル | 順位 | メインメモリー | サブメモリー | 中央値 |
-                    if len(cols) >= 5:
-                        idols_list.append({
-                            "idol": cols[0],
-                            "main_mem": cols[2],
-                            "sub_mem": cols[3],
-                            "median": cols[4],
-                        })
-            stages_data[s_num] = {
-                "total": stage_total,
-                "idols": idols_list,
-            }
-
-        # ── 特定アイドルの詳細デッキ構成（スキルカード12枚展開）────────────────
-        if target_idol or idol_name:
-            def norm_n(s: str) -> str:
-                return s.replace(" ", "").replace("　", "").strip()
-
-            target_norm = norm_n(target_idol or idol_name)
-            matched_entries = []
-            for s_num, s_info in stages_data.items():
-                if stage is not None and stage != s_num:
-                    continue
-                for idx, item in enumerate(s_info["idols"]):
-                    iname = item["idol"]
-                    i_norm = norm_n(iname)
-                    if target_norm and (target_norm in i_norm or i_norm in target_norm):
-                        matched_entries.append((s_num, idx + 1, item))
-
-            if not matched_entries:
-                return f"※ 最適化レポート `{latest_file.name}` 内に、指定されたアイドル '{idol_name}'（ステージ: {stage or '全ステージ'}）の配置が見つかりませんでした。"
-
-            detail_lines = [
-                f"【🛡️ コンテスト最適化デッキ詳細: **{target_idol or idol_name}**（参照: `{latest_file.name}`）】",
-            ]
-
-            def unpack_memory_details(mem_str: str, label: str) -> list[str]:
-                res = [f"■ **{label}**: `{mem_str}`"]
-                # メモリーID（5桁前後の数字）を抽出
-                m_id = re.search(r"(\d{4,6})", mem_str)
-                if not m_id or self._db is None:
-                    res.append("  - （メモリー詳細データ取得不可）")
-                    return res
-
-                mem_num = m_id.group(1)
-                doc = self._db["memories"].find_one({"name": {"$regex": mem_num}})
-                if not doc:
-                    res.append(f"  - （MongoDB内に ID `{mem_num}` のメモリーが見つかりませんでした）")
-                    return res
-
-                params = doc.get("params", [])
-                if params and len(params) >= 4:
-                    res.append(f"  - ステータス: Vo `{params[0]}` ｜ Da `{params[1]}` ｜ Vi `{params[2]}` ｜ HP `{params[3]}`")
-
-                c_ids = doc.get("skillCardIds", [])
-                custs = doc.get("customizations", [])
-                res.append("  - 習得スキルカード（6枚）:")
-                for i, cid in enumerate(c_ids):
-                    cname = cards_map.get(cid, f"ID:{cid}")
-                    cust = custs[i] if i < len(custs) else {}
-                    cust_names = []
-                    if cust and isinstance(cust, dict):
-                        for k in cust.keys():
-                            c_info = self._customizations.get(str(k), {})
-                            cust_names.append(c_info.get("name", str(k)))
-                    cust_desc = f" *(カスタム: {', '.join(cust_names)})*" if cust_names else ""
-                    res.append(f"    {i+1}. 『{cname}』{cust_desc}")
-
-                i_ids = [iid for iid in doc.get("pItemIds", []) if iid != 0]
-                if i_ids:
-                    inames = [items_map.get(iid, f"ID:{iid}") for iid in i_ids]
-                    res.append(f"  - 獲得Pアイテム: {', '.join(inames)}")
-
-                return res
-
-            for s_num, slot, item in matched_entries:
-                detail_lines.append(f"\n### ◆ ステージ {s_num} （枠 {slot} / 期待中央値: `{item['median']} Pt`）")
-                detail_lines.extend(unpack_memory_details(item["main_mem"], "メインメモリー"))
-                detail_lines.append("")
-                detail_lines.extend(unpack_memory_details(item["sub_mem"], "サブメモリー"))
-
-            return "\n".join(detail_lines).strip()
-
-        # ── 全ステージ（または指定ステージ）のサマリー一覧 ────────────────────
-        stages_to_show = [stage] if stage in (1, 2, 3) else [1, 2, 3]
-        output_lines = [
-            f"【🛡️ 現在のコンテスト最適化編成（参照: `{latest_file.name}`）】",
-        ]
-        if overall_score and stage is None:
-            output_lines.append(f"- **3ステージ総合期待中央値**: **約 {overall_score} Pt**\n")
-
-        for s_num in stages_to_show:
-            s_data = stages_data.get(s_num)
-            if not s_data:
-                continue
-            output_lines.append(f"### ■ ステージ {s_num} （合計期待中央値: **約 {s_data['total']} Pt**）")
-            for idx, idol_item in enumerate(s_data["idols"]):
-                output_lines.append(
-                    f"- **枠{idx+1}: {idol_item['idol']}** ｜ 期待中央値: `{idol_item['median']} Pt`\n"
-                    f"  └ メイン: `{idol_item['main_mem']}`\n"
-                    f"  └ サブ: `{idol_item['sub_mem']}`"
-                )
-            output_lines.append("")
-
-        return "\n".join(output_lines).strip()
+        return f"【🛡️ 過去のコンテスト最適化編成（フォールバック参照: `{latest_file.name}`）】\n" + content[:1500]
 
     # ── ツール: get_stage_loadout ────────────────────────────────────────────
 
