@@ -119,6 +119,9 @@ async function main() {
   const ownedIdx = idxMap['is_owned'];
   const awakenIdx = idxMap['awaken_level'];
   const talentIdx = idxMap['talent_level'];
+  const primaStellaIdx = Object.keys(idxMap).find(k => k.trim().startsWith('prima_stella')) !== undefined 
+    ? idxMap[Object.keys(idxMap).find(k => k.trim().startsWith('prima_stella'))] 
+    : undefined;
 
   // Check for missing P-idols from master
   const existingIds = new Set();
@@ -208,63 +211,6 @@ async function main() {
     console.log(`[Info] There are ${missingPIdols.length} new P-Idols available in gakumas-tools. Run with '--export' to append them to Google Sheets.`);
   }
 
-  const ownedPIdols = [];
-
-  for (let i = 1; i < rows.length; i++) {
-    const row = rows[i];
-    if (!row || row.length === 0) continue;
-
-    const isOwnedStr = row[idxMap['is_owned']] ? row[idxMap['is_owned']].trim().toLowerCase() : '';
-    
-    // Check if is_owned is truthy (e.g. TRUE, true, 1, yes, o, ○, etc.)
-    if (isOwnedStr && isOwnedStr !== 'false' && isOwnedStr !== '0' && isOwnedStr !== 'no') {
-      const idStr = row[idxMap['ID']];
-      if (!idStr) continue;
-
-      const pIdolRef = pIdolsDict[idStr];
-      if (!pIdolRef) {
-        console.warn(`Warning: P-Idol with ID ${idStr} not found in p_idols.json`);
-        continue;
-      }
-
-      const rarity = row[idxMap['レアリティ']] || pIdolRef.rarity;
-      const awaken_level = parseInt(row[idxMap['awaken_level']] || '0', 10);
-      const talent_level = parseInt(row[idxMap['talent_level']] || '1', 10);
-
-      // Find associated skill cards
-      // sourceType == 'pIdol' and pIdolId == id
-      const associatedCards = skillCardsData.filter(card => 
-        card.sourceType === 'pIdol' && String(card.pIdolId) === idStr
-      );
-
-      const baseIdol = idolsDict[pIdolRef.idolId.toString()];
-      const idol_name = baseIdol ? baseIdol.name : "";
-
-      ownedPIdols.push({
-        _id: idStr,
-        id: parseInt(idStr, 10),
-        idolId: pIdolRef.idolId,
-        idol_name,
-        title: pIdolRef.title,
-        plan: pIdolRef.plan,
-        recommendedEffect: pIdolRef.recommendedEffect,
-        recommended_effect: EFFECT_TO_JA[pIdolRef.recommendedEffect] || pIdolRef.recommendedEffect || '',
-        rarity,
-        awaken_level,
-        talent_level,
-        skill_cards: associatedCards,
-        updatedAt: new Date()
-      });
-    }
-  }
-
-  console.log(`Found ${ownedPIdols.length} owned P-Idols to synchronize.`);
-
-  if (ownedPIdols.length === 0) {
-    console.log("No owned P-Idols found. Exiting.");
-    process.exit(0);
-  }
-
   let client;
   try {
     client = new MongoClient(MONGODB_URI);
@@ -273,6 +219,84 @@ async function main() {
 
     const db = client.db(MONGODB_DB);
     const collection = db.collection('owned_p_idols');
+    const ownedIdolsCol = db.collection('owned_idols');
+
+    // Fetch current idol status (STEP, produce_rank, ichibanboshi)
+    const ownedIdolsList = await ownedIdolsCol.find({}).toArray();
+    const idolStatusMap = new Map();
+    ownedIdolsList.forEach(item => {
+      idolStatusMap.set(item.id, {
+        step: item.step,
+        produce_rank: item.produce_rank,
+        ichibanboshi: item.ichibanboshi
+      });
+    });
+
+    const ownedPIdols = [];
+
+    for (let i = 1; i < rows.length; i++) {
+      const row = rows[i];
+      if (!row || row.length === 0) continue;
+
+      const isOwnedStr = row[idxMap['is_owned']] ? row[idxMap['is_owned']].trim().toLowerCase() : '';
+      
+      // Check if is_owned is truthy (e.g. TRUE, true, 1, yes, o, ○, etc.)
+      if (isOwnedStr && isOwnedStr !== 'false' && isOwnedStr !== '0' && isOwnedStr !== 'no') {
+        const idStr = row[idxMap['ID']];
+        if (!idStr) continue;
+
+        const pIdolRef = pIdolsDict[idStr];
+        if (!pIdolRef) {
+          console.warn(`Warning: P-Idol with ID ${idStr} not found in p_idols.json`);
+          continue;
+        }
+
+        const rarity = row[idxMap['レアリティ']] || pIdolRef.rarity;
+        const awaken_level = parseInt(row[idxMap['awaken_level']] || '0', 10);
+        const talent_level = parseInt(row[idxMap['talent_level']] || '1', 10);
+
+        // Find associated skill cards
+        // sourceType == 'pIdol' and pIdolId == id
+        const associatedCards = skillCardsData.filter(card => 
+          card.sourceType === 'pIdol' && String(card.pIdolId) === idStr
+        );
+
+        const baseIdol = idolsDict[pIdolRef.idolId.toString()];
+        const idol_name = baseIdol ? baseIdol.name : "";
+        const idolStatus = idolStatusMap.get(pIdolRef.idolId) || {};
+
+        const isPrimaStella = primaStellaIdx !== undefined && row[primaStellaIdx] 
+          ? (row[primaStellaIdx].trim().toLowerCase() === 'true' || row[primaStellaIdx].trim() === '1')
+          : false;
+
+        ownedPIdols.push({
+          _id: idStr,
+          id: parseInt(idStr, 10),
+          idolId: pIdolRef.idolId,
+          idol_name,
+          title: pIdolRef.title,
+          plan: pIdolRef.plan,
+          recommendedEffect: pIdolRef.recommendedEffect,
+          recommended_effect: EFFECT_TO_JA[pIdolRef.recommendedEffect] || pIdolRef.recommendedEffect || '',
+          rarity,
+          awaken_level,
+          talent_level,
+          prima_stella: isPrimaStella,
+          step: idolStatus.step,
+          produce_rank: idolStatus.produce_rank,
+          ichibanboshi: idolStatus.ichibanboshi,
+          skill_cards: associatedCards,
+          updatedAt: new Date()
+        });
+      }
+    }
+
+    console.log(`Found ${ownedPIdols.length} owned P-Idols to synchronize.`);
+
+    if (ownedPIdols.length === 0) {
+      console.log("No owned P-Idols found. Exiting.");
+      return;
+    }
 
     if (force) {
       console.log("--force flag provided. Dropping existing collection...");

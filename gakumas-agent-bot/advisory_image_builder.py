@@ -52,11 +52,17 @@ FONT_CANDIDATES = [
 
 def _find_font_path() -> str | None:
     for p in FONT_CANDIDATES:
-        if p.exists() and p.stat().st_size > 500000:
-            return str(p)
+        try:
+            if p.exists() and p.stat().st_size > 500000:
+                return str(p)
+        except Exception:
+            continue
     for p in FONT_CANDIDATES:
-        if p.exists():
-            return str(p)
+        try:
+            if p.exists():
+                return str(p)
+        except Exception:
+            continue
     return None
 
 FONT_PATH = _find_font_path()

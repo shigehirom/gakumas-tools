@@ -10,8 +10,11 @@ from pathlib import Path
 
 def _find_dir(candidates: list[Path]) -> Path:
     for c in candidates:
-        if c.exists():
-            return c
+        try:
+            if c.exists():
+                return c
+        except Exception:
+            continue
     return candidates[0]
 
 WORKSPACE_DIR = _find_dir([

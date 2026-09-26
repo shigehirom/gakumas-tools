@@ -26,13 +26,21 @@ from typing import AsyncIterator
 
 import aiohttp
 import discord
-from google.antigravity import (
-    Agent,
-    CapabilitiesConfig,
-    LocalAgentConfig,
-)
-from google.antigravity.hooks import policy
-from google.antigravity.types import ChatResponse, SessionContinuationMode
+try:
+    from google.antigravity import (
+        Agent,
+        CapabilitiesConfig,
+        LocalAgentConfig,
+    )
+    from google.antigravity.hooks import policy
+    from google.antigravity.types import ChatResponse, SessionContinuationMode
+except ImportError:
+    Agent = None  # type: ignore
+    CapabilitiesConfig = None  # type: ignore
+    LocalAgentConfig = None  # type: ignore
+    policy = None  # type: ignore
+    ChatResponse = None  # type: ignore
+    SessionContinuationMode = None  # type: ignore
 
 from agent_engine import AgentEngine
 from quota_tracker import quota_tracker, BOT_VERSION
@@ -41,6 +49,7 @@ from contest_parser import parse_contest_images
 from dsl_translator import DslTranslator
 from gakumas_data_searcher import GakumasDataSearcher
 from gakumas_tools import GakumasToolExecutor
+from mcp_bridge import McpToolBridge
 from image_resolver import ImageResolver
 from match_history_updater import update_match_history_csv, get_latest_season_number
 from sync_service import GakumasSyncService
@@ -49,8 +58,11 @@ from sync_service import GakumasSyncService
 
 def _find_dir(candidates: list[Path]) -> Path:
     for c in candidates:
-        if c.exists():
-            return c
+        try:
+            if c.exists():
+                return c
+        except Exception:
+            continue
     return candidates[0]
 
 WORKSPACE_DIR = _find_dir([
@@ -392,6 +404,8 @@ class AntigravitySDKService:
         return self._is_busy
 
     async def start(self):
+        if Agent is None:
+            raise RuntimeError("google.antigravity is not available in this environment")
         config = LocalAgentConfig(
             api_key=GEMINI_API_KEY if GEMINI_API_KEY else None,
             app_data_dir=str(Path.home() / ".gemini/antigravity-ide"),
@@ -428,7 +442,8 @@ class AntigravitySDKService:
 class GakumasAntigravityBot(discord.Client):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._executor = GakumasToolExecutor()
+        self._mcp_bridge = McpToolBridge()
+        self._executor = self._mcp_bridge
         self._agent_engine = AgentEngine(
             self._executor,
             base_url=LLM_BASE_URL,
@@ -445,6 +460,7 @@ class GakumasAntigravityBot(discord.Client):
         self.tree = discord.app_commands.CommandTree(self)
 
     async def setup_hook(self) -> None:
+        await self._mcp_bridge.initialize()
         self._register_slash_commands()
 
     async def on_ready(self) -> None:
@@ -557,15 +573,19 @@ class GakumasAntigravityBot(discord.Client):
         async def slash_status(interaction: discord.Interaction) -> None:
             mode_desc = AVAILABLE_MODELS.get(bot.user_selected_mode, bot.user_selected_mode)
             busy_label = "処理中" if (bot._is_busy or bot.gemini_service.is_busy) else "待機中 (アイドル)"
-            sc_count = len(bot._executor._skill_cards)
-            pi_count = len(bot._executor._p_items)
+            
+            # MCP 接続状態
+            mcp_status = "🟢 接続中 (FastMCP / SSE)" if bot._mcp_bridge.is_connected else "🟡 ローカルフォールバック"
+            tools_count = len(bot._mcp_bridge.get_tool_names())
             hist_count = len(bot._agent_engine.history)
+            
             await interaction.response.send_message(
                 f"**📊 学マス Bot 稼働状態**\n"
                 f"- バージョン: **`v{BOT_VERSION}`**\n"
                 f"- 現在のモード: **{mode_desc}** (エージェント方式)\n"
                 f"- 稼働状態: 🟢 {busy_label}\n"
-                f"- マスタデータ: スキルカード `{sc_count}` 件 / Pアイテム `{pi_count}` 件\n"
+                f"- MCP サーバー: **{mcp_status}** ({tools_count} ツール利用可能)\n"
+                f"- 接続先: `{bot._mcp_bridge.mcp_url}`\n"
                 f"- 会話履歴: `{hist_count}` 件（/new でリセット）"
             )
 
@@ -798,8 +818,28 @@ class GakumasAntigravityBot(discord.Client):
                     if infographic_file:
                         await channel.send("📊 **【コンテスト構成インフォグラフィック】**", file=infographic_file)
 
+                    card_detail_builder = None
+                    try:
+                        from card_detail_image_builder import CardDetailImageBuilder
+                        card_detail_builder = CardDetailImageBuilder()
+                    except Exception as e:
+                        log.warning(f"[Bot] CardDetailImageBuilder 初期化スキップ: {e}")
+
                     for idx, (lbl, img_path) in enumerate(found_images, 1):
-                        if img_path.exists():
+                        detail_bytes = None
+                        if card_detail_builder:
+                            m_name = re.search(r"[『「](.*?)[』」]", lbl)
+                            target_name = m_name.group(1) if m_name else lbl.split(":")[-1].strip()
+                            try:
+                                detail_bytes = card_detail_builder.build_by_name(target_name)
+                            except Exception:
+                                pass
+
+                        if detail_bytes:
+                            safe_name = re.sub(r'[\\/*?:"<>|]', "", f"{idx:02d}_{lbl}_detail.png")
+                            file = discord.File(io.BytesIO(detail_bytes), filename=safe_name)
+                            await channel.send(f"🖼️ **[{idx}/{len(found_images)}] {lbl}**", file=file)
+                        elif img_path.exists():
                             safe_name = re.sub(r'[\\/*?:"<>|]', "", f"{idx:02d}_{lbl}.png")
                             file = discord.File(str(img_path), filename=safe_name)
                             await channel.send(f"🖼️ **[{idx}/{len(found_images)}] {lbl}**", file=file)
@@ -818,11 +858,31 @@ class GakumasAntigravityBot(discord.Client):
                     else:
                         max_card_icons = 6
 
+                    card_detail_builder = None
+                    try:
+                        from card_detail_image_builder import CardDetailImageBuilder
+                        card_detail_builder = CardDetailImageBuilder()
+                    except Exception as e:
+                        log.warning(f"[Bot] CardDetailImageBuilder 初期化スキップ: {e}")
+
                     num_emojis = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣", "🔟"]
 
                     for idx, (lbl, img_path) in enumerate(found_images[:max_card_icons], 1):
-                        if img_path.exists():
-                            emoji = num_emojis[idx - 1] if idx <= len(num_emojis) else f"[{idx}]"
+                        emoji = num_emojis[idx - 1] if idx <= len(num_emojis) else f"[{idx}]"
+                        detail_bytes = None
+                        if card_detail_builder:
+                            m_name = re.search(r"[『「](.*?)[』」]", lbl)
+                            target_name = m_name.group(1) if m_name else lbl.split(":")[-1].strip()
+                            try:
+                                detail_bytes = card_detail_builder.build_by_name(target_name)
+                            except Exception:
+                                pass
+
+                        if detail_bytes:
+                            safe_name = re.sub(r'[\\/*?:"<>|]', "", f"{idx:02d}_{lbl}_detail.png")
+                            discord_files.append(discord.File(io.BytesIO(detail_bytes), filename=safe_name))
+                            caption_lines.append(f"{emoji} **{lbl}**")
+                        elif img_path.exists():
                             safe_name = re.sub(r'[\\/*?:"<>|]', "", f"{idx:02d}_{lbl}.png")
                             discord_files.append(discord.File(str(img_path), filename=safe_name))
                             caption_lines.append(f"{emoji} **{lbl}**")

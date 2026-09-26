@@ -14,7 +14,7 @@ from typing import Any
 
 log = logging.getLogger("quota_tracker")
 
-USAGE_FILE = Path("/root/gakumas-workspace/gakumas-agent-bot/data/quota_usage.json")
+USAGE_FILE = Path(__file__).resolve().parent / "data" / "quota_usage.json"
 DAILY_RPD_LIMIT = 1500  # Gemini 3.6 Flash Free Tier 1日あたり目安リクエスト数
 
 

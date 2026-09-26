@@ -1,7 +1,4 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.advisoryCommand = void 0;
 exports.renderChecklistText = renderChecklistText;
@@ -9,10 +6,7 @@ exports.renderChecklistFromOptions = renderChecklistFromOptions;
 exports.buildChecklistSelectMenu = buildChecklistSelectMenu;
 exports.handleAdvisoryChecklistInteraction = handleAdvisoryChecklistInteraction;
 const discord_js_1 = require("discord.js");
-const child_process_1 = require("child_process");
-const path_1 = __importDefault(require("path"));
-const fs_1 = __importDefault(require("fs"));
-const config_1 = require("../config");
+const mcp_client_1 = require("../utils/mcp-client");
 function renderChecklistText(checklist, checkedSet) {
     const lines = [];
     lines.push('━━━━━━━━━━━━━━━━━━━━');
@@ -182,16 +176,6 @@ async function handleAdvisoryChecklistInteraction(interaction) {
         components: [newRow]
     });
 }
-function resolvePythonScript(scriptName) {
-    const candidatePaths = [
-        path_1.default.resolve(__dirname, `../../../../gakumas-agent-bot/${scriptName}`),
-        path_1.default.resolve(__dirname, `../../../gakumas-agent-bot/${scriptName}`),
-        `/app/gakumas-agent-bot/${scriptName}`,
-        `/root/gakumas-workspace/gakumas-agent-bot/${scriptName}`,
-        `/root/gakumas-workspace/gakumas-tools/gakumas-agent-bot/${scriptName}`,
-    ];
-    return candidatePaths.find(p => fs_1.default.existsSync(p)) || candidatePaths[0];
-}
 function formatRequiredSupportCards(images) {
     if (!images || images.length === 0)
         return '';
@@ -298,52 +282,32 @@ exports.advisoryCommand = {
         .setAutocomplete(true))
         .addIntegerOption(option => option.setName('season')
         .setDescription('シーズン番号 (省略時は最新シーズン)')
-        .setRequired(false))
-        .addIntegerOption(option => option.setName('columns')
-        .setDescription('表示列数 (1: 縦型スリム[デフォルト], 2: 2列ワイド)')
-        .setRequired(false)
-        .addChoices({ name: '1列 (縦型スリム・スマホ最適 [デフォルト])', value: 1 }, { name: '2列 (2列グリッド・ワイド表示)', value: 2 })),
+        .setRequired(false)),
     async autocomplete(interaction) {
         const focusedOption = interaction.options.getFocused(true);
         const focusedValue = (focusedOption.value || '').toLowerCase();
         const stage = interaction.options.getInteger('stage') || 1;
         const season = interaction.options.getInteger('season');
         const source = interaction.options.getString('source') || 'human';
-        const scriptPath = resolvePythonScript('cli_get_stage_idols.py');
-        if (!fs_1.default.existsSync(scriptPath)) {
-            await interaction.respond([]);
-            return;
-        }
-        const args = [
-            scriptPath,
-            '--stage', stage.toString(),
-            '--mongo-uri', config_1.config.mongoUri,
-            '--source', source
-        ];
-        if (season) {
-            args.push('--season', season.toString());
-        }
         try {
-            const child = (0, child_process_1.spawn)('python3', args);
-            let stdout = '';
-            child.stdout.on('data', d => { stdout += d.toString(); });
-            child.on('close', async (code) => {
-                if (code !== 0 || !stdout.trim()) {
-                    await interaction.respond([]);
-                    return;
-                }
-                try {
-                    const choices = JSON.parse(stdout);
-                    const filtered = choices.filter(c => c.name.toLowerCase().includes(focusedValue) ||
-                        c.value.toLowerCase().includes(focusedValue));
-                    await interaction.respond(filtered.slice(0, 25));
-                }
-                catch {
-                    await interaction.respond([]);
-                }
+            const raw = await (0, mcp_client_1.callMcpTool)('get_stage_idols', {
+                stage,
+                season: season || null,
+                source
             });
+            let choices = [];
+            if (Array.isArray(raw)) {
+                choices = raw;
+            }
+            else if (raw?.content?.[0]?.text) {
+                choices = JSON.parse(raw.content[0].text);
+            }
+            const filtered = choices.filter(c => c.name.toLowerCase().includes(focusedValue) ||
+                c.value.toLowerCase().includes(focusedValue));
+            await interaction.respond(filtered.slice(0, 25));
         }
-        catch {
+        catch (err) {
+            console.error('[advisory] MCP autocomplete error:', err);
             await interaction.respond([]);
         }
     },
@@ -351,135 +315,102 @@ exports.advisoryCommand = {
         await interaction.deferReply();
         const source = interaction.options.getString('source', true);
         const stage = interaction.options.getInteger('stage', true);
-        const idol = interaction.options.getString('idol');
+        const idol = interaction.options.getString('idol') || '';
         const season = interaction.options.getInteger('season');
-        const columns = interaction.options.getInteger('columns') || 1;
-        const scriptPath = resolvePythonScript('cli_advisory_image.py');
-        const args = [
-            scriptPath,
-            '--stage', stage.toString(),
-            '--mongo-uri', config_1.config.mongoUri,
-            '--columns', columns.toString(),
-            '--source', source
-        ];
-        if (idol) {
-            args.push('--idol', idol);
-        }
-        if (season) {
-            args.push('--season', season.toString());
-        }
         try {
-            const child = (0, child_process_1.spawn)('python3', args, {
-                env: { ...process.env }
+            const raw = await (0, mcp_client_1.callMcpTool)('get_contest_advisory_report', {
+                stage,
+                idol,
+                season: season || null,
+                source,
+                columns: 1
             });
-            let stdout = '';
-            let stderr = '';
-            child.stdout.on('data', (d) => { stdout += d.toString(); });
-            child.stderr.on('data', (d) => { stderr += d.toString(); });
-            child.on('close', async (code) => {
-                if (code !== 0 || !stdout.trim()) {
-                    let errMsg = '画像の生成に失敗しました。';
-                    try {
-                        const parsed = JSON.parse(stdout);
-                        if (parsed.error)
-                            errMsg = parsed.error;
-                    }
-                    catch {
-                        if (stderr)
-                            errMsg += `\n\`${stderr.slice(0, 200)}\``;
-                    }
-                    await interaction.followUp({ content: `⚠️ ${errMsg}` });
-                    return;
+            let result = null;
+            if (raw?.content?.[0]?.text) {
+                result = JSON.parse(raw.content[0].text);
+            }
+            else if (raw && typeof raw === 'object' && raw.success !== undefined) {
+                result = raw;
+            }
+            if (!result || !result.success || !result.images || result.images.length === 0) {
+                await interaction.followUp({ content: `⚠️ ${result?.error || 'アドバイザリデータの取得に失敗しました。'}` });
+                return;
+            }
+            const attachments = [];
+            for (const imgData of result.images) {
+                if (imgData.image_base64) {
+                    const buf = Buffer.from(imgData.image_base64, 'base64');
+                    attachments.push(new discord_js_1.AttachmentBuilder(buf, {
+                        name: imgData.filename || 'advisory.png'
+                    }));
                 }
-                try {
-                    const result = JSON.parse(stdout);
-                    if (!result.success || !result.images || result.images.length === 0) {
-                        await interaction.followUp({ content: `⚠️ ${result.error || '画像ファイルが見つかりませんでした。'}` });
-                        return;
-                    }
-                    const attachments = [];
-                    const titles = [];
-                    for (const imgData of result.images) {
-                        if (fs_1.default.existsSync(imgData.image_path)) {
-                            attachments.push(new discord_js_1.AttachmentBuilder(imgData.image_path, {
-                                name: path_1.default.basename(imgData.image_path)
-                            }));
-                            titles.push(imgData.full_title);
-                        }
-                    }
-                    if (attachments.length === 0) {
-                        await interaction.followUp({ content: '⚠️ 生成された画像ファイルの読み込みに失敗しました。' });
-                        return;
-                    }
-                    const first = result.images[0];
-                    const curSeason = first.season || 51;
-                    const components = [];
-                    let msg = '';
-                    const sourceTitle = source === 'ai' ? '🤖 AI自律推奨構成 (AI Auto-Advisory)' : 'あじふらい氏推奨構成';
-                    const sourceDesc = source === 'ai' ? 'シミュレータ主導のビームサーチ探索によって自律導出された' : 'あじふらい氏アドバイスに基づく';
-                    if (result.mode === 'single') {
-                        msg = `📋 **[${sourceTitle}レポート]** シーズン${curSeason} Stage ${stage}：**${first.full_title}**\n` +
-                            `${sourceDesc}推奨Pアイテムおよびスキルカードの構成画像を出力しました。`;
-                        const supportReqs = formatRequiredSupportCards([first]);
-                        if (supportReqs) {
-                            msg += `\n\n💡 **推奨構成に必要なサポートカード一覧**:\n${supportReqs}`;
-                        }
-                        if (first.checklist_items) {
-                            const customId = `advisory_cl:${interaction.user.id}`;
-                            const checkedSet = new Set();
-                            const checklistText = renderChecklistText(first.checklist_items, checkedSet);
-                            msg += '\n\n' + checklistText;
-                            const selectMenuRow = buildChecklistSelectMenu(first.checklist_items, checkedSet, customId);
-                            components.push(selectMenuRow);
-                        }
-                    }
-                    else {
-                        const supportReqs = (result.support_combinations && result.support_combinations.length > 0)
-                            ? formatStageSupportCombinations(result.support_combinations, result.asari_idols)
-                            : formatRequiredSupportCards(result.images);
-                        let configListStr = result.images.map((img) => {
-                            const icon = img.config_type === 'common' ? '📌' : '🌟';
-                            let str = `${icon} **${img.full_title}**`;
-                            if (img.target_idols_short && img.target_idols_short.length > 0) {
-                                str += `\n　└ *対象Pアイドル*: ${img.target_idols_short.join('、')}`;
-                            }
-                            return str;
-                        }).join('\n');
-                        let header = `📋 **[${sourceTitle}レポート]** シーズン${curSeason} Stage ${stage}（汎用構成 ＆ 個別推奨構成 全${attachments.length}種）\n` +
-                            `${sourceDesc}推奨構成画像を出力しました（添付画像参照）：\n${configListStr}\n\n`;
-                        // 2000文字制限セーフティ
-                        if ((header + supportReqs).length > 1900) {
-                            configListStr = result.images.slice(0, 3).map((img) => {
-                                const icon = img.config_type === 'common' ? '📌' : '🌟';
-                                let str = `${icon} **${img.full_title}**`;
-                                if (img.target_idols_short && img.target_idols_short.length > 0) {
-                                    str += `\n　└ *対象*: ${img.target_idols_short.slice(0, 5).join('、')}${img.target_idols_short.length > 5 ? ' 等' : ''}`;
-                                }
-                                return str;
-                            }).join('\n') + (result.images.length > 3 ? `\n・...他 ${result.images.length - 3}種` : '');
-                            header = `📋 **[${sourceTitle}レポート]** シーズン${curSeason} Stage ${stage}（汎用構成 ＆ 個別推奨構成 全${attachments.length}種）\n` +
-                                `${configListStr}\n\n`;
-                        }
-                        msg = header + `💡 **【ステージ必須サポートカード構成の組合せ】**:\n\n` + supportReqs;
-                        if (msg.length > 1950) {
-                            msg = msg.slice(0, 1940) + '\n...（文字数制限のため一部省略）';
-                        }
-                    }
-                    await interaction.followUp({
-                        content: msg,
-                        files: attachments,
-                        components
-                    });
+            }
+            if (attachments.length === 0) {
+                await interaction.followUp({ content: '⚠️ 生成された画像データの読み込みに失敗しました。' });
+                return;
+            }
+            const first = result.images[0];
+            const curSeason = first.season || 52;
+            const components = [];
+            let msg = '';
+            const sourceTitle = source === 'ai' ? '🤖 AI自律推奨構成 (AI Auto-Advisory)' : 'あじふらい氏推奨構成';
+            const sourceDesc = source === 'ai' ? 'シミュレータ主導のビームサーチ探索によって自律導出された' : 'あじふらい氏アドバイスに基づく';
+            if (result.mode === 'single') {
+                msg = `📋 **[${sourceTitle}レポート]** シーズン${curSeason} Stage ${stage}：**${first.full_title}**\n` +
+                    `${sourceDesc}推奨Pアイテムおよびスキルカードの構成画像を出力しました。`;
+                const supportReqs = formatRequiredSupportCards([first]);
+                if (supportReqs) {
+                    msg += `\n\n💡 **推奨構成に必要なサポートカード一覧**:\n${supportReqs}`;
                 }
-                catch (e) {
-                    await interaction.followUp({ content: `⚠️ 結果の処理中にエラーが発生しました: ${e.message}` });
+                if (first.checklist_items) {
+                    const customId = `advisory_cl:${interaction.user.id}`;
+                    const checkedSet = new Set();
+                    const checklistText = renderChecklistText(first.checklist_items, checkedSet);
+                    msg += '\n\n' + checklistText;
+                    const selectMenuRow = buildChecklistSelectMenu(first.checklist_items, checkedSet, customId);
+                    components.push(selectMenuRow);
                 }
-            });
-            child.on('error', async (err) => {
-                await interaction.followUp({ content: `⚠️ Pythonスクリプトの起動に失敗しました: ${err.message}` });
+            }
+            else {
+                const supportReqs = (result.support_combinations && result.support_combinations.length > 0)
+                    ? formatStageSupportCombinations(result.support_combinations, result.asari_idols)
+                    : formatRequiredSupportCards(result.images);
+                let configListStr = result.images.map((img) => {
+                    const icon = img.config_type === 'common' ? '📌' : '🌟';
+                    let str = `${icon} **${img.full_title}**`;
+                    if (img.target_idols_short && img.target_idols_short.length > 0) {
+                        str += `\n　└ *対象Pアイドル*: ${img.target_idols_short.join('、')}`;
+                    }
+                    return str;
+                }).join('\n');
+                let header = `📋 **[${sourceTitle}レポート]** シーズン${curSeason} Stage ${stage}（汎用構成 ＆ 個別推奨構成 全${attachments.length}種）\n` +
+                    `${sourceDesc}推奨構成画像を出力しました（添付画像参照）：\n${configListStr}\n\n`;
+                // 2000文字制限セーフティ
+                if ((header + supportReqs).length > 1900) {
+                    configListStr = result.images.slice(0, 3).map((img) => {
+                        const icon = img.config_type === 'common' ? '📌' : '🌟';
+                        let str = `${icon} **${img.full_title}**`;
+                        if (img.target_idols_short && img.target_idols_short.length > 0) {
+                            str += `\n　└ *対象*: ${img.target_idols_short.slice(0, 5).join('、')}${img.target_idols_short.length > 5 ? ' 等' : ''}`;
+                        }
+                        return str;
+                    }).join('\n') + (result.images.length > 3 ? `\n・...他 ${result.images.length - 3}種` : '');
+                    header = `📋 **[${sourceTitle}レポート]** シーズン${curSeason} Stage ${stage}（汎用構成 ＆ 個別推奨構成 全${attachments.length}種）\n` +
+                        `${configListStr}\n\n`;
+                }
+                msg = header + `💡 **【ステージ必須サポートカード構成の組合せ】**:\n\n` + supportReqs;
+                if (msg.length > 1950) {
+                    msg = msg.slice(0, 1940) + '\n...（文字数制限のため一部省略）';
+                }
+            }
+            await interaction.followUp({
+                content: msg,
+                files: attachments,
+                components
             });
         }
         catch (e) {
+            console.error('[advisory] Execution error:', e);
             await interaction.followUp({ content: `⚠️ エラーが発生しました: ${e.message}` });
         }
     }

@@ -34,8 +34,8 @@ function calculateMemoryHash(memoryData) {
     return crypto.createHash('sha256').update(parts.join('|')).digest('hex');
 }
 
-function deriveRunMeta(loadout) {
-    const { stageId, customStage, skillCardIdGroups } = loadout;
+function deriveRunMeta(loadout, fallbackIdolId = null, fallbackPIdolId = null) {
+    const { stageId, customStage, skillCardIdGroups, pItemIds } = loadout;
 
     let stageName = null;
     let season = null;
@@ -55,9 +55,9 @@ function deriveRunMeta(loadout) {
     for (const id of firstGroup) {
         if (!id) continue;
         const card = SkillCards.getById(id);
-        if (card?.sourceType === "pIdol") {
+        if (card?.sourceType === "pIdol" || card?.unique) {
             signatureCardId = id;
-            pIdolId = card.pIdolId;
+            if (card.pIdolId) pIdolId = card.pIdolId;
             break;
         }
     }
@@ -71,10 +71,32 @@ function deriveRunMeta(loadout) {
         }
     }
 
+    // フォールバック: 引数、または pItemIds から解決
+    if (!pIdolId && fallbackPIdolId) {
+        pIdolId = fallbackPIdolId;
+    }
+    if (!pIdolId && pItemIds && pItemIds.length > 0) {
+        for (const pid of pItemIds) {
+            if (!pid) continue;
+            const pidol = PIdols.getAll().find(p => p.pItemId === pid);
+            if (pidol) {
+                pIdolId = pidol.id;
+                break;
+            }
+        }
+    }
+    if (!pIdolId && signatureCardId) {
+        const pidol = PIdols.getAll().find(p => p.signatureCardId === signatureCardId);
+        if (pidol) pIdolId = pidol.id;
+    }
+
     let idolId = null;
     if (pIdolId) {
         const pIdol = PIdols.getById(pIdolId);
         if (pIdol) idolId = pIdol.idolId;
+    }
+    if (!idolId && fallbackIdolId) {
+        idolId = fallbackIdolId;
     }
 
     return {
@@ -850,7 +872,7 @@ async function run() {
                                 customStage: {},
                                 supportBonus,
                                 params: mainMem.data.params.map((p, i) => (p || 0) + Math.floor((subMem.data.params[i] || 0) * multiplier)),
-                                pItemIds: [...(mainMem.data.pItemIds || []), ...(subMem.data.pItemIds || [])],
+                                pItemIds: [...(mainMem.data.pItemIds || [])].slice(0, 4),
                                 skillCardIdGroups: [mainMem.data.skillCardIds, subMem.data.skillCardIds],
                                 customizationGroups: [
                                     mainMem.data.customizations || [{}, {}, {}, {}, {}, {}],
@@ -860,7 +882,7 @@ async function run() {
                                 createdAt: new Date(),
                                 stats: best.stats,
                             };
-                            loadout.derived = deriveRunMeta(loadout);
+                            loadout.derived = deriveRunMeta(loadout, idolId, mainMem.data.pIdolId);
 
                             // 世代管理ローテーション (1位結果または日付名エントリの場合)
                             if (rank === 0 && idolId) {

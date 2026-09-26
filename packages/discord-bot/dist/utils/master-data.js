@@ -40,8 +40,12 @@ const GAKUMAS_DATA_JSON_DIR = path.resolve(__dirname, '../../../../packages/gaku
 function loadJson(filename) {
     const candidatePaths = [
         path.join(GAKUMAS_DATA_JSON_DIR, filename),
+        path.resolve(process.cwd(), 'data/json', filename),
+        path.resolve(process.cwd(), 'json', filename),
         path.resolve(process.cwd(), 'packages/gakumas-data/json', filename),
         path.resolve(__dirname, '../../../gakumas-data/json', filename),
+        path.resolve(__dirname, '../data/json', filename),
+        path.resolve(__dirname, '../../data/json', filename),
         path.resolve('/app/packages/gakumas-data/json', filename),
         path.resolve('/root/gakumas-workspace/gakumas-tools/packages/gakumas-data/json', filename)
     ];

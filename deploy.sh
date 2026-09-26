@@ -20,6 +20,7 @@ mkdir -p ./agent-instructions && cp -r ../shared/agent-instructions/* ./agent-in
 mkdir -p ./.config/gakumas-tools && cp -r ~/.config/gakumas-tools/* ./.config/gakumas-tools/ 2>/dev/null || true
 mkdir -p ./shared/gakumas-dev/knowledge && cp -r ../shared/gakumas-dev/knowledge/* ./shared/gakumas-dev/knowledge/ 2>/dev/null || true
 mkdir -p ./gakumas-agent-bot && cp -r ../gakumas-agent-bot/* ./gakumas-agent-bot/ 2>/dev/null || true
+mkdir -p ./gakumas-mcp-server && cp -r ../gakumas-mcp-server/* ./gakumas-mcp-server/ 2>/dev/null || true
 mkdir -p ./gakumas-support_cards && cp -r ../gakumas-support_cards/* ./gakumas-support_cards/ 2>/dev/null || true
 mkdir -p ./gk-img && cp -r ../gk-img/* ./gk-img/ 2>/dev/null || true
 
@@ -44,16 +45,15 @@ rsync -avz --delete \
 
 echo "Building and restarting Docker Compose containers on TrueNAS..."
 ssh -t $TARGET "cd $TARGET_DIR && \
-  echo '==> Building Web UI & Discord Bots...' && \
-  sudo docker compose build --no-cache asari-agent gakumas-bot && \
+  echo '==> Building Web UI (gakumas-tools)...' && \
   sudo docker compose build gakumas-tools && \
-  echo '==> Stopping and cleaning old Bot containers...' && \
+  echo '==> Stopping and cleaning retired Bot containers (gakumas-bot & asari-agent are now on Pi 5)...' && \
   sudo docker compose stop gakumas-bot asari-agent 2>/dev/null || true && \
   sudo docker compose rm -f gakumas-bot asari-agent 2>/dev/null || true && \
   sudo docker ps -q --filter name=gakumas-bot | xargs -r sudo docker rm -f 2>/dev/null || true && \
   sudo docker ps -q --filter name=asari-agent | xargs -r sudo docker rm -f 2>/dev/null || true && \
-  echo '==> Starting Discord Bots...' && \
-  sudo docker compose up -d --force-recreate gakumas-bot asari-agent && \
+  echo '==> Starting Web UI (gakumas-tools)...' && \
+  sudo docker compose up -d --force-recreate gakumas-tools && \
   echo '==> Container Status:' && \
   sudo docker compose ps"
 

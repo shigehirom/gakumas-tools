@@ -15,7 +15,10 @@ function parseArgs() {
     requiredCards: [], // card names
     includeOnlyStage: false,
     top: 3,
-    verbose: false
+    verbose: false,
+    targetStep4: false, // Target STEP4 & non-S4+ idols
+    anomalyOnly: false, // Filter target idols to those with owned anomaly (fullPower) P-idols
+    primaStellaOnly: true // Filter to idols who own their prima_stella song (default: true for --asari)
   };
 
   for (let i = 0; i < args.length; i++) {
@@ -33,6 +36,16 @@ function parseArgs() {
       options.top = parseInt(args[++i], 10) || 3;
     } else if (arg === '--verbose' || arg === '-v') {
       options.verbose = true;
+    } else if (arg === '--target-step4' || arg === '--s4-target' || arg === '--asari') {
+      options.targetStep4 = true;
+      options.anomalyOnly = true;
+      options.primaStellaOnly = true;
+    } else if (arg === '--all-step4-targets') {
+      options.targetStep4 = true;
+      options.anomalyOnly = false;
+      options.primaStellaOnly = false;
+    } else if (arg === '--ignore-prima-stella') {
+      options.primaStellaOnly = false;
     } else if (arg === '--help' || arg === '-h') {
       console.log(`
 Usage: node scripts/optimize-produce-deck.mjs [options]
@@ -43,6 +56,9 @@ Options:
   --cards, -c <c1,c2...>                Required skill cards to bring
   --stage-only                          Only use memories that have matching stage memory
   --top, -n <number>                    Number of top deck builds to display (default: 3)
+  --target-step4, --asari               Auto-target STEP4 & non-S4+ idols with prima_stella & anomaly (fullPower)
+  --all-step4-targets                   Auto-target all STEP4 & non-S4+ idols (including non-anomaly/no prima_stella)
+  --ignore-prima-stella                 Include idols even if they do not own the prima_stella song
   --verbose, -v                         Show detailed ability breakdowns
       `);
       process.exit(0);
@@ -108,39 +124,9 @@ function calculateDeckScore(deck, focus) {
   };
 }
 
-async function main() {
-  const options = parseArgs();
-  console.log(`=== S4+ Produce Deck Optimizer ===`);
-  console.log(`Target Focus: ${options.focus.toUpperCase()}`);
-  if (options.idol) console.log(`Idol Filter: ${options.idol}`);
-  if (options.requiredCards.length > 0) console.log(`Required Cards: ${options.requiredCards.join(', ')}`);
-
-  const client = new MongoClient(MONGODB_URI);
-  await client.connect();
-  const db = client.db(MONGODB_DB);
-  const produceMemCol = db.collection('produce_memories');
-
-  const query = {};
-  if (options.idol) {
-    query.idolName = { $regex: options.idol };
-  }
-  if (options.includeOnlyStage) {
-    query.hasStageMemory = true;
-  }
-
-  const allMemories = await produceMemCol.find(query).toArray();
-  console.log(`Found ${allMemories.length} memories matching query.`);
-
+function optimizeDeckForIdol(allMemories, options, idolDisplayName) {
   if (allMemories.length < 4) {
-    console.error(`Not enough memories (${allMemories.length} found, minimum 4 required).`);
-    await client.close();
-    return;
-  }
-
-  // Check required cards existence
-  if (options.requiredCards.length > 4) {
-    console.error(`Cannot require more than 4 cards.`);
-    await client.close();
+    console.log(`⚠️ ${idolDisplayName}: メモリー不足 (${allMemories.length} 件、最低4件必要)`);
     return;
   }
 
@@ -153,7 +139,6 @@ async function main() {
   }
 
   // Pre-score and prune memories to keep combination search fast
-  // Calculate individual evaluation score for pruning
   allMemories.forEach(m => {
     const b = m.bonuses || {};
     let indScore = 0;
@@ -162,7 +147,6 @@ async function main() {
     else if (options.focus === 'vi') indScore = (b.viBonus || 0) * 100 + (b.initVi || 0);
     else indScore = (b.voBonus || 0) + (b.daBonus || 0) + (b.viBonus || 0);
 
-    // Give bonus to required cards so they aren't pruned
     if (m.skillCard?.name && options.requiredCards.some(rc => m.skillCard.name.includes(rc))) {
       indScore += 100000;
     }
@@ -171,8 +155,6 @@ async function main() {
 
   allMemories.sort((a, b) => b._indScore - a._indScore);
 
-  // Group by skill card ID to avoid having duplicate cards in pool
-  // Keep top memories for each card, plus memories with no cards
   const candidatePool = [];
   const cardGroup = new Map();
 
@@ -185,7 +167,7 @@ async function main() {
         cardGroup.set(cardId, []);
       }
       const list = cardGroup.get(cardId);
-      if (list.length < 3) { // keep up to 3 best memories per card ID
+      if (list.length < 3) {
         list.push(m);
         candidatePool.push(m);
       }
@@ -193,15 +175,11 @@ async function main() {
     if (candidatePool.length >= 60) break;
   }
 
-  console.log(`Evaluated candidates pool size: ${candidatePool.length} memories.`);
-
-  // Combinations generator of size 4
   const combinations = [];
   const N = candidatePool.length;
 
   function findCombos(startIndex, current) {
     if (current.length === 4) {
-      // Validate unique skill card IDs (excluding 0)
       const seenCards = new Set();
       let valid = true;
       for (const m of current) {
@@ -215,7 +193,6 @@ async function main() {
         }
       }
 
-      // Validate required cards
       if (valid && options.requiredCards.length > 0) {
         for (const rc of options.requiredCards) {
           const present = current.some(m => m.skillCard?.name && m.skillCard.name.includes(rc));
@@ -244,11 +221,9 @@ async function main() {
   }
 
   findCombos(0, []);
-
-  // Sort by calculated score descending
   combinations.sort((a, b) => b.stats.score - a.stats.score);
 
-  console.log(`\n=== 🏆 Top ${Math.min(options.top, combinations.length)} Recommended Produce Decks ===\n`);
+  console.log(`\n=== 🏆 [${idolDisplayName}] Top ${Math.min(options.top, combinations.length)} Recommended Produce Decks ===\n`);
 
   for (let rank = 0; rank < Math.min(options.top, combinations.length); rank++) {
     const res = combinations[rank];
@@ -288,6 +263,118 @@ async function main() {
       }
     });
     console.log('');
+  }
+}
+
+async function main() {
+  const options = parseArgs();
+  console.log(`=== S4+ Produce Deck Optimizer ===`);
+  console.log(`Target Focus: ${options.focus.toUpperCase()}`);
+  if (options.idol) console.log(`Idol Filter: ${options.idol}`);
+  if (options.targetStep4) {
+    console.log(`Target Mode: STEP4 & S4+未達成 アイドル抽出 (Anomaly=${options.anomalyOnly})`);
+  }
+  if (options.requiredCards.length > 0) console.log(`Required Cards: ${options.requiredCards.join(', ')}`);
+
+  const client = new MongoClient(MONGODB_URI);
+  await client.connect();
+  const db = client.db(MONGODB_DB);
+  const produceMemCol = db.collection('produce_memories');
+  const ownedIdolsCol = db.collection('owned_idols');
+  const ownedPIdolsCol = db.collection('owned_p_idols');
+
+  // If targetStep4 is set, query eligible idols
+  let targetIdols = [];
+  if (options.targetStep4) {
+    // Eligible: step === 4 && produce_rank !== 'S4+' && !ichibanboshi
+    const step4Docs = await ownedIdolsCol.find({
+      step: 4,
+      produce_rank: { $ne: 'S4+' },
+      ichibanboshi: { $ne: true }
+    }).toArray();
+
+    console.log(`\n📋 STEP4 かつ S4+未達成アイドル: ${step4Docs.length} 名`);
+    for (const idol of step4Docs) {
+      // Check owned prima_stella cards
+      const primaCards = await ownedPIdolsCol.find({
+        idolId: idol.id,
+        prima_stella: true
+      }).toArray();
+      const hasPrima = primaCards.length > 0;
+
+      // Check owned anomaly fullPower P-idols
+      const anomalyPIdols = await ownedPIdolsCol.find({
+        idolId: idol.id,
+        plan: 'anomaly',
+        $or: [
+          { recommendedEffect: 'fullPower' },
+          { recommended_effect: '全力' }
+        ]
+      }).toArray();
+      const hasAnomaly = anomalyPIdols.length > 0;
+
+      const statusStr = `[${idol.name}] STEP: ${idol.step} | P評価: ${idol.produce_rank || '未評価'} | 一番星: ${idol.ichibanboshi ? 'TRUE' : 'FALSE'}`;
+      const primaStr = hasPrima ? `一番星楽曲: ⭕ (${primaCards.map(p => `【${p.title}】`).join(', ')})` : `一番星楽曲: ❌ 未所有`;
+      const anomalyStr = hasAnomaly ? `アノマリー(全力): ⭕ (${anomalyPIdols.map(p => `【${p.title}】`).join(', ')})` : `アノマリー(全力): ❌`;
+
+      const meetsPrima = !options.primaStellaOnly || hasPrima;
+      const meetsAnomaly = !options.anomalyOnly || hasAnomaly;
+
+      if (hasPrima && hasAnomaly) {
+        console.log(`  ⭐ ${statusStr} -> ${primaStr} | ${anomalyStr} => 【最優先対象】`);
+      } else if (hasPrima) {
+        console.log(`  ⚪ ${statusStr} -> ${primaStr} | ${anomalyStr}`);
+      } else {
+        console.log(`  ⚠️ ${statusStr} -> ${primaStr} | ${anomalyStr} (一番星楽曲未所持)`);
+      }
+
+      if (meetsPrima && meetsAnomaly) {
+        targetIdols.push({
+          name: idol.name,
+          primaCards,
+          anomalyCards: anomalyPIdols
+        });
+      }
+    }
+
+    if (targetIdols.length === 0) {
+      console.log('\n該当するターゲットアイドルが見つかりませんでした。');
+      await client.close();
+      return;
+    }
+
+    // If specific idol filter was also passed, filter down
+    if (options.idol) {
+      targetIdols = targetIdols.filter(t => t.name.includes(options.idol));
+    }
+  }
+
+  // If single idol mode
+  if (!options.targetStep4) {
+    const query = {};
+    if (options.idol) {
+      query.idolName = { $regex: options.idol };
+    }
+    if (options.includeOnlyStage) {
+      query.hasStageMemory = true;
+    }
+
+    const allMemories = await produceMemCol.find(query).toArray();
+    console.log(`Found ${allMemories.length} memories matching query.`);
+    optimizeDeckForIdol(allMemories, options, options.idol || 'All Idols');
+  } else {
+    // Loop through each target idol
+    console.log(`\n🚀 対象アイドル ${targetIdols.length} 名の最適編成探索を開始します...`);
+    for (const target of targetIdols) {
+      const idolShort = target.name.split(' ')[1] || target.name;
+      const query = { idolName: { $regex: idolShort } };
+      if (options.includeOnlyStage) {
+        query.hasStageMemory = true;
+      }
+      const memories = await produceMemCol.find(query).toArray();
+      const cardInfo = target.anomalyCards.length > 0 ? ` (所持: ${target.anomalyCards.map(c => c.title).join(', ')})` : '';
+      optimizeDeckForIdol(memories, options, `${target.name}${cardInfo}`);
+    }
   }
 
   await client.close();

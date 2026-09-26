@@ -20,8 +20,11 @@ log = logging.getLogger("image_resolver")
 
 def _find_dir(candidates: list[Path]) -> Path:
     for c in candidates:
-        if c.exists():
-            return c
+        try:
+            if c.exists():
+                return c
+        except Exception:
+            continue
     return candidates[0]
 
 WORKSPACE_DIR = _find_dir([
@@ -31,6 +34,7 @@ WORKSPACE_DIR = _find_dir([
 ])
 
 IMAGES_DIR = _find_dir([
+    Path("/home/pi/gakumas-mcp-server/data/images"),
     Path("/app/packages/gakumas-images/images"),
     Path("/root/gakumas-workspace/gakumas-tools/packages/gakumas-images/images"),
     WORKSPACE_DIR / "gakumas-tools" / "packages" / "gakumas-images" / "images",
@@ -38,6 +42,7 @@ IMAGES_DIR = _find_dir([
 ])
 
 CSV_DIR = _find_dir([
+    Path("/home/pi/gakumas-mcp-server/data/csv"),
     Path("/app/packages/gakumas-data/csv"),
     Path("/root/gakumas-workspace/gakumas-tools/packages/gakumas-data/csv"),
     WORKSPACE_DIR / "gakumas-tools" / "packages" / "gakumas-data" / "csv",
@@ -45,6 +50,7 @@ CSV_DIR = _find_dir([
 ])
 
 SUPPORT_CARDS_JSON = _find_dir([
+    Path("/home/pi/gakumas-mcp-server/data/support_cards_master.json"),
     Path("/app/gakumas-support_cards/support_cards_master.json"),
     Path("/app/support_cards_master.json"),
     Path("/root/gakumas-workspace/gakumas-support_cards/support_cards_master.json"),

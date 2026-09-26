@@ -24,8 +24,11 @@ log = logging.getLogger("generate_contest_boxplot")
 
 def _find_dir(candidates: list[Path]) -> Path:
     for c in candidates:
-        if c.exists():
-            return c
+        try:
+            if c.exists():
+                return c
+        except Exception:
+            continue
     return candidates[0]
 
 def _find_workspace_dir() -> Path:

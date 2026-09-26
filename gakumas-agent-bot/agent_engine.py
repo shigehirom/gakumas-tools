@@ -156,6 +156,8 @@ class AgentEngine:
             if isinstance(schema, dict):
                 cleaned = {}
                 for k, v in schema.items():
+                    if k in ("additionalProperties", "additional_properties", "title", "$schema", "default"):
+                        continue
                     if k == "enum" and isinstance(v, list):
                         cleaned[k] = [str(x) for x in v]
                     else:
@@ -166,14 +168,23 @@ class AgentEngine:
             return schema
 
         gemini_tools = []
-        for s in TOOLS_SCHEMA:
-            fn = s.get("function", {})
-            params = fn.get("parameters")
-            gemini_tools.append({
-                "name": fn.get("name"),
-                "description": fn.get("description"),
-                "parameters": _clean_schema(params) if params else None,
-            })
+        if hasattr(self.executor, "get_gemini_tools_schema"):
+            raw_tools = self.executor.get_gemini_tools_schema()
+            for t in raw_tools:
+                gemini_tools.append({
+                    "name": t.get("name"),
+                    "description": t.get("description", ""),
+                    "parameters": _clean_schema(t.get("parameters")) if t.get("parameters") else None,
+                })
+        else:
+            for s in TOOLS_SCHEMA:
+                fn = s.get("function", {})
+                params = fn.get("parameters")
+                gemini_tools.append({
+                    "name": fn.get("name"),
+                    "description": fn.get("description"),
+                    "parameters": _clean_schema(params) if params else None,
+                })
 
         # Gemini Chat セッションのメッセージ構築
         chat_contents = []
@@ -349,7 +360,10 @@ class AgentEngine:
                 "temperature": 0.5,
             }
             if not has_recent_tool:
-                kwargs["tools"] = TOOLS_SCHEMA
+                if hasattr(self.executor, "get_openai_tools_schema"):
+                    kwargs["tools"] = self.executor.get_openai_tools_schema()
+                else:
+                    kwargs["tools"] = TOOLS_SCHEMA
                 kwargs["tool_choice"] = "auto"
 
             response = await self._local_client.chat.completions.create(**kwargs)

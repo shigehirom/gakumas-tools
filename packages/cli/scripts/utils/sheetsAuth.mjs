@@ -7,6 +7,7 @@ import { google } from 'googleapis';
 // Load environment variables from .env.local manually to avoid external dependencies
 export function loadEnvLocal() {
   const candidates = [
+    path.resolve(process.cwd(), '.env'),
     path.resolve(process.cwd(), '.env.local'),
     path.resolve(process.cwd(), '../../.env.local'),
     '/root/gakumas-workspace/gakumas-tools/.env.local',

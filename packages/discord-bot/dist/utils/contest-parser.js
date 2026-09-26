@@ -1,6 +1,10 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.parseContestImages = parseContestImages;
+const sharp_1 = __importDefault(require("sharp"));
 const config_1 = require("../config");
 /**
  * 3枚のコンテストスクリーンショットからGemini APIを用いて結果を構造化抽出する
@@ -12,7 +16,20 @@ async function parseContestImages(imageBuffers, apiKey) {
     if (!key) {
         throw new Error('Gemini APIキーが設定されていません。GEMINI_API_KEY を環境変数または .env.local に設定してください。');
     }
-    const base64Images = imageBuffers.map(buf => buf.toString('base64'));
+    // 画像をリサイズ & JPEG圧縮して送信サイズを軽量化（1枚2〜5MB -> 100〜150KB）
+    const compressedImages = await Promise.all(imageBuffers.map(async (buf) => {
+        try {
+            return await (0, sharp_1.default)(buf)
+                .resize({ width: 1280, height: 1280, fit: 'inside', withoutEnlargement: true })
+                .jpeg({ quality: 80 })
+                .toBuffer();
+        }
+        catch (err) {
+            console.warn('[contest-parser] sharp resize failed, using original buffer:', err);
+            return buf;
+        }
+    }));
+    const base64Images = compressedImages.map(buf => buf.toString('base64'));
     const prompt = `
 You are analyzing 3 sequential screenshots from the mobile game "Gakuen Idolmaster (学園アイドルマスター)" contest mode.
 
@@ -63,17 +80,18 @@ Respond strictly with valid JSON matching this schema:
 }
 `;
     const models = [
+        'gemini-3.6-flash',
         'gemini-3.5-flash',
         'gemini-flash-latest',
-        'gemini-3.6-flash',
-        'gemini-3.7-flash'
+        'gemini-3.7-flash',
+        'gemini-3.8-flash'
     ];
     let lastError = null;
     for (const model of models) {
         for (let attempt = 1; attempt <= 2; attempt++) {
             try {
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 20000);
+                const timeoutId = setTimeout(() => controller.abort(), 45000);
                 const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
                 const res = await fetch(url, {
                     method: 'POST',
@@ -82,9 +100,9 @@ Respond strictly with valid JSON matching this schema:
                     body: JSON.stringify({
                         contents: [{
                                 parts: [
-                                    { inlineData: { mimeType: 'image/png', data: base64Images[0] } },
-                                    { inlineData: { mimeType: 'image/png', data: base64Images[1] } },
-                                    { inlineData: { mimeType: 'image/png', data: base64Images[2] } },
+                                    { inlineData: { mimeType: 'image/jpeg', data: base64Images[0] } },
+                                    { inlineData: { mimeType: 'image/jpeg', data: base64Images[1] } },
+                                    { inlineData: { mimeType: 'image/jpeg', data: base64Images[2] } },
                                     { text: prompt }
                                 ]
                             }],

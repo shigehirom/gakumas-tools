@@ -206,6 +206,9 @@ export async function syncContestMatchesBidirectional(): Promise<{ success: bool
 function runSyncScript(args: string[]): Promise<{ success: boolean; error?: string; output?: string }> {
     return new Promise((resolve) => {
         const candidates = [
+            path.resolve(process.cwd(), 'scripts/sync-contest-matches.mjs'),
+            path.resolve(__dirname, '../scripts/sync-contest-matches.mjs'),
+            path.resolve(__dirname, '../../scripts/sync-contest-matches.mjs'),
             path.resolve(__dirname, '../../../../packages/cli/scripts/sync-contest-matches.mjs'),
             path.resolve(__dirname, '../../../cli/scripts/sync-contest-matches.mjs'),
             '/app/packages/cli/scripts/sync-contest-matches.mjs',

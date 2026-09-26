@@ -1,176 +1,117 @@
 import { SlashCommandBuilder, ChatInputCommandInteraction, EmbedBuilder } from 'discord.js';
 import { spawn } from 'child_process';
 import path from 'path';
+import * as fs from 'fs';
+import { syncContestMatchesBidirectional } from '../utils/match-history-updater';
 
 export const syncCommand = {
     data: new SlashCommandBuilder()
         .setName('sync')
-        .setDescription('GoogleスプレッドシートからMongoDBへインベントリ（Pアイドル・所持サポカ）を同期します')
+        .setDescription('GoogleスプレッドシートとMongoDBのデータ（コンテスト対戦記録・インベントリ）を同期します')
         .addStringOption(option =>
             option.setName('target')
-                .setDescription('同期する対象')
+                .setDescription('同期する対象 (デフォルト: コンテスト対戦記録)')
                 .setRequired(false)
                 .addChoices(
+                    { name: '🏆 コンテスト対戦記録 (Contest 双方向同期)', value: 'contest' },
                     { name: '📦 全インベントリ (Pアイドル + サポカ)', value: 'all' },
                     { name: '🃏 サポートカード (Support-Cards)', value: 'support' },
-                    { name: '🌟 Pアイドル (P-Idols)', value: 'pidol' },
-                    { name: '🏆 コンテスト対戦記録 (Contest)', value: 'contest' }
+                    { name: '🌟 Pアイドル (P-Idols)', value: 'pidol' }
                 )
         ),
 
     async execute(interaction: ChatInputCommandInteraction) {
         await interaction.deferReply();
 
-        const target = interaction.options.getString('target') || 'all';
-        const rootDir = path.resolve(__dirname, '../../../..');
-        const cliScriptsDir = path.resolve(__dirname, '../../../../packages/cli/scripts');
+        const target = interaction.options.getString('target') || 'contest';
 
-        let scOutput = '';
-        let scError = '';
-        let piOutput = '';
-        let piError = '';
-        let ctOutput = '';
-        let ctError = '';
+        // ── 1. コンテスト対戦記録の双方向同期 ──
+        if (target === 'contest') {
+            try {
+                console.log('[sync] Starting bidirectional contest sync...');
+                const result = await syncContestMatchesBidirectional();
 
-        const runNodeScript = (scriptName: string, extraArgs: string[] = []): Promise<{ stdout: string; stderr: string; code: number }> => {
-            return new Promise((resolve) => {
-                const scriptPath = path.join(cliScriptsDir, scriptName);
-                const child = spawn('node', [scriptPath, ...extraArgs], {
-                    cwd: rootDir,
-                    env: { ...process.env }
-                });
+                if (!result.success) {
+                    const embed = new EmbedBuilder()
+                        .setTitle('❌ コンテスト記録の同期に失敗しました')
+                        .setDescription(`**エラー内容**:\n\`\`\`\n${(result.error || '不明なエラー').slice(0, 500)}\n\`\`\``)
+                        .addFields({
+                            name: '💡 対処法',
+                            value: 'Google Sheets OAuth トークンが失効している可能性があります。\nSandbox ターミナルで `node packages/cli/scripts/reauth-sheets.mjs` を実行して再認証を行ってください。'
+                        })
+                        .setColor(0xEF4444)
+                        .setTimestamp();
 
-                let stdout = '';
-                let stderr = '';
-
-                child.stdout.on('data', (d) => { stdout += d.toString(); });
-                child.stderr.on('data', (d) => { stderr += d.toString(); });
-
-                child.on('close', (code) => {
-                    resolve({ stdout, stderr, code: code ?? 0 });
-                });
-                child.on('error', (err) => {
-                    resolve({ stdout: '', stderr: err.message, code: 1 });
-                });
-            });
-        };
-
-        try {
-            // 1. Support-Cards 同期
-            if (target === 'all' || target === 'support') {
-                const res = await runNodeScript('sync-support-cards.mjs');
-                scOutput = res.stdout;
-                scError = res.stderr;
-            }
-
-            // 2. P-Idols 同期
-            if (target === 'all' || target === 'pidol') {
-                const res = await runNodeScript('sync-p-idols.mjs');
-                piOutput = res.stdout;
-                piError = res.stderr;
-            }
-
-            // 3. コンテスト対戦記録同期（双方向: スプレッドシート ⇔ MongoDB）
-            if (target === 'contest') {
-                const res = await runNodeScript('sync-contest-matches.mjs', ['--mode', 'bidirectional', '--execute']);
-                ctOutput = res.stdout;
-                ctError = res.stderr;
-            }
-
-
-            const embed = new EmbedBuilder()
-                .setTitle('📦 インベントリ同期完了')
-                .setDescription('Googleスプレッドシートから MongoDB への同期処理を実行しました。')
-                .setColor(0x34A853);
-
-            // サポカ結果のパース・整形
-            if (target === 'all' || target === 'support') {
-                if (scError && !scOutput.includes('Updated') && !scOutput.includes('Inserted')) {
-                    embed.addFields({
-                        name: '🃏 サポートカード (Support-Cards ➔ MongoDB)',
-                        value: `⚠️ エラー: ${scError.slice(0, 300)}`,
-                        inline: false
-                    });
-                } else {
-                    const insMatch = scOutput.match(/Inserted[^:]*:\s*(\d+)/i) || scOutput.match(/新規[^:]*:\s*(\d+)/i);
-                    const updMatch = scOutput.match(/Updated[^:]*:\s*(\d+)/i) || scOutput.match(/更新[^:]*:\s*(\d+)/i);
-                    const delMatch = scOutput.match(/Deleted[^:]*:\s*(\d+)/i) || scOutput.match(/削除[^:]*:\s*(\d+)/i);
-                    const bonusMatch = scOutput.match(/SupportBonus:\s*([0-9.]+%[^\n]*)/i);
-                    
-                    const ins = insMatch ? insMatch[1] : '0';
-                    const upd = updMatch ? updMatch[1] : '0';
-                    const del = delMatch ? delMatch[1] : '0';
-                    const bonusStr = bonusMatch ? bonusMatch[1] : '';
-
-                    let valueStr = `・新規追加: \`${ins}\` 件\n・レベル/凸更新: \`${upd}\` 件\n・除外: \`${del}\` 件`;
-                    if (bonusStr) {
-                        valueStr += `\n・最新サポートボーナス: **${bonusStr}**`;
-                    }
-
-                    embed.addFields({
-                        name: '🃏 サポートカード (Support-Cards ➔ MongoDB)',
-                        value: valueStr,
-                        inline: false
-                    });
+                    await interaction.followUp({ embeds: [embed] });
+                    return;
                 }
+
+                const embed = new EmbedBuilder()
+                    .setTitle('✅ コンテスト記録の双方向同期が完了しました')
+                    .setDescription(`Google スプレッドシート（Contest）と MongoDB の対戦履歴を相互に最新化しました。\n\`\`\`\n${(result.output || '同期完了').slice(0, 1000)}\n\`\`\``)
+                    .setColor(0x10B981)
+                    .setTimestamp();
+
+                await interaction.followUp({ embeds: [embed] });
+                return;
+
+            } catch (err: any) {
+                console.error('[sync] Contest sync error:', err);
+                await interaction.followUp({ content: `❌ 同期中にエラーが発生しました: ${err.message}` });
+                return;
             }
-
-            // Pアイドル結果のパース・整形
-            if (target === 'all' || target === 'pidol') {
-                if (piError && !piOutput.includes('Updated') && !piOutput.includes('Inserted')) {
-                    embed.addFields({
-                        name: '🌟 Pアイドル (P-Idols ➔ MongoDB)',
-                        value: `⚠️ エラー: ${piError.slice(0, 300)}`,
-                        inline: false
-                    });
-                } else {
-                    const insMatch = piOutput.match(/Inserted[^:]*:\s*(\d+)/i) || piOutput.match(/新規[^:]*:\s*(\d+)/i);
-                    const updMatch = piOutput.match(/Updated[^:]*:\s*(\d+)/i) || piOutput.match(/更新[^:]*:\s*(\d+)/i);
-                    const delMatch = piOutput.match(/Deleted[^:]*:\s*(\d+)/i) || piOutput.match(/削除[^:]*:\s*(\d+)/i);
-
-                    const ins = insMatch ? insMatch[1] : '0';
-                    const upd = updMatch ? updMatch[1] : '0';
-                    const del = delMatch ? delMatch[1] : '0';
-
-                    embed.addFields({
-                        name: '🌟 Pアイドル (P-Idols ➔ MongoDB)',
-                        value: `・新規追加: \`${ins}\` 件\n・更新: \`${upd}\` 件\n・除外: \`${del}\` 件`,
-                        inline: false
-                    });
-                }
-            }
-
-            // コンテスト同期結果
-            if (target === 'contest') {
-                if (ctError && !ctOutput.includes('rows written') && !ctOutput.includes('documents')) {
-                    embed.addFields({
-                        name: '🏆 コンテスト対戦記録 (MongoDB ➔ Contest シート)',
-                        value: `⚠️ エラー: ${ctError.slice(0, 300)}`,
-                        inline: false
-                    });
-                } else {
-                    const rowMatch = ctOutput.match(/(\d+)\s+rows?\s+written/i);
-                    const rows = rowMatch ? rowMatch[1] : '?';
-                    embed.addFields({
-                        name: '🏆 コンテスト対戦記録 (MongoDB ➔ Contest シート)',
-                        value: `・書き込み: \`${rows}\` 行\n\`/sync contest\` でシートを最新状態に更新しました。`,
-                        inline: false
-                    });
-                }
-                embed.setTitle('🏆 コンテスト対戦記録 同期完了');
-                embed.setDescription('MongoDB → Google Sheets `Contest` タブへの同期処理を実行しました。');
-            }
-
-            embed.setFooter({ text: '初星学園 データベース同期システム' });
-
-            embed.setTimestamp();
-
-            await interaction.editReply({ embeds: [embed] });
-        } catch (err: any) {
-            console.error('[Sync Command Error]', err);
-            await interaction.editReply({
-                content: `⚠️ 同期コマンドの実行中に例外が発生しました: \`${err.message}\``
-            });
         }
+
+        // ── 2. インベントリ (Pアイドル / サポカ) の同期 ──
+        let scriptName = 'sync-all.mjs';
+        if (target === 'support') scriptName = 'sync-support-cards.mjs';
+        else if (target === 'pidol') scriptName = 'sync-p-idols.mjs';
+
+        const scriptCandidates = [
+            path.resolve(process.cwd(), 'scripts', scriptName),
+            path.resolve(__dirname, '../scripts', scriptName),
+            path.resolve(__dirname, '../../scripts', scriptName),
+            path.resolve(__dirname, '../../../..', 'packages/cli/scripts', scriptName),
+            path.resolve(__dirname, '../../..', 'cli/scripts', scriptName),
+            path.resolve(__dirname, '../../../..', 'scripts', scriptName),
+            `/app/packages/cli/scripts/${scriptName}`,
+            `/app/scripts/${scriptName}`,
+        ];
+
+        const scriptPath = scriptCandidates.find(p => fs.existsSync(p));
+        if (!scriptPath) {
+            await interaction.followUp({ content: `❌ 同期スクリプトが見つかりませんでした: ${scriptName}` });
+            return;
+        }
+
+        const runCwd = path.dirname(path.dirname(scriptPath));
+        const proc = spawn('node', [scriptPath], {
+            cwd: runCwd,
+            env: { ...process.env }
+        });
+
+        let stdout = '';
+        let stderr = '';
+
+        proc.stdout.on('data', data => { stdout += data.toString(); });
+        proc.stderr.on('data', data => { stderr += data.toString(); });
+
+        proc.on('close', async (code) => {
+            if (code !== 0) {
+                const embed = new EmbedBuilder()
+                    .setTitle('❌ インベントリ同期に失敗しました')
+                    .setDescription(`\`\`\`\n${(stderr || stdout).slice(0, 1000)}\n\`\`\``)
+                    .setColor(0xEF4444)
+                    .setTimestamp();
+                await interaction.followUp({ embeds: [embed] });
+            } else {
+                const embed = new EmbedBuilder()
+                    .setTitle('✅ インベントリ同期が完了しました')
+                    .setDescription(`スプレッドシートから MongoDB への同期が正常に完了しました。\n\`\`\`\n${stdout.slice(0, 1000)}\n\`\`\``)
+                    .setColor(0x10B981)
+                    .setTimestamp();
+                await interaction.followUp({ embeds: [embed] });
+            }
+        });
     }
 };

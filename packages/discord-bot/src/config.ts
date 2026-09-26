@@ -2,8 +2,9 @@ import * as dotenv from 'dotenv';
 import * as fs from 'fs';
 import * as path from 'path';
 
-// Load .env.local from potential paths
+// Load .env / .env.local from potential paths
 const possiblePaths = [
+    path.resolve(process.cwd(), '.env'),
     path.resolve(process.cwd(), '.env.local'),
     path.resolve(process.cwd(), '../../.env.local'),
     path.resolve(__dirname, '../../../.env.local'),
@@ -31,6 +32,7 @@ export const config = {
     geminiApiKey: process.env.GEMINI_API_KEY || '',
     userId: process.env.CLI_USER_ID || '755794545861591082',
     syncSheetId: process.env.SYNC_SHEET_ID || '',
+    mcpServerUrl: process.env.MCP_SERVER_URL || 'http://192.168.100.32:30081/sse',
 };
 
 

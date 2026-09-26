@@ -42,6 +42,9 @@ async function syncIdols() {
     const idIdx = header.findIndex(h => h.includes('ID'));
     const nameIdx = header.findIndex(h => h.includes('アイドル名') || h.includes('名前'));
     const trustIdx = header.findIndex(h => h.includes('親愛度'));
+    const stepIdx = header.findIndex(h => h.trim() === 'STEP');
+    const produceRankIdx = header.findIndex(h => h.includes('P評価ランク') || h.includes('評価ランク'));
+    const ichibanboshiIdx = header.findIndex(h => h.includes('一番星'));
     const colorNameIdx = header.findIndex(h => h.includes('色名') || h.includes('カラー'));
     const rgbIdx = header.findIndex(h => h.includes('RGB') || h.includes('HEX'));
     const charIdx = header.findIndex(h => h.includes('特性'));
@@ -61,8 +64,9 @@ async function syncIdols() {
     const enrollmentIdx = header.findIndex(h => h.includes('入学'));
     const hobbyIdx = header.findIndex(h => h.includes('趣味'));
     const skillIdx = header.findIndex(h => h.includes('特技'));
+    const readingIdx = header.findIndex(h => h.includes('ふりがな') || h.includes('フリガナ') || h.includes('読み'));
 
-    console.log('[sync-idols] Column indices:', { idIdx, nameIdx, trustIdx, colorNameIdx, rgbIdx, charIdx, cvIdx, bdayIdx, hobbyIdx });
+    console.log('[sync-idols] Column indices:', { idIdx, nameIdx, readingIdx, trustIdx, stepIdx, produceRankIdx, ichibanboshiIdx, colorNameIdx, rgbIdx, charIdx });
 
     const client = new MongoClient(MONGODB_URI);
     try {
@@ -80,6 +84,9 @@ async function syncIdols() {
             const id = parseInt(row[idIdx], 10);
             const name = row[nameIdx].trim();
             const trustLevel = trustIdx !== -1 && row[trustIdx] ? parseInt(row[trustIdx], 10) : undefined;
+            const step = stepIdx !== -1 && row[stepIdx] && !isNaN(parseInt(row[stepIdx], 10)) ? parseInt(row[stepIdx], 10) : undefined;
+            const produceRank = produceRankIdx !== -1 && row[produceRankIdx] ? row[produceRankIdx].trim() : '';
+            const ichibanboshi = ichibanboshiIdx !== -1 && row[ichibanboshiIdx] ? (row[ichibanboshiIdx].trim().toLowerCase() === 'true' || row[ichibanboshiIdx].trim() === '1') : false;
             const colorName = colorNameIdx !== -1 ? (row[colorNameIdx] || '').trim() : '';
             const colorRgb = rgbIdx !== -1 ? (row[rgbIdx] || '').trim() : '';
             const characteristic = charIdx !== -1 ? (row[charIdx] || '').trim() : '';
@@ -92,6 +99,9 @@ async function syncIdols() {
             if (trustLevel !== undefined && !isNaN(trustLevel)) {
                 updateData.trust_level = trustLevel;
             }
+            if (step !== undefined) updateData.step = step;
+            if (produceRank) updateData.produce_rank = produceRank;
+            updateData.ichibanboshi = ichibanboshi;
             if (colorName) updateData.color_name = colorName;
             if (colorRgb) updateData.color_rgb = colorRgb;
             if (characteristic) updateData.characteristic = characteristic;
@@ -114,12 +124,17 @@ async function syncIdols() {
             if (enrollmentIdx !== -1 && row[enrollmentIdx]) profile.enrollment = row[enrollmentIdx].trim();
             if (hobbyIdx !== -1 && row[hobbyIdx]) profile.hobby = row[hobbyIdx].trim();
             if (skillIdx !== -1 && row[skillIdx]) profile.skill = row[skillIdx].trim();
+            if (readingIdx !== -1 && row[readingIdx]) {
+                const reading = row[readingIdx].trim();
+                profile.reading = reading;
+                updateData.reading = reading;
+            }
 
             if (Object.keys(profile).length > 0) {
                 updateData.profile = profile;
             }
 
-            console.log(`[${id}] ${name}: 特性=${characteristic || '(なし)'}, 親愛度=${trustLevel ?? '-'}, 色=${colorName}`);
+            console.log(`[${id}] ${name}: STEP=${step ?? '-'}, P評価=${produceRank || '-'}, 一番星=${ichibanboshi}, 特性=${characteristic || '(なし)'}, 親愛度=${trustLevel ?? '-'}`);
 
             if (execute) {
                 await col.updateOne(

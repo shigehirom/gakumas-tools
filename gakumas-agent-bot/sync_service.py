@@ -26,8 +26,11 @@ log = logging.getLogger("gakumas_sync")
 
 def _find_dir(candidates: list[Path]) -> Path:
     for c in candidates:
-        if c.exists():
-            return c
+        try:
+            if c.exists():
+                return c
+        except Exception:
+            continue
     return candidates[0]
 
 WORKSPACE_ROOT = _find_dir([

@@ -25,6 +25,7 @@ WORKSPACE_DIR = _find_dir([
 ])
 
 INSTRUCTIONS_DIRS = [
+    Path("/home/pi/gakumas-mcp-server/data/agent-instructions"),
     Path("/root/gakumas-workspace/shared/agent-instructions"),
     Path("/root/gakumas-workspace/gakumas-tools/agent-instructions"),
     Path("/app/agent-instructions"),

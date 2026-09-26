@@ -17,13 +17,16 @@ from typing import Any
 
 import pymongo
 
-from dsl_translator import DslTranslator
+from dsl_translator import DslTranslator, format_skill_card_specs, format_p_item_specs
 
 # ── .env 読み込み ────────────────────────────────────────────────────────────
 def _find_dir(candidates: list[Path]) -> Path:
     for c in candidates:
-        if c.exists():
-            return c
+        try:
+            if c.exists():
+                return c
+        except Exception:
+            continue
     return candidates[0]
 
 WORKSPACE_DIR = _find_dir([
@@ -99,6 +102,135 @@ DEFAULT_IDOL_CHARACTERISTICS: dict[str, str] = {
     "秦谷美鈴": "Vo>Vi>Da",
     "雨夜燕": "Da>Vo>Vi",
     "根緒亜紗里": "",
+}
+
+DEFAULT_IDOL_PROFILES: dict[str, dict[str, Any]] = {
+    "花海咲季": {
+        "id": 1, "name": "花海 咲季", "reading": "はなみ さき",
+        "birthday": "4月2日", "cv": "長月 あおい", "age": 16, "class": "高等部 1年1組",
+        "blood_type": "A型", "height": 152, "weight": 45,
+        "bust": 84, "waist": 55, "hip": 80, "dominant_hand": "左",
+        "hometown": "愛知県", "residence": "寮", "enrollment": "外部生",
+        "hobby": "勝負ごと全般", "skill": "運動全般、家事全般、マッサージ",
+        "characteristic": "Vi>Da>Vo"
+    },
+    "月村手毬": {
+        "id": 2, "name": "月村 手毬", "reading": "つきむら てまり",
+        "birthday": "6月3日", "cv": "小鹿 なお", "age": 15, "class": "高等部 1年1組",
+        "blood_type": "AB型", "height": 162, "weight": 51,
+        "bust": 82, "waist": 58, "hip": 86, "dominant_hand": "右",
+        "hometown": "京都府", "residence": "寮", "enrollment": "内部生",
+        "hobby": "美味しいものを食べること（封印中）", "skill": "歌",
+        "characteristic": "Vo>Da>Vi"
+    },
+    "藤田ことね": {
+        "id": 3, "name": "藤田 ことね", "reading": "ふじた ことね",
+        "birthday": "4月29日", "cv": "飯田 ヒカル", "age": 15, "class": "高等部 1年1組",
+        "blood_type": "O型", "height": 156, "weight": 40,
+        "bust": 75, "waist": 55, "hip": 75, "dominant_hand": "右",
+        "hometown": "埼玉県", "residence": "寮", "enrollment": "内部生",
+        "hobby": "お金を稼ぐこと", "skill": "ダンス、人の顔と名前を覚えること",
+        "characteristic": "Da>Vi>Vo"
+    },
+    "有村麻央": {
+        "id": 4, "name": "有村 麻央", "reading": "ありむら まお",
+        "birthday": "1月18日", "cv": "七瀬 つむぎ", "age": 17, "class": "高等部 3年1組",
+        "blood_type": "A型", "height": 157, "weight": 46,
+        "bust": 85, "waist": 53, "hip": 85, "dominant_hand": "右",
+        "hometown": "兵庫県", "residence": "寮", "enrollment": "外部生",
+        "hobby": "他人の面倒を見ること、観劇", "skill": "格闘技、手先が器用",
+        "characteristic": "Vo>Vi>Da"
+    },
+    "葛城リーリヤ": {
+        "id": 5, "name": "葛城 リーリヤ", "reading": "かつらぎ りーりや",
+        "birthday": "7月24日", "cv": "花岩 香奈", "age": 15, "class": "高等部 1年1組",
+        "blood_type": "B型", "height": 161, "weight": 43,
+        "bust": 82, "waist": 53, "hip": 80, "dominant_hand": "右",
+        "hometown": "スウェーデン", "residence": "寮", "enrollment": "外部生",
+        "hobby": "お菓子作り、日本のアニメ", "skill": "お菓子作り、ゲーム",
+        "characteristic": "Vi>Da>Vo"
+    },
+    "倉本千奈": {
+        "id": 6, "name": "倉本 千奈", "reading": "くらもと ちな",
+        "birthday": "8月1日", "cv": "伊藤 舞音", "age": 15, "class": "高等部 1年2組",
+        "blood_type": "O型", "height": 148, "weight": 43,
+        "bust": 73, "waist": 56, "hip": 73, "dominant_hand": "右",
+        "hometown": "神奈川県", "residence": "別荘(学園の近く)", "enrollment": "外部生",
+        "hobby": "お絵描き", "skill": "元気なあいさつ、動物に好かれること",
+        "characteristic": "Da>Vi>Vo"
+    },
+    "紫雲清夏": {
+        "id": 7, "name": "紫雲 清夏", "reading": "しうん すみか",
+        "birthday": "11月11日", "cv": "湊 みや", "age": 15, "class": "高等部 1年1組",
+        "blood_type": "O型", "height": 168, "weight": 54,
+        "bust": 89, "waist": 58, "hip": 85, "dominant_hand": "左",
+        "hometown": "北海道", "residence": "寮", "enrollment": "外部生",
+        "hobby": "カラオケ、SNS", "skill": "身体が柔らかい",
+        "characteristic": "Da>Vi>Vo"
+    },
+    "篠澤広": {
+        "id": 8, "name": "篠澤 広", "reading": "しのさわ ひろ",
+        "birthday": "12月21日", "cv": "川村 玲奈", "age": 15, "class": "高等部 1年2組",
+        "blood_type": "AB型", "height": 159, "weight": 41,
+        "bust": 72, "waist": 54, "hip": 76, "dominant_hand": "左",
+        "hometown": "秋田県", "residence": "寮", "enrollment": "外部生",
+        "hobby": "苦手分野に挑戦すること、観葉植物を育てること", "skill": "学業全般、物理、数学、パズル",
+        "characteristic": "Vo>Da>Vi"
+    },
+    "姫崎莉波": {
+        "id": 9, "name": "姫崎 莉波", "reading": "ひめさき りなみ",
+        "birthday": "3月5日", "cv": "薄井 友里", "age": 17, "class": "高等部 3年1組",
+        "blood_type": "A型", "height": 166, "weight": 56,
+        "bust": 90, "waist": 59, "hip": 93, "dominant_hand": "右",
+        "hometown": "福岡県", "residence": "寮", "enrollment": "外部生",
+        "hobby": "カフェ巡り、コスメ集め", "skill": "料理、裁縫・手芸",
+        "characteristic": "Vi>Da>Vo"
+    },
+    "花海佑芽": {
+        "id": 10, "name": "花海 佑芽", "reading": "はなみ うめ",
+        "birthday": "4月1日", "cv": "松田 彩音", "age": 15, "class": "高等部 1年2組",
+        "blood_type": "AB型", "height": 158, "weight": 50,
+        "bust": 91, "waist": 60, "hip": 85, "dominant_hand": "右",
+        "hometown": "愛知県", "residence": "寮", "enrollment": "外部生",
+        "hobby": "スポーツ全般、マッサージ", "skill": "お姉ちゃんとの勝負",
+        "characteristic": "Da>Vo>Vi"
+    },
+    "十王星南": {
+        "id": 11, "name": "十王 星南", "reading": "じゅうおう せな",
+        "birthday": "12月7日", "cv": "陽高 真白", "age": 17, "class": "高等部 3年1組",
+        "blood_type": "A型", "height": 170, "weight": 54,
+        "bust": 88, "waist": 56, "hip": 86, "dominant_hand": "両",
+        "hometown": "東京都", "residence": "自宅", "enrollment": "内部生",
+        "hobby": "レッスン、才能のあるアイドルを見つけること", "skill": "アイドルの才能を見抜くこと",
+        "characteristic": "Vi>Vo>Da"
+    },
+    "秦谷美鈴": {
+        "id": 12, "name": "秦谷 美鈴", "reading": "はたや みすず",
+        "birthday": "2月6日", "cv": "春咲 暖", "age": 15, "class": "高等部 1年2組",
+        "blood_type": "B型", "height": 160, "weight": 42,
+        "bust": 73, "waist": 54, "hip": 74, "dominant_hand": "右",
+        "hometown": "京都府", "residence": "寮", "enrollment": "内部生",
+        "hobby": "お昼寝、お散歩", "skill": "料理、生け花、体内時計が正確",
+        "characteristic": "Vo>Vi>Da"
+    },
+    "雨夜燕": {
+        "id": 13, "name": "雨夜 燕", "reading": "あまや つばめ",
+        "birthday": "5月20日", "cv": "天音 ゆかり", "age": 17, "class": "高等部 3年1組",
+        "blood_type": "A型", "height": 169, "weight": 51,
+        "bust": 80, "waist": 55, "hip": 82, "dominant_hand": "右",
+        "hometown": "東京都", "residence": "自宅", "enrollment": "内部生",
+        "hobby": "書道、歴史(日本史)、読書", "skill": "秘書技能全般、数学、書道",
+        "characteristic": "Da>Vo>Vi"
+    },
+    "根緒亜紗里": {
+        "id": 14, "name": "根緒 亜紗里", "reading": "ねお あさり",
+        "birthday": "不明", "cv": "古賀 葵", "age": None, "class": "担任講師",
+        "blood_type": "不明", "height": None, "weight": None,
+        "bust": None, "waist": None, "hip": None, "dominant_hand": "不明",
+        "hometown": "不明", "residence": "不明", "enrollment": "教員",
+        "hobby": "不明", "skill": "不明",
+        "characteristic": "-"
+    },
 }
 
 
@@ -340,6 +472,27 @@ TOOLS_SCHEMA: list[dict] = [
                     "title": {
                         "type": "string",
                         "description": "Pアイドルのタイトル・二つ名・楽曲名（例: '「ねえ、言っちゃうよ。」', '小さな野望' 等）",
+                    },
+                },
+                "required": [],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_idol_profile",
+            "description": (
+                "アイドルの公式プロフィール（誕生日、年齢、学年・クラス、CV、身長、体重、3サイズ、出身地、血液型、趣味、特技、パラメータ特性等）を取得する。"
+                "生徒の誕生日（「手毬の誕生日は？」「今月誕生日の生徒は？」「生徒の誕生日一覧」等）や、身体測定・CV・パーソナルデータに関する質問には必ずこのツールを使用してください。"
+                "idol_name を空欄または「全員」にすると全14名の誕生日・クラス一覧を取得できます。"
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "idol_name": {
+                        "type": "string",
+                        "description": "アイドル名（例: '月村手毬', '手毬', '咲季'、空欄または '全員' で全アイドル一覧）",
                     },
                 },
                 "required": [],
@@ -666,6 +819,27 @@ class GakumasToolExecutor:
                 except Exception:
                     pass
 
+        # Pアイドル逆引きマップの構築
+        self._pidol_info_map = {}
+        try:
+            from master_data import GakumasMaster
+            master = GakumasMaster()
+            for p in master.p_idols:
+                pid = str(p.get("id", "")).strip()
+                if not pid:
+                    continue
+                iid = int(p.get("idolId", 0))
+                iname = master.idols.get(iid, "")
+                title = p.get("title", "")
+                self._pidol_info_map[pid] = {
+                    "title": title,
+                    "idol_name": iname,
+                    "plan": p.get("plan", ""),
+                    "rarity": p.get("rarity", ""),
+                }
+        except Exception:
+            pass
+
         self._load_contest_matches()
 
     def _load_contest_matches(self) -> None:
@@ -728,10 +902,136 @@ class GakumasToolExecutor:
                     return str(doc["characteristic"]).strip()
             except Exception:
                 pass
-        for k, v in DEFAULT_IDOL_CHARACTERISTICS.items():
-            if k in norm_name or norm_name in k:
-                return v
-        return ""
+    def get_idol_profile_summary(self, idol_name: str) -> str:
+        """アイドルの誕生日、年齢、身長、CVを含む1行サマリを返す"""
+        if not idol_name:
+            return ""
+        norm_name = re.sub(r"\s+", "", idol_name)
+        prof: dict[str, Any] = {}
+        if self._db is not None:
+            try:
+                doc = self._db["owned_idols"].find_one({
+                    "$or": [
+                        {"name": norm_name},
+                        {"name": " ".join(norm_name)},
+                        {"name": {"$regex": re.escape(norm_name)}},
+                    ]
+                })
+                if doc and doc.get("profile"):
+                    prof = dict(doc["profile"])
+            except Exception:
+                pass
+
+        if not prof:
+            for k, v in DEFAULT_IDOL_PROFILES.items():
+                if k in norm_name or norm_name in k:
+                    prof = dict(v)
+                    break
+
+        if not prof:
+            return ""
+
+        bday = prof.get("birthday") or "不明"
+        age = f"{prof.get('age')}歳" if prof.get("age") else ""
+        height = f"{prof.get('height')}cm" if prof.get("height") else ""
+        cv = prof.get("cv") or ""
+        parts = [f"🎂 {bday}"]
+        if age:
+            parts.append(f"👤 {age}")
+        if height:
+            parts.append(f"📏 {height}")
+        if cv:
+            parts.append(f"🎙️ {cv}")
+        return " ｜ ".join(parts)
+
+    def get_idol_profile(self, idol_name: str = "") -> str:
+        """アイドルの公式プロフィール（誕生日、年齢、学年・クラス、CV、身長、体重、3サイズ、出身地、血液型、趣味、特技、パラメータ特性等）を取得する。
+
+        生徒の誕生日（「手毬の誕生日は？」「今月誕生日の生徒は？」「生徒の誕生日一覧」等）や、身体測定・CV・パーソナルデータに関する質問にはこのツールを使用してください。
+        idol_name を空欄または「全員」「一覧」にすると全14名の誕生日・クラス一覧を取得できます。
+        """
+        mongo_docs = {}
+        if self._db is not None:
+            try:
+                for doc in self._db["owned_idols"].find():
+                    c_name = re.sub(r"\s+", "", doc.get("name", ""))
+                    mongo_docs[c_name] = doc
+            except Exception:
+                pass
+
+        idols_data = []
+        for k, default_p in DEFAULT_IDOL_PROFILES.items():
+            doc = mongo_docs.get(k, {})
+            prof = doc.get("profile", {})
+            merged = dict(default_p)
+            for field in [
+                "birthday", "cv", "class", "age", "blood_type", "height", "weight",
+                "bust", "waist", "hip", "dominant_hand", "hometown", "residence",
+                "enrollment", "hobby", "skill"
+            ]:
+                if prof.get(field) is not None:
+                    merged[field] = prof[field]
+            if doc.get("characteristic"):
+                merged["characteristic"] = doc["characteristic"]
+            if doc.get("trust_level"):
+                merged["trust_level"] = doc["trust_level"]
+            idols_data.append(merged)
+
+        idols_data.sort(key=lambda x: x.get("id", 99))
+        norm_target = re.sub(r"[\s　]", "", idol_name).lower() if idol_name else ""
+
+        # 全員一覧表示の判定
+        if not norm_target or norm_target in ["全員", "ぜんいん", "一覧", "いちらん", "all", "誕生日", "たんじょうび", "生徒", "みんな", "学生"]:
+            lines = ["【初星学園 生徒・講師プロフィール（誕生日一覧）】\n"]
+            for d in idols_data:
+                bday = d.get("birthday") or "不明"
+                age_val = d.get("age")
+                age_str = f"{age_val}歳" if age_val else "-"
+                cv_str = d.get("cv") or "-"
+                class_str = d.get("class") or "-"
+                reading_str = f"（{d.get('reading', '')}）" if d.get("reading") else ""
+                lines.append(f"- **{d['name']}{reading_str}**: 🎂 **{bday}** ｜ 年齢: {age_str} ｜ CV: {cv_str} ｜ クラス: {class_str}")
+            lines.append("\n💡 特定のアイドルの詳細プロフィールを確認したい場合は、アイドル名（例: `idol_name='月村手毬'`）を指定してください。")
+            return "\n".join(lines)
+
+        # 特定アイドルの検索
+        target_d = None
+        for d in idols_data:
+            norm_n = re.sub(r"\s+", "", d["name"]).lower()
+            reading = d.get("reading", "").lower()
+            parts = d["name"].split()
+            first_n = parts[1].lower() if len(parts) >= 2 else ""
+            if (norm_target in norm_n) or (first_n and first_n in norm_target) or (reading and norm_target in reading):
+                target_d = d
+                break
+
+        if not target_d:
+            return f"※ 「{idol_name}」に該当するアイドルは見つかりませんでした。（入力: '{idol_name}'）"
+
+        b_val = target_d.get("bust")
+        w_val = target_d.get("waist")
+        h_val = target_d.get("hip")
+        bwh = f"B{b_val}/W{w_val}/H{h_val}" if b_val else "-"
+
+        reading_str = f"（{target_d.get('reading', '')}）" if target_d.get("reading") else ""
+        lines = [
+            f"【アイドルプロフィール: **{target_d['name']}{reading_str}**】",
+            f"- 🎂 **誕生日**: **{target_d.get('birthday', '未設定')}**",
+            f"- 🎙️ **CV**: {target_d.get('cv', '未設定')}",
+            f"- 🏫 **学年・クラス**: {target_d.get('class', '未設定')}（{target_d.get('enrollment', '')}）",
+            f"- 👤 **年齢**: {target_d.get('age', '-')}歳 ｜ **血液型**: {target_d.get('blood_type', '-')}",
+            f"- 📏 **身長 / 体重**: {target_d.get('height', '-')}cm / {target_d.get('weight', '-')}kg",
+            f"- 👗 **3サイズ**: {bwh}",
+            f"- ✍️ **利き手**: {target_d.get('dominant_hand', '-')}",
+            f"- 🗾 **出身地 / 居住地**: {target_d.get('hometown', '-')} / {target_d.get('residence', '-')}",
+            f"- 🎨 **趣味**: {target_d.get('hobby', '-')}",
+            f"- ⚡ **特技**: {target_d.get('skill', '-')}",
+            f"- 🎯 **パラメータ特性**: `{target_d.get('characteristic', '-')}`",
+        ]
+        if target_d.get("trust_level"):
+            lines.append(f"- 💖 **親愛度**: Lv.{target_d['trust_level']}")
+
+        return "\n".join(lines)
 
     # ── 公開ディスパッチャ ────────────────────────────────────────────────────
 
@@ -742,6 +1042,7 @@ class GakumasToolExecutor:
             "search_p_items":           self.search_p_items,
             "get_owned_p_idols":        self.get_owned_p_idols,
             "get_p_idol_details":       self.get_p_idol_details,
+            "get_idol_profile":         self.get_idol_profile,
             "get_owned_support_cards":  self.get_owned_support_cards,
             "get_owned_memories":       self.get_owned_memories,
             "get_contest_stats":        self.get_contest_stats,
@@ -887,7 +1188,12 @@ class GakumasToolExecutor:
                             custom_labels.append(label)
                             custom_effs_text += f" {c_name} {c_act} {c_eff} {cobj.get('alias','')} {label}"
 
-                combined_search_text = f"{c.get('name','')} {all_eff} {self._dsl.translate(all_eff)} {custom_effs_text}".lower()
+                # Pアイドル逆引き情報
+                c_pid = str(c.get("pIdolId") or c.get("pIdol") or "").strip()
+                p_info = getattr(self, "_pidol_info_map", {}).get(c_pid)
+                p_info_text = f" {p_info['title']} {p_info['idol_name']}" if p_info else ""
+
+                combined_search_text = f"{c.get('name','')} {all_eff} {self._dsl.translate(all_eff)} {custom_effs_text}{p_info_text}".lower()
 
                 has_force_initial_hand = (
                     c.get("forceInitialHand") == "TRUE"
@@ -921,6 +1227,9 @@ class GakumasToolExecutor:
                         if tok_low in combined_search_text:
                             matched_count += 1
                             match_score += 10
+                            if p_info:
+                                if (tok_low in p_info["title"].lower()) or (tok_low in p_info["idol_name"].lower()) or (p_info["idol_name"].lower() in tok_low):
+                                    match_score += 35
                         # 2. 1ターン目・初手シノニムと開始時手札の連動
                         elif any(syn in tok_low for syn in synonym_groups["first_turn"]) and has_force_initial_hand:
                             matched_count += 1
@@ -1090,49 +1399,73 @@ class GakumasToolExecutor:
         if fallback_notice:
             lines.append(fallback_notice)
 
-        for c, custom_labels, fhand in results[:limit_count]:
-            c_plan   = (c.get("plan") or "").lower()
-            c_type   = (c.get("type") or "").lower()
-            type_lbl = TYPE_LABEL.get(c_type, c_type)
-            emoji    = PLAN_EMOJI.get(c_plan, "")
-            c_acts_item   = c.get("actions", "")
-            c_effs_item   = c.get("effects", "")
-            acts_clean_item = re.sub(r'\{[^{}]*\}', '', c_acts_item)
-            effs_clean_item = re.sub(r'\{[^{}]*\}', '', c_effs_item)
-            is_item_one_time = (
-                (c.get("unique") == "TRUE")
-                or (c.get("limit", "").strip() == "1")
-                or bool(re.search(r'(?:^|;)\s*limit:1(?:\s*;|\s*$)', acts_clean_item))
-                or bool(re.search(r'(?:^|;)\s*limit:1(?:\s*;|\s*$)', effs_clean_item))
-            )
-            repeat = "1回限り" if is_item_one_time else "繰り返し可"
-            is_first_turn_query = any(w in kw_raw for w in ["1ターン目", "1ターン", "初手", "開幕", "開始時"])
-            fhand_tag = " 🌟**【初手確定】**" if (fhand and is_first_turn_query) else ""
-            cost_raw = (
-                c.get("cost", "0")
-                .replace("cost-=",        "体力消費:")
-                .replace("stamina-=",     "固定体力:")
-            )
-            all_eff = f"{c.get('actions', '')}; {c.get('effects', '')}".strip("; ")
-            jp_eff  = self._dsl.translate(all_eff)
+        pidol_map = getattr(self, "_pidol_info_map", {})
+        if limit_count <= 4:
+            for c, custom_labels, fhand in results[:limit_count]:
+                c_pid = str(c.get("pIdolId") or c.get("pIdol") or "").strip()
+                p_info = pidol_map.get(c_pid)
+                p_tag = f" 🌟【{p_info['idol_name']}【{p_info['title']}】固有】" if p_info else ""
+                custom_line = f"  - カスタマイズ: {' / '.join(custom_labels)}" if custom_labels else ""
 
-            custom_line = f" 🛠️{'/'.join(custom_labels[:2])}" if custom_labels else ""
+                block = format_skill_card_specs(c, indent="", dsl=self._dsl)
+                block_lines = block.split("\n")
+                block_lines[0] = block_lines[0] + p_tag
+                if custom_line:
+                    block_lines.append(custom_line)
+                lines.append("\n".join(block_lines))
+                lines.append("")
+        else:
+            for c, custom_labels, fhand in results[:limit_count]:
+                c_plan   = (c.get("plan") or "").lower()
+                c_type   = (c.get("type") or "").lower()
+                type_lbl = TYPE_LABEL.get(c_type, c_type)
+                emoji    = PLAN_EMOJI.get(c_plan, "")
+                c_acts_item   = c.get("actions", "")
+                c_effs_item   = c.get("effects", "")
+                acts_clean_item = re.sub(r'\{[^{}]*\}', '', c_acts_item)
+                effs_clean_item = re.sub(r'\{[^{}]*\}', '', c_effs_item)
+                is_item_one_time = (
+                    (c.get("unique") == "TRUE")
+                    or (c.get("limit", "").strip() == "1")
+                    or bool(re.search(r'(?:^|;)\s*limit:1(?:\s*;|\s*$)', acts_clean_item))
+                    or bool(re.search(r'(?:^|;)\s*limit:1(?:\s*;|\s*$)', effs_clean_item))
+                )
+                repeat = "1回限り" if is_item_one_time else "繰り返し可"
+                is_first_turn_query = any(w in kw_raw for w in ["1ターン目", "1ターン", "初手", "開幕", "開始時"])
+                fhand_tag = " 🌟**【初手確定】**" if (fhand and is_first_turn_query) else ""
+                cost_raw = (
+                    c.get("cost", "0")
+                    .replace("cost-=",        "体力消費:")
+                    .replace("stamina-=",     "固定体力:")
+                )
+                all_eff = f"{c.get('actions', '')}; {c.get('effects', '')}".strip("; ")
+                jp_eff  = self._dsl.translate(all_eff)
 
-            lines.append(
-                f"- {emoji} **{c.get('name', '')}** `[{c.get('rarity','')} / {type_lbl} / {repeat}]`{fhand_tag} (コスト:{cost_raw}) ➔ {jp_eff}{custom_line}"
-            )
+                custom_line = f" 🛠️{'/'.join(custom_labels[:2])}" if custom_labels else ""
+
+                c_pid = str(c.get("pIdolId") or c.get("pIdol") or "").strip()
+                p_info = pidol_map.get(c_pid)
+                p_tag = f" 🌟【{p_info['idol_name']}【{p_info['title']}】固有】" if p_info else ""
+
+                lines.append(
+                    f"- {emoji} **{c.get('name', '')}** `[{c.get('rarity','')} / {type_lbl} / {repeat}]`{fhand_tag}{p_tag} (コスト:{cost_raw}) ➔ {jp_eff}{custom_line}"
+                )
         if len(results) > limit_count:
             lines.append(f"\n※他 {len(results) - limit_count} 件（主要候補のみ抜粋）")
-        return "\n".join(lines)
+        return "\n".join(lines).strip()
     # ── ツール: search_p_items ───────────────────────────────────────────────
 
     def search_p_items(
         self,
         plan: str = "any",
         effect_type: str = "any",
+        keyword: str = "",
         max_results: int = 15,
         **kwargs: Any,
     ) -> str:
+        results: list[dict] = []
+        kw_low = (keyword or kwargs.get("keyword", "")).lower().strip()
+        pidol_map = getattr(self, "_pidol_info_map", {})
 
         for item in self._p_items:
             i_plan   = (item.get("plan") or "").lower()
@@ -1141,10 +1474,21 @@ class GakumasToolExecutor:
 
             if plan != "any" and i_plan not in (plan, "free"):
                 continue
-            if keyword:
-                name = item.get("name", "")
-                if keyword not in name and keyword not in i_effs:
+
+            item_pid = str(item.get("pIdolId") or item.get("pIdol") or "").strip()
+            p_info = pidol_map.get(item_pid)
+
+            if kw_low:
+                name = item.get("name", "").lower()
+                match = (kw_low in name) or (kw_low in i_effs_low)
+                if not match and p_info:
+                    p_title = p_info["title"].lower()
+                    p_iname = p_info["idol_name"].lower()
+                    if (kw_low in p_title) or (kw_low in p_iname) or (p_iname in kw_low):
+                        match = True
+                if not match:
                     continue
+
             effect_map = {
                 "fullPower": "fullpowercharge" in i_effs_low,
                 "genki":     "genki+=" in i_effs_low,
@@ -1159,17 +1503,31 @@ class GakumasToolExecutor:
         if not results:
             return "※ 条件に一致するPアイテムは見つかりませんでした。"
 
-        lines = [f"【Pアイテム検索結果（{len(results)} 件）】\n"]
-        for item in results[:max_results]:
-            i_plan = (item.get("plan") or "").lower()
-            emoji  = PLAN_EMOJI.get(i_plan, "")
-            i_effs = f"{item.get('actions','')}; {item.get('effects','')}".strip("; ")
-            jp_eff = self._dsl.translate(i_effs)
-            lines.append(
-                f"- {emoji} **{item.get('name','')}** `[{item.get('rarity','')} / {i_plan}]`\n"
-                f"  効果: {jp_eff}"
-            )
-        return "\n".join(lines)
+        display_items = results[:max_results]
+        lines = [f"【Pアイテム検索結果（{len(results)} 件中 {len(display_items)} 件表示）】\n"]
+
+        if len(display_items) <= 5:
+            for item in display_items:
+                item_pid = str(item.get("pIdolId") or item.get("pIdol") or "").strip()
+                p_info = pidol_map.get(item_pid)
+                p_tag = f" 🌟【{p_info['idol_name']}【{p_info['title']}】固有】" if p_info else ""
+
+                block = format_p_item_specs(item, indent="", dsl=self._dsl)
+                block_lines = block.split("\n")
+                block_lines[0] = block_lines[0] + p_tag
+                lines.append("\n".join(block_lines))
+                lines.append("")
+        else:
+            for item in display_items:
+                i_plan = (item.get("plan") or "").lower()
+                emoji  = PLAN_EMOJI.get(i_plan, "")
+                item_pid = str(item.get("pIdolId") or item.get("pIdol") or "").strip()
+                p_info = pidol_map.get(item_pid)
+                p_tag = f" 🌟【{p_info['idol_name']}【{p_info['title']}】固有】" if p_info else ""
+                block = format_p_item_specs(item, indent="  ", dsl=self._dsl)
+                lines.append(f"- {emoji} {block.strip()}{p_tag}")
+
+        return "\n".join(lines).strip()
 
     # ── ツール: get_owned_p_idols ────────────────────────────────────────────
 
@@ -1914,35 +2272,56 @@ class GakumasToolExecutor:
         from master_data import GakumasMaster, RECOMMENDED_EFFECT_MAP
         master = GakumasMaster()
 
-        target_idol = master.resolve_idol_name(idol_name) if idol_name else ""
+        # 1. 複合入力のスマート分離・解析
+        raw_query = kwargs.get("query") or f"{idol_name} {title}".strip()
+        norm_combined = re.sub(r"[「」『』【】\s、。,\.]", "", raw_query).lower()
 
-        # タイトルの正規化（鉤括弧、ぇ/え、句読点、空白等の除去）
-        def normalize_str(s: str) -> str:
-            return re.sub(r"[「」『』【】\s、。,\.]", "", s).replace("ぇ", "え").replace("っ", "")
+        # アイドルの特定
+        found_idol = None
+        for iid, name in master.idols.items():
+            norm_name = re.sub(r"\s+", "", name).lower()
+            parts = [p.strip() for p in name.split() if p.strip()]
+            first_name = parts[1] if len(parts) >= 2 else ""
+            if (norm_name in norm_combined) or (first_name and first_name in norm_combined):
+                found_idol = name
+                break
+        if not found_idol and idol_name:
+            found_idol = master.resolve_idol_name(idol_name)
 
-        q_title = normalize_str(title) if title else ""
+        # 衣装タイトルの特定
+        title_search_text = norm_combined
+        if found_idol:
+            title_search_text = title_search_text.replace(re.sub(r"\s+", "", found_idol).lower(), "")
+            for p in found_idol.split():
+                title_search_text = title_search_text.replace(p.lower(), "")
 
-        matched_pidols = []
+        matched_exact_pidol = None
         for p in master.p_idols:
-            iid = int(p.get("idolId", 0))
-            p_iname = master.idols.get(iid, "")
-            p_title = p.get("title", "")
+            t = p.get("title", "")
+            norm_t = re.sub(r"[「」『』【】\s、。,\.]", "", t).lower()
+            if len(norm_t) >= 2 and norm_t in norm_combined:
+                matched_exact_pidol = p
+                if not found_idol:
+                    iid = int(p.get("idolId", 0))
+                    found_idol = master.idols.get(iid)
+                break
+            elif title_search_text and len(title_search_text) >= 2 and (title_search_text in norm_t or norm_t in title_search_text):
+                matched_exact_pidol = p
+                break
 
-            if target_idol and target_idol != p_iname:
-                continue
+        # 対象アイドルの全Pアイドルを取得
+        target_idol_pidols = []
+        if found_idol:
+            for p in master.p_idols:
+                iid = int(p.get("idolId", 0))
+                if master.idols.get(iid) == found_idol:
+                    target_idol_pidols.append(p)
 
-            if q_title:
-                norm_p_title = normalize_str(p_title)
-                if q_title in norm_p_title or norm_p_title in q_title:
-                    matched_pidols.append((p, p_iname))
-            elif target_idol:
-                matched_pidols.append((p, p_iname))
+        if not matched_exact_pidol and not target_idol_pidols:
+            return f"※ 条件に一致するPアイドルは見つかりませんでした（入力: '{idol_name}' '{title}'）。"
 
-        if not matched_pidols:
-            return f"※ 条件に一致するPアイドルは見つかりませんでした（アイドル: '{idol_name}', タイトル: '{title}'）。"
-
-        lines = []
-        for p, iname in matched_pidols[:3]:
+        # 詳細ヘルパー関数
+        def _build_pidol_detail(p: dict, iname: str) -> str:
             pid = str(p.get("id"))
             t = p.get("title")
             rarity = p.get("rarity")
@@ -1954,14 +2333,14 @@ class GakumasToolExecutor:
             unique_skills = []
             for sc in self._skill_cards:
                 if str(sc.get("pIdolId", "")).strip() == pid:
-                    s_name = sc.get("name", "")
-                    s_type = sc.get("type", "")
-                    s_cost = sc.get("cost", "")
-                    s_act = sc.get("actions", "")
-                    s_eff = sc.get("effects", "")
-                    dsl_full = "; ".join([x for x in [s_act, s_eff] if x])
-                    s_eff_jp = self._dsl.translate(dsl_full) if dsl_full else "（効果記載なし）"
-                    unique_skills.append(f"- 『{s_name}』 `[{s_type} / コスト: {s_cost}]`: {s_eff_jp}")
+                    unique_skills.append(format_skill_card_specs(sc, indent="  ", dsl=self._dsl))
+
+            # 固有Pアイテムの探索
+            unique_items = []
+            for item in self._p_items:
+                item_pid = str(item.get("pIdolId") or item.get("pIdol") or "").strip()
+                if item_pid == pid:
+                    unique_items.append(format_p_item_specs(item, indent="  ", dsl=self._dsl))
 
             # MongoDB から所持状況を取得
             owned_status = "未所持"
@@ -1972,17 +2351,49 @@ class GakumasToolExecutor:
                     awaken = doc.get("awaken_level", 0)
                     owned_status = f"所持中（才能開花: ★{talent} ｜ 特訓: Lv.{awaken}）"
 
-            skills_text = "\n".join(unique_skills) if unique_skills else "  - （固有スキルデータなし）"
+            skills_text = "\n\n".join(unique_skills) if unique_skills else "  - （固有スキルデータなし）"
+            items_text = "\n\n".join(unique_items) if unique_items else "  - （固有Pアイテムデータなし）"
             char = self.get_idol_characteristic(iname)
             char_line = f"- パラメータ特性: **`{char}`**\n" if char else ""
-            lines.append(
+            prof_summary = self.get_idol_profile_summary(iname)
+            prof_line = f"- 基本プロフィール: {prof_summary}\n" if prof_summary else ""
+            return (
                 f"【Pアイドル詳細: **{iname}** 【{t}】 `[{rarity} / {plan} / {rec_eff_jp}]`】\n"
                 f"{char_line}"
+                f"{prof_line}"
                 f"- 所持・育成状況: **{owned_status}**\n"
-                f"- 固有スキルカード:\n{skills_text}"
+                f"- 固有スキルカード:\n{skills_text}\n"
+                f"- 固有Pアイテム:\n{items_text}"
             )
 
-        return "\n\n".join(lines).strip()
+        # 1. 特定衣装がマッチした場合 ➔ その衣装の詳細を返す
+        if matched_exact_pidol:
+            iname = found_idol or master.idols.get(int(matched_exact_pidol.get("idolId", 0)), "")
+            return _build_pidol_detail(matched_exact_pidol, iname)
+
+        # 2. 衣装が特定されず、アイドルのみ指定された場合 ➔ 全衣装の固有スキル・Pアイテム一覧サマリを返す！
+        lines = [f"【{found_idol} の全Pアイドル衣装一覧（全 {len(target_idol_pidols)} 着）】\n"]
+        target_idol_pidols.sort(key=lambda x: int(x.get("id", 0)), reverse=True)
+
+        for p in target_idol_pidols:
+            pid = str(p.get("id"))
+            t = p.get("title")
+            rarity = p.get("rarity")
+            plan = p.get("plan", "").upper()
+            emoji = PLAN_EMOJI.get(p.get("plan", "").lower(), "")
+
+            # 固有スキル名
+            sc_names = [sc.get("name", "") for sc in self._skill_cards if str(sc.get("pIdolId", "")).strip() == pid and not sc.get("name", "").endswith("+")]
+            sc_str = f"固有スキル: 『{sc_names[0]}』" if sc_names else "固有スキルなし"
+
+            # 固有Pアイテム名
+            item_names = [item.get("name", "") for item in self._p_items if str(item.get("pIdolId") or item.get("pIdol") or "").strip() == pid and not item.get("name", "").endswith("+")]
+            item_str = f"固有Pアイテム: 『{item_names[0]}』" if item_names else "固有Pアイテムなし"
+
+            lines.append(f"- {emoji} **【{t}】** `[{rarity} / {plan}]` ➔ {sc_str} ｜ {item_str}")
+
+        lines.append(f"\n💡 特定の衣装の詳細効果（数値やスキル効果）を確認したい場合は、衣装名（例: `title='Howling over the World'`）を指定してください。")
+        return "\n".join(lines).strip()
 
 
     # ── ツール: get_optimized_deck ───────────────────────────────────────────

@@ -13,12 +13,8 @@ CARD_PATTERN = re.compile(
     re.MULTILINE
 )
 
-DEFAULT_HEADERS = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-}
-
 def scrape_cards():
-    res = requests.get(PAGE_URL, headers=DEFAULT_HEADERS)
+    res = requests.get(PAGE_URL)
     res.encoding = "euc-jp"
     soup = BeautifulSoup(res.text, "html.parser")
 

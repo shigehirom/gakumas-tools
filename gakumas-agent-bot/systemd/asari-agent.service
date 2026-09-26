@@ -1,0 +1,17 @@
+[Unit]
+Description=Gakumas Asari Agent Discord Bot (MCP Client)
+After=network.target gakumas-mcp.service
+Wants=gakumas-mcp.service
+
+[Service]
+Type=simple
+User=pi
+WorkingDirectory=/home/pi/gakumas-agent-bot
+ExecStart=/home/pi/gakumas-agent-bot/.venv/bin/python gakumas_agent_bot.py
+Restart=always
+RestartSec=5
+EnvironmentFile=/home/pi/gakumas-agent-bot/.env
+
+[Install]
+WantedBy=multi-user.target
+

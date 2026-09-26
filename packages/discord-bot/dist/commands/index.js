@@ -2,29 +2,15 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.commandMap = exports.commands = void 0;
 const contest_1 = require("./contest");
-const deck_1 = require("./deck");
-const recent_memories_1 = require("./recent-memories");
-const import_memory_1 = require("./import-memory");
-const sync_1 = require("./sync");
-const advisory_1 = require("./advisory");
-const compare_memory_1 = require("./compare-memory");
 const record_contest_1 = require("./record-contest");
-const sync_contest_1 = require("./sync-contest");
-const memory_stats_1 = require("./memory-stats");
-const calc_1 = require("./calc");
-const contest_chart_1 = require("./contest-chart");
+const advisory_1 = require("./advisory");
+const memory_1 = require("./memory");
+const sync_1 = require("./sync");
 exports.commands = [
     contest_1.contestCommand,
-    contest_chart_1.contestChartCommand,
-    deck_1.deckCommand,
-    recent_memories_1.recentMemoriesCommand,
-    import_memory_1.importMemoryCommand,
-    sync_1.syncCommand,
-    advisory_1.advisoryCommand,
-    compare_memory_1.compareMemoryCommand,
     record_contest_1.recordContestCommand,
-    sync_contest_1.syncContestCommand,
-    memory_stats_1.memoryStatsCommand,
-    calc_1.calcCommand
+    advisory_1.advisoryCommand,
+    memory_1.memoryCommand,
+    sync_1.syncCommand,
 ];
 exports.commandMap = new Map(exports.commands.map(cmd => [cmd.data.name, cmd]));
