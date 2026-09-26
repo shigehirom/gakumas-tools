@@ -4,10 +4,6 @@ const GK_IMG_BASE_URL = process.env.NEXT_PUBLIC_GK_IMG_BASE_URL || "";
 
 const SKILL_CARD_ICON_KEY_SET = new Set(SKILL_CARD_ICON_KEYS);
 
-// アップストリーム（CDN）未反映のローカル先行配信ID
-const LOCAL_OVERRIDE_P_ITEMS = new Set(["485", "486", "487"]);
-const LOCAL_OVERRIDE_SKILL_CARDS = new Set(["871", "872", "873", "874"]);
-
 export default function getImages(entity, idolId = 6) {
   switch (entity?._type) {
     case "idol":
@@ -18,25 +14,13 @@ export default function getImages(entity, idolId = 6) {
         details: `${GK_IMG_BASE_URL}/p_drinks/details/${entity.id}.webp`,
       };
     case "pIdol":
-      return { icon: `/images/p_idols/${entity.id}.png` };
+      return { icon: `${GK_IMG_BASE_URL}/p_idols/${entity.id}.webp` };
     case "pItem":
-      if (LOCAL_OVERRIDE_P_ITEMS.has(String(entity.id))) {
-        return {
-          icon: `/images/p_items/icons/${entity.id}.png`,
-          details: `/images/p_items/details/${entity.id}.png`,
-        };
-      }
       return {
         icon: `${GK_IMG_BASE_URL}/p_items/icons/${entity.id}.webp`,
         details: `${GK_IMG_BASE_URL}/p_items/details/${entity.id}.webp`,
       };
     case "skillCard": {
-      if (LOCAL_OVERRIDE_SKILL_CARDS.has(String(entity.id))) {
-        return {
-          icon: `/images/skill_cards/icons/${entity.id}.png`,
-          details: `/images/skill_cards/details/${entity.id}.png`,
-        };
-      }
       let fileName = `${entity.id}`;
       if (SKILL_CARD_ICON_KEY_SET.has(`${entity.id}_${idolId}`)) {
         fileName = `${entity.id}_${idolId}`;
@@ -55,8 +39,8 @@ export default function getImages(entity, idolId = 6) {
 
 export function isGkImgUrl(src) {
   return (
+    !!GK_IMG_BASE_URL &&
     typeof src == "string" &&
-    ((!!GK_IMG_BASE_URL && src.startsWith(GK_IMG_BASE_URL)) ||
-      src.startsWith("/images/"))
+    src.startsWith(GK_IMG_BASE_URL)
   );
 }

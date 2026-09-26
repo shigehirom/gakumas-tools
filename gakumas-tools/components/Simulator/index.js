@@ -1,1 +1,1 @@
-export { default } from "./SimulatorWithDnd.js";
+export { default } from "./Simulator";

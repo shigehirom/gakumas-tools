@@ -12,7 +12,6 @@ import image_11 from "./11.png";
 import image_12 from "./12.png";
 import image_13 from "./13.png";
 import image_14 from "./14.png";
-import image_asari_bot from "./asari_bot.png";
 
 const IMAGES = {
   '1': image_1,
@@ -29,7 +28,6 @@ const IMAGES = {
   '12': image_12,
   '13': image_13,
   '14': image_14,
-  'asari_bot': image_asari_bot,
 };
 
 export default IMAGES;
